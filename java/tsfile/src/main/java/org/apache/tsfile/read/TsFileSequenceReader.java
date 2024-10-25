@@ -1721,7 +1721,8 @@ public class TsFileSequenceReader implements AutoCloseable {
       return buffer;
     }
     return ByteBuffer.wrap(
-        decryptor.decrypt(buffer.array(), buffer.position(), buffer.remaining()));
+        decryptor.decrypt(
+            buffer.array(), buffer.arrayOffset() + buffer.position(), buffer.remaining()));
   }
 
   private static ByteBuffer uncompress(
@@ -1733,7 +1734,11 @@ public class TsFileSequenceReader implements AutoCloseable {
     ByteBuffer uncompressedBuffer = ByteBuffer.allocate(uncompressedSize);
     try {
       unCompressor.uncompress(
-          buffer.array(), buffer.position(), buffer.remaining(), uncompressedBuffer.array(), 0);
+          buffer.array(),
+          buffer.arrayOffset() + buffer.position(),
+          buffer.remaining(),
+          uncompressedBuffer.array(),
+          0);
     } catch (Exception e) {
       throw new IOException(
           "Uncompress error! uncompress size: "
