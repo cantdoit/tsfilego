@@ -44,7 +44,7 @@
                 <executions>
                     <execution>
                         <id>install-conan</id>
-                        <phase>initialize</phase>
+                        <phase>validate</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
@@ -58,7 +58,7 @@
                     </execution>
                     <execution>
                         <id>generate-conan-profile</id>
-                        <phase>validate</phase>
+                        <phase>initialize</phase>
                         <goals>
                             <goal>exec</goal>
                         </goals>
