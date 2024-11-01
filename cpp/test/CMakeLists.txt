@@ -16,44 +16,7 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 ]]
-include(FetchContent)
-
-set(URL_LIST
-    "https://github.com/google/googletest/archive/refs/tags/release-1.12.1.zip"
-    "https://hub.nuaa.cf/google/googletest/archive/refs/tags/release-1.12.1.zip"
-    "https://hub.yzuu.cf/google/googletest/archive/refs/tags/release-1.12.1.zip"
-)
-
-set(DOWNLOADED 0)
-set(GTEST_URL "")
-set(TIMEOUT 30)
-
-foreach(URL ${URL_LIST})
-    message(STATUS "Trying to download from ${URL}")
-    file(DOWNLOAD ${URL} "${CMAKE_BINARY_DIR}/googletest-release-1.12.1.zip" STATUS DOWNLOAD_STATUS TIMEOUT ${TIMEOUT})
-
-    list(GET DOWNLOAD_STATUS 0 DOWNLOAD_RESULT)
-    if(${DOWNLOAD_RESULT} EQUAL 0)
-        set(DOWNLOADED 1)
-        set(GTEST_URL ${URL})
-        break()
-    endif()
-endforeach()
-
-if(${DOWNLOADED})
-    message(STATUS "Successfully downloaded googletest from ${GTEST_URL}")
-    FetchContent_Declare(
-      googletest
-      URL ${GTEST_URL}
-    )
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(googletest)
-    set(TESTS_ENABLED ON PARENT_SCOPE)
-else()
-    message(WARNING "Failed to download googletest from all provided URLs, setting TESTS_ENABLED to OFF")
-    set(TESTS_ENABLED OFF PARENT_SCOPE)
-    return()
-endif()
+find_package(GTest REQUIRED)
 
 message(STATUS "Adding test configurations...")
 

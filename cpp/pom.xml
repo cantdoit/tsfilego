@@ -37,6 +37,58 @@
     <build>
         <sourceDirectory>${project.basedir}</sourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>install-conan</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>pip</executable>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>conan</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-conan-profile</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>conan</executable>
+                            <arguments>
+                                <argument>profile</argument>
+                                <argument>detect</argument>
+                                <argument>--force</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>conan-install-dependencies</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>conan</executable>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>.</argument>
+                                <argument>--output-folder=${project.build.directory}/build</argument>
+                                <argument>--build=missing</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!--
                 Do the actual build.
             -->
@@ -70,6 +122,8 @@
                         <configuration>
                             <options>
                                 <option>-DBUILD_PHASE=test-compile</option>
+                                <option>-DCMAKE_BUILD_TYPE=Release</option>
+                                <option>-DCMAKE_TOOLCHAIN_FILE=${project.build.directory}/build/conan_toolchain.cmake</option>
                                 <option>${cmake.addition.option}</option>
                             </options>
                             <sourcePath/>
