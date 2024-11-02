@@ -55,9 +55,9 @@ TEST_F(WriteFileTest, WriteToFile) {
     EXPECT_EQ(write_file.create(file_name, flags, mode), E_OK);
     EXPECT_TRUE(write_file.file_opened());
 
-    const char *content = "Hello, World!";
-    uint32_t content_len = strlen(content);
-    EXPECT_EQ(write_file.write(content, content_len), E_OK);
+    std::string content = "Hello, World!";
+    size_t content_len = content.length();
+    EXPECT_EQ(write_file.write(content.c_str(), content_len), E_OK);
 
     write_file.close();
 
