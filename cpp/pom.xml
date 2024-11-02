@@ -85,7 +85,6 @@
                                 <argument>--output-folder=${project.build.directory}/build</argument>
                                 <argument>--build=missing</argument>
                                 <!-- 根据操作系统选择不同参数 -->
-                                <argument>${os.install.argument}</argument>
                                 <argument>${os.compiler}</argument>
                                 <argument>${os.compiler_setting}</argument>
                                 <argument>${os.compiler_cppstd}</argument>
@@ -214,9 +213,7 @@
                     <family>unix</family>
                 </os>
             </activation>
-            <properties>
-                <os.install.argument>--unix-specific-arg</os.install.argument>
-            </properties>
+            <properties></properties>
         </profile>
         <!-- Mac profile -->
         <profile>
@@ -226,9 +223,7 @@
                     <family>mac</family>
                 </os>
             </activation>
-            <properties>
-                <os.install.argument>--mac-specific-arg</os.install.argument>
-            </properties>
+            <properties></properties>
         </profile>
         <profile>
             <id>with-code-coverage</id>
