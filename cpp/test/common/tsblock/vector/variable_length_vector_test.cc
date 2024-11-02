@@ -50,7 +50,7 @@ TEST(VariableLengthVectorTest, AppendAndRead) {
 
     const char* value = "test";
     vlv.append(value, type_size);
-    uint32_t len;
+    uint32_t len = 0;
     bool null;
     char* result = vlv.read(&len, &null, 0);
     EXPECT_EQ(len, type_size);
@@ -66,7 +66,7 @@ TEST(VariableLengthVectorTest, ReadWithLen) {
 
     const char* value = "test";
     vlv.append(value, type_size);
-    uint32_t len;
+    uint32_t len = 0;
     char* result = vlv.read(&len);
     EXPECT_EQ(len, type_size);
     EXPECT_EQ(memcmp(result, value, type_size), 0);

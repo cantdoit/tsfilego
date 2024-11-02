@@ -37,6 +37,66 @@
     <build>
         <sourceDirectory>${project.basedir}</sourceDirectory>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.0.0</version>
+                <executions>
+                    <execution>
+                        <id>install-conan</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>pip</executable>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>conan</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-conan-profile</id>
+                        <phase>initialize</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>conan</executable>
+                            <arguments>
+                                <argument>profile</argument>
+                                <argument>detect</argument>
+                                <argument>--force</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>conan-install-dependencies</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>conan</executable>
+                            <arguments>
+                                <argument>install</argument>
+                                <argument>.</argument>
+                                <argument>--output-folder=${project.build.directory}/build</argument>
+                                <argument>--build=missing</argument>
+                                <argument>${os.compiler}</argument>
+                                <argument>${os.compiler_setting}</argument>
+                                <argument>${os.compiler_cppstd}</argument>
+                                <argument>${os.compiler_cppstd_setting}</argument>
+                                <argument>${os.compiler_libcxx}</argument>
+                                <argument>${os.compiler_libcxx_setting}</argument>
+                                <argument>${os.compiler_version}</argument>
+                                <argument>${os.compiler_version_setting}</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <!--
                 Do the actual build.
             -->
@@ -70,6 +130,8 @@
                         <configuration>
                             <options>
                                 <option>-DBUILD_PHASE=test-compile</option>
+                                <option>-DCMAKE_BUILD_TYPE=Release</option>
+                                <option>-DCMAKE_TOOLCHAIN_FILE=${project.build.directory}/build/conan_toolchain.cmake</option>
                                 <option>${cmake.addition.option}</option>
                             </options>
                             <sourcePath/>
@@ -123,6 +185,45 @@
         </plugins>
     </build>
     <profiles>
+        <!-- Windows profile -->
+        <profile>
+            <id>windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <os.compiler>--settings</os.compiler>
+                <os.compiler_setting>compiler=gcc</os.compiler_setting>
+                <os.compiler_cppstd>--settings</os.compiler_cppstd>
+                <os.compiler_cppstd_setting>compiler.cppstd=gnu17</os.compiler_cppstd_setting>
+                <os.compiler_libcxx>--settings</os.compiler_libcxx>
+                <os.compiler_libcxx_setting>compiler.libcxx=libstdc++11</os.compiler_libcxx_setting>
+                <os.compiler_version>--settings</os.compiler_version>
+                <os.compiler_version_setting>compiler.version=11</os.compiler_version_setting>
+            </properties>
+        </profile>
+        <!-- Unix profile -->
+        <profile>
+            <id>unix</id>
+            <activation>
+                <os>
+                    <family>unix</family>
+                </os>
+            </activation>
+            <properties></properties>
+        </profile>
+        <!-- Mac profile -->
+        <profile>
+            <id>mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties></properties>
+        </profile>
         <profile>
             <id>with-code-coverage</id>
             <properties>
