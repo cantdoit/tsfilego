@@ -74,11 +74,6 @@ include_directories(${PROJECT_INCLUDE_DIR})
 
 add_subdirectory(src)
 
-configure_file(
-  "${PROJECT_SOURCE_DIR}/cmake/config.h.in"
-  "${PROJECT_BINARY_DIR}/cmake_config.h"
-)
-
 add_subdirectory(test)
 if(TESTS_ENABLED)
     add_dependencies(TsFile_Test tsfile)
