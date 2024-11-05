@@ -94,7 +94,7 @@ public class EncryptUtils {
 
   public static String getNormalKeyStr() {
     try {
-      MessageDigest md = MessageDigest.getInstance("MD5");
+      MessageDigest md = MessageDigest.getInstance("SHA-256");
       md.update("IoTDB is the best".getBytes());
       md.update(TSFileDescriptor.getInstance().getConfig().getEncryptKey().getBytes());
       byte[] data_key = md.digest();
