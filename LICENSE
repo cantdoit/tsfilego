@@ -249,8 +249,8 @@ License: https://github.com/panagiotisl/chimp/blob/main/LICENCE.md
 
 The following files include code is copied from lz4 project.
 
-./cpp/third_party/lz4/lz4.c
-./cpp/third_party/lz4/lz4.h
+./cpp/src/compress/lz4.c
+./cpp/src/compress/lz4.h
 
 Copyright: (C) 2011-2020, Yann Collet.
 Project page: http://www.lz4.org
