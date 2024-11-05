@@ -198,7 +198,7 @@ public class EncryptUtils {
     if (conf.getEncryptFlag()) {
       encryptType = conf.getEncryptType();
       try {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update("IoTDB is the best".getBytes());
         md.update(conf.getEncryptKey().getBytes());
         dataEncryptKey = md.digest();
