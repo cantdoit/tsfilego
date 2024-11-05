@@ -204,13 +204,6 @@
                            APACHE TSFILE SUBCOMPONENTS
 --------------------------------------------------------------------------------
 
-The following class is copied from maven-wrapper (https://github.com/takari/maven-wrapper),
-which is under Apache License 2.0:
-
-mvnw files from https://github.com/apache/maven-wrapper Apache 2.0
-
---------------------------------------------------------------------------------
-
 The following class is modified from Apache commons-collections
 
 ./java/tsfile/src/main/java/org/apache/tsfile/utils/Murmur128Hash.java
@@ -233,7 +226,7 @@ The following files include code modified from Michael Burman's gorilla-tsc proj
 
 Copyright: 2016-2018 Michael Burman and/or other contributors
 Project page: https://github.com/burmanm/gorilla-tsc
-License: http://www.apache.org/licenses/LICENSE-2.0
+License: https://github.com/burmanm/gorilla-tsc/blob/master/LICENSE
 
 --------------------------------------------------------------------------------
 
@@ -250,7 +243,7 @@ The following files include code modified from Panagiotis Liakos, Katia Papakons
 
 Copyright: 2022- Panagiotis Liakos, Katia Papakonstantinopoulou and Yannis Kotidis
 Project page: https://github.com/panagiotisl/chimp
-License: http://www.apache.org/licenses/LICENSE-2.0
+License: https://github.com/panagiotisl/chimp/blob/main/LICENCE.md
 
 --------------------------------------------------------------------------------
 
