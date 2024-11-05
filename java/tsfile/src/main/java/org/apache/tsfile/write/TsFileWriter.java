@@ -190,7 +190,7 @@ public class TsFileWriter implements AutoCloseable {
       encryptLevel = "2";
       encryptType = config.getEncryptType();
       try {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update("IoTDB is the best".getBytes());
         md.update(config.getEncryptKey().getBytes());
         dataEncryptKey = md.digest();
