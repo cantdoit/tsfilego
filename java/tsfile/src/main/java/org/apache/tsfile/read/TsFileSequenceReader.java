@@ -145,7 +145,21 @@ public class TsFileSequenceReader implements AutoCloseable {
    * @throws IOException If some I/O error occurs
    */
   public TsFileSequenceReader(String file) throws IOException {
-    this(file, true);
+    this(file, null);
+  }
+
+  /**
+   * Create a file reader of the given file. The reader will read the tail of the file to get the
+   * file metadata size.Then the reader will skip the first
+   * TSFileConfig.MAGIC_STRING.getBytes().length + TSFileConfig.NUMBER_VERSION.getBytes().length
+   * bytes of the file for preparing reading real data.
+   *
+   * @param file the data file
+   * @param ioSizeRecorder can be null
+   * @throws IOException If some I/O error occurs
+   */
+  public TsFileSequenceReader(String file, LongConsumer ioSizeRecorder) throws IOException {
+    this(file, true, ioSizeRecorder);
   }
 
   /**
@@ -155,6 +169,18 @@ public class TsFileSequenceReader implements AutoCloseable {
    * @param loadMetadataSize -whether load meta data size
    */
   public TsFileSequenceReader(String file, boolean loadMetadataSize) throws IOException {
+    this(file, loadMetadataSize, null);
+  }
+
+  /**
+   * construct function for TsFileSequenceReader.
+   *
+   * @param file -given file name
+   * @param loadMetadataSize -whether load meta data size
+   * @param ioSizeRecorder can be null
+   */
+  public TsFileSequenceReader(String file, boolean loadMetadataSize, LongConsumer ioSizeRecorder)
+      throws IOException {
     if (resourceLogger.isDebugEnabled()) {
       resourceLogger.debug("{} reader is opened. {}", file, getClass().getName());
     }
@@ -162,9 +188,9 @@ public class TsFileSequenceReader implements AutoCloseable {
     tsFileInput = FSFactoryProducer.getFileInputFactory().getTsFileInput(file);
 
     try {
-      loadFileVersion();
+      loadFileVersion(ioSizeRecorder);
       if (loadMetadataSize) {
-        loadMetadataSize();
+        loadMetadataSize(ioSizeRecorder);
       }
     } catch (Throwable e) {
       tsFileInput.close();
@@ -225,10 +251,14 @@ public class TsFileSequenceReader implements AutoCloseable {
     this.fileMetadataSize = fileMetadataSize;
   }
 
-  private void loadFileVersion() throws IOException {
+  // ioSizeRecorder can be null
+  private void loadFileVersion(LongConsumer ioSizeRecorder) throws IOException {
     try {
       tsFileInput.position(TSFileConfig.MAGIC_STRING.getBytes(TSFileConfig.STRING_CHARSET).length);
-      final ByteBuffer buffer = ByteBuffer.allocate(1);
+      final ByteBuffer buffer = ByteBuffer.allocate(Byte.BYTES);
+      if (ioSizeRecorder != null) {
+        ioSizeRecorder.accept(Byte.BYTES);
+      }
       tsFileInput.read(buffer);
       buffer.flip();
       fileVersion = buffer.get();
@@ -256,8 +286,19 @@ public class TsFileSequenceReader implements AutoCloseable {
   }
 
   public void loadMetadataSize() throws IOException {
-    ByteBuffer metadataSize = ByteBuffer.allocate(Integer.BYTES);
+    loadMetadataSize(null);
+  }
+
+  /**
+   * @param ioSizeRecorder can be null
+   */
+  public void loadMetadataSize(LongConsumer ioSizeRecorder) throws IOException {
+    int readSize = Integer.BYTES;
+    ByteBuffer metadataSize = ByteBuffer.allocate(readSize);
     if (readTailMagic().equals(TSFileConfig.MAGIC_STRING)) {
+      if (ioSizeRecorder != null) {
+        ioSizeRecorder.accept(readSize);
+      }
       tsFileInput.read(
           metadataSize,
           tsFileInput.size() - TSFileConfig.MAGIC_STRING.getBytes().length - Integer.BYTES);
@@ -330,7 +371,8 @@ public class TsFileSequenceReader implements AutoCloseable {
   /** this function reads version number and checks compatibility of TsFile. */
   public byte readVersionNumber() throws IOException {
     ByteBuffer versionNumberByte = ByteBuffer.allocate(Byte.BYTES);
-    tsFileInput.read(versionNumberByte, TSFileConfig.MAGIC_STRING.getBytes().length);
+    tsFileInput.read(
+        versionNumberByte, TSFileConfig.MAGIC_STRING.getBytes(TSFileConfig.STRING_CHARSET).length);
     versionNumberByte.flip();
     return versionNumberByte.get();
   }
@@ -460,18 +502,28 @@ public class TsFileSequenceReader implements AutoCloseable {
 
   public TimeseriesMetadata readTimeseriesMetadata(
       IDeviceID device, String measurement, boolean ignoreNotExists) throws IOException {
-    readFileMetadata();
+    return readTimeseriesMetadata(device, measurement, ignoreNotExists, null);
+  }
+
+  public TimeseriesMetadata readTimeseriesMetadata(
+      IDeviceID device,
+      String measurement,
+      boolean ignoreNotExistDevice,
+      LongConsumer ioSizeConsumer)
+      throws IOException {
+    readFileMetadata(ioSizeConsumer);
     MetadataIndexNode deviceMetadataIndexNode =
         tsFileMetaData.getTableMetadataIndexNode(device.getTableName());
     Pair<IMetadataIndexEntry, Long> metadataIndexPair =
-        getMetadataAndEndOffsetOfDeviceNode(deviceMetadataIndexNode, device, true);
+        getMetadataAndEndOffsetOfDeviceNode(deviceMetadataIndexNode, device, true, ioSizeConsumer);
     if (metadataIndexPair == null) {
-      if (ignoreNotExists) {
+      if (ignoreNotExistDevice) {
         return null;
       }
       throw new IOException("Device {" + device + "} is not in tsFileMetaData");
     }
-    ByteBuffer buffer = readData(metadataIndexPair.left.getOffset(), metadataIndexPair.right);
+    ByteBuffer buffer =
+        readData(metadataIndexPair.left.getOffset(), metadataIndexPair.right, ioSizeConsumer);
     MetadataIndexNode metadataIndexNode = deviceMetadataIndexNode;
     if (!metadataIndexNode.getNodeType().equals(MetadataIndexNodeType.LEAF_MEASUREMENT)) {
       try {
@@ -483,14 +535,16 @@ public class TsFileSequenceReader implements AutoCloseable {
         throw e;
       }
       metadataIndexPair =
-          getMetadataAndEndOffsetOfMeasurementNode(metadataIndexNode, measurement, false, null);
+          getMetadataAndEndOffsetOfMeasurementNode(
+              metadataIndexNode, measurement, false, ioSizeConsumer);
     }
     if (metadataIndexPair == null) {
       return null;
     }
     List<TimeseriesMetadata> timeseriesMetadataList = new ArrayList<>();
     if (metadataIndexPair.right - metadataIndexPair.left.getOffset() < Integer.MAX_VALUE) {
-      buffer = readData(metadataIndexPair.left.getOffset(), metadataIndexPair.right);
+      buffer =
+          readData(metadataIndexPair.left.getOffset(), metadataIndexPair.right, ioSizeConsumer);
       while (buffer.hasRemaining()) {
         try {
           timeseriesMetadataList.add(TimeseriesMetadata.deserializeFrom(buffer, true));
@@ -501,6 +555,9 @@ public class TsFileSequenceReader implements AutoCloseable {
         }
       }
     } else {
+      if (ioSizeConsumer != null) {
+        ioSizeConsumer.accept(metadataIndexPair.right - metadataIndexPair.left.getOffset());
+      }
       // when the buffer length is over than Integer.MAX_VALUE,
       // using tsFileInput to get timeseriesMetadataList
       tsFileInput.position(metadataIndexPair.left.getOffset());
@@ -521,7 +578,7 @@ public class TsFileSequenceReader implements AutoCloseable {
   }
 
   // This method is only used for TsFile
-  public ITimeSeriesMetadata readITimeseriesMetadata(Path path, boolean ignoreNotExists)
+  public ITimeSeriesMetadata readITimeseriesMetadata(Path path, boolean ignoreNotExistDevice)
       throws IOException {
     readFileMetadata();
     MetadataIndexNode deviceMetadataIndexNode =
@@ -529,7 +586,7 @@ public class TsFileSequenceReader implements AutoCloseable {
     Pair<IMetadataIndexEntry, Long> metadataIndexPair =
         getMetadataAndEndOffsetOfDeviceNode(deviceMetadataIndexNode, path.getIDeviceID(), true);
     if (metadataIndexPair == null) {
-      if (ignoreNotExists) {
+      if (ignoreNotExistDevice) {
         return null;
       }
       throw new IOException("Device {" + path.getDeviceString() + "} is not in tsFileMetaData");
@@ -581,22 +638,27 @@ public class TsFileSequenceReader implements AutoCloseable {
     }
   }
 
-  /* Find the leaf node that contains path, return all the sensors in that leaf node which are also in allSensors set */
-  public List<TimeseriesMetadata> readTimeseriesMetadata(
-      IDeviceID device, String measurement, Set<String> allSensors) throws IOException {
-    return readTimeseriesMetadata(device, measurement, allSensors, null);
-  }
-
   /**
+   * Find the leaf node that contains path, return all the sensors in that leaf node which are also
+   * in allSensors set
+   *
+   * @param ignoreNotExistDevice whether throw IOException if device not found
    * @param ioSizeRecorder can be null
    */
   public List<TimeseriesMetadata> readTimeseriesMetadata(
-      IDeviceID device, String measurement, Set<String> allSensors, LongConsumer ioSizeRecorder)
+      IDeviceID device,
+      String measurement,
+      Set<String> allSensors,
+      boolean ignoreNotExistDevice,
+      LongConsumer ioSizeRecorder)
       throws IOException {
     Pair<IMetadataIndexEntry, Long> metadataIndexPair =
         getLeafMetadataIndexPair(device, measurement, ioSizeRecorder);
     if (metadataIndexPair == null) {
-      return Collections.emptyList();
+      if (ignoreNotExistDevice) {
+        return Collections.emptyList();
+      }
+      throw new IOException("Device {" + device + "} is not in tsFileMetaData");
     }
     List<TimeseriesMetadata> timeseriesMetadataList = new ArrayList<>();
 
