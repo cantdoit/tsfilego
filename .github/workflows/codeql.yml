@@ -16,6 +16,7 @@ on:
     branches:
       - develop
       - rc/*
+      - dev/*
     paths-ignore:
       - 'docs/**'
 

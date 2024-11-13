@@ -4,12 +4,14 @@ on:
     branches:
       - develop
       - rc/*
+      - dev/*
     paths-ignore:
       - 'docs/**'
   pull_request:
     branches:
       - develop
       - rc/*
+      - dev/*
     paths-ignore:
       - 'docs/**'
 

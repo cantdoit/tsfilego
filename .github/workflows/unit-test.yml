@@ -9,6 +9,7 @@ on:
       - develop
       - iotdb
       - rc/*
+      - dev/*
     paths-ignore:
       - 'docs/**'
   pull_request:
@@ -16,6 +17,7 @@ on:
       - develop
       - iotdb
       - rc/*
+      - dev/*
     paths-ignore:
       - 'docs/**'
   # Enable manually starting builds, and allow forcing updating of SNAPSHOT dependencies.
