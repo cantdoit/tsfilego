@@ -23,12 +23,14 @@ import org.apache.tsfile.exception.NotImplementedException;
 import org.apache.tsfile.file.metadata.TsFileMetadata;
 
 import java.io.IOException;
+import java.util.function.LongConsumer;
 
 /** A class for reading unclosed tsfile. */
 public class UnClosedTsFileReader extends TsFileSequenceReader {
 
-  public UnClosedTsFileReader(String file) throws IOException {
-    super(file, false);
+  // ioSizeRecorder can be null
+  public UnClosedTsFileReader(String file, LongConsumer ioSizeRecorder) throws IOException {
+    super(file, false, ioSizeRecorder);
   }
 
   /** unclosed file has no tail magic data. */
