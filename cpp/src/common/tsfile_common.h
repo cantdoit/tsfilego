@@ -726,7 +726,7 @@ struct MetaIndexNode {
     int binary_search_children(const common::String &name, bool exact_search,
                                MetaIndexEntry &ret_index_entry,
                                int64_t &ret_end_offset);
-  
+
     int serialize_to(common::ByteStream &out) {
         int ret = common::E_OK;
 #if DEBUG_SE

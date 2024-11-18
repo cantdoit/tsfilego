@@ -21,8 +21,8 @@
 
 #include "common/db_common.h"
 #include "expression.h"
-#include "result_set.h"
 #include "reader/tsfile_series_scan_iterator.h"
+#include "result_set.h"
 
 namespace storage {
 
@@ -122,8 +122,9 @@ class QDSWithTimeGenerator : public ResultSet {
     bool next();
     bool is_null(const std::string &column_name);
     bool is_null(uint32_t column_index);
-    RowRecord* get_row_record();
-    ResultSetMetadata* get_metadata();
+    RowRecord *get_row_record();
+    ResultSetMetadata *get_metadata();
+
    private:
     Node *construct_node_tree(Expression *expr);
 

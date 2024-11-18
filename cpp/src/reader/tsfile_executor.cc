@@ -58,8 +58,7 @@ int TsFileExecutor::init(const std::string &file_path) {
     return ret;
 }
 
-int TsFileExecutor::execute(QueryExpression *query_expr,
-                            ResultSet *&ret_qds) {
+int TsFileExecutor::execute(QueryExpression *query_expr, ResultSet *&ret_qds) {
     ASSERT(is_inited_);
     query_exprs_ = query_expr;
     std::vector<Path> paths = query_exprs_->selected_series_;

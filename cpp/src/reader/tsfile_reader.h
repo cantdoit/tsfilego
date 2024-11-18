@@ -43,12 +43,15 @@ class TsFileReader {
     int open(const std::string &file_path);
     int close();
     int query(storage::QueryExpression *qe, ResultSet *&ret_qds);
-    int query(std::vector<std::string> &path_list, int64_t start_time, int64_t end_time, ResultSet *&result_set);
+    int query(std::vector<std::string> &path_list, int64_t start_time,
+              int64_t end_time, ResultSet *&result_set);
     void destroy_query_data_set(ResultSet *qds);
     ResultSet *read_timeseries(const std::string &device_name,
-                                  std::vector<std::string> measurement_name);
+                               std::vector<std::string> measurement_name);
     std::vector<std::string> get_all_devices();
-    int get_timeseries_schema(const std::string &device_id, std::vector<MeasurementSchema> &result);
+    int get_timeseries_schema(const std::string &device_id,
+                              std::vector<MeasurementSchema> &result);
+
    private:
     storage::ReadFile *read_file_;
     storage::TsFileExecutor *tsfile_executor_;

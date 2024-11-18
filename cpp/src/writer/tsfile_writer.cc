@@ -410,8 +410,8 @@ int TsFileWriter::write_record(const TsRecord &record) {
     // std::vector<ChunkWriter*> chunk_writers;
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromRecord mnames_getter(record);
-    if (RET_FAIL(do_check_schema(record.device_id_, mnames_getter,
-                                 chunk_writers))) {
+    if (RET_FAIL(
+            do_check_schema(record.device_id_, mnames_getter, chunk_writers))) {
         return ret;
     }
 
@@ -529,8 +529,8 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     int ret = E_OK;
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
-    if (RET_FAIL(do_check_schema(tablet.device_id_, mnames_getter,
-                                 chunk_writers))) {
+    if (RET_FAIL(
+            do_check_schema(tablet.device_id_, mnames_getter, chunk_writers))) {
         return ret;
     }
     ASSERT(chunk_writers.size() == tablet.get_column_count());

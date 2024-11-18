@@ -88,25 +88,24 @@ struct Field {
 
     template <typename T>
     FORCE_INLINE T get_value() {
-        switch (type_)
-        {
-        case common::TSDataType::BOOLEAN :
-            return value_.bval_;
-        case common::TSDataType::INT32 :
-            return value_.ival_;
-        case common::TSDataType::INT64 :
-            return value_.lval_;
-        case common::TSDataType::FLOAT :
-            return value_.fval_;
-        case common::TSDataType::DOUBLE :
-            return value_.dval_;
-        // case common::TSDataType::TEXT :
-        //     return value_.sval_;        
-        default:
-            std::cout << "unknown data type" << std::endl;
-            break;
+        switch (type_) {
+            case common::TSDataType::BOOLEAN:
+                return value_.bval_;
+            case common::TSDataType::INT32:
+                return value_.ival_;
+            case common::TSDataType::INT64:
+                return value_.lval_;
+            case common::TSDataType::FLOAT:
+                return value_.fval_;
+            case common::TSDataType::DOUBLE:
+                return value_.dval_;
+            // case common::TSDataType::TEXT :
+            //     return value_.sval_;
+            default:
+                std::cout << "unknown data type" << std::endl;
+                break;
         }
-        return -1; // when data type is unknown
+        return -1;  // when data type is unknown
     }
 
    public:
@@ -206,6 +205,7 @@ class RowRecord {
     FORCE_INLINE std::vector<Field *> *get_fields() { return fields_; }
 
     FORCE_INLINE uint32_t get_col_num() { return col_num_; }
+
    private:
     int64_t time_;                  // time value
     uint32_t col_num_;              // measurement num

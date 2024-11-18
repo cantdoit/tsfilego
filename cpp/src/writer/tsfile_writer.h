@@ -55,8 +55,9 @@ class TsFileWriter {
 
     int register_timeseries(const std::string &device_id,
                             const MeasurementSchema &measurement_schema);
-    int register_aligned_timeseries(const std::string &device_id,
-                                    const MeasurementSchema &measurement_schema);
+    int register_aligned_timeseries(
+        const std::string &device_id,
+        const MeasurementSchema &measurement_schema);
     int register_aligned_timeseries(
         const std::string &device_id,
         const std::vector<MeasurementSchema *> &measurement_schemas);

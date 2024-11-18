@@ -56,7 +56,7 @@ int QDSWithoutTimeGenerator::init(TsFileIOReader *io_reader,
             column_names.push_back(paths[i].full_path_);
         }
     }
-    
+
     size_t path_count = valid_paths.size();
     row_record_ = new RowRecord(path_count);
     tsblocks_.resize(path_count);
@@ -146,11 +146,9 @@ bool QDSWithoutTimeGenerator::is_null(uint32_t column_index) {
     return row_record_->get_field(column_index) == nullptr;
 }
 
-RowRecord* QDSWithoutTimeGenerator::get_row_record() {
-    return row_record_;
-}
- 
-ResultSetMetadata* QDSWithoutTimeGenerator::get_metadata() {
+RowRecord *QDSWithoutTimeGenerator::get_row_record() { return row_record_; }
+
+ResultSetMetadata *QDSWithoutTimeGenerator::get_metadata() {
     return result_set_metadata_;
 }
 

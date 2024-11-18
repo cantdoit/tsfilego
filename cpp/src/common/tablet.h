@@ -55,15 +55,15 @@ class Tablet {
         }
     }
 
-    Tablet(const std::string &device_id, 
+    Tablet(const std::string &device_id,
            const std::vector<std::string> *measurement_list,
            const std::vector<common::TSDataType> *data_type_list,
-           uint32_t max_row_num = DEFAULT_MAX_ROWS) :
-           max_row_num_(max_row_num),
-           device_id_(device_id),
-           timestamps_(NULL),
-           value_matrix_(NULL),
-           bitmaps_(NULL) {
+           uint32_t max_row_num = DEFAULT_MAX_ROWS)
+        : max_row_num_(max_row_num),
+          device_id_(device_id),
+          timestamps_(NULL),
+          value_matrix_(NULL),
+          bitmaps_(NULL) {
         ASSERT(device_id.size() >= 1);
         ASSERT(measurement_list != NULL);
         ASSERT(data_type_list != NULL);
@@ -72,12 +72,13 @@ class Tablet {
             ASSERT(false);
             max_row_num_ = DEFAULT_MAX_ROWS;
         }
-        
+
         ASSERT(measurement_list->size() == data_type_list->size());
         std::vector<MeasurementSchema> measurement_vec;
         measurement_vec.reserve(measurement_list->size());
         std::transform(measurement_list->begin(), measurement_list->end(),
-                       data_type_list->begin(), std::back_inserter(measurement_vec),
+                       data_type_list->begin(),
+                       std::back_inserter(measurement_vec),
                        [](const std::string &name, common::TSDataType type) {
                            return MeasurementSchema(name, type);
                        });
@@ -91,10 +92,11 @@ class Tablet {
     int add_timestamp(uint32_t row_index, int64_t timestamp);
 
     template <typename T>
-    int add_value(uint32_t row_index, uint32_t schema_index, T val); 
+    int add_value(uint32_t row_index, uint32_t schema_index, T val);
 
     template <typename T>
-    int add_value(uint32_t row_index, const std::string &measurement_name, T val);
+    int add_value(uint32_t row_index, const std::string &measurement_name,
+                  T val);
 
     friend class TabletColIterator;
     friend class TsFileWriter;

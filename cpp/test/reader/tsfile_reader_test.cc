@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include "writer/tsfile_writer.h"
+#include "reader/tsfile_reader.h"
 
 #include <gtest/gtest.h>
 
@@ -29,7 +29,7 @@
 #include "file/tsfile_io_writer.h"
 #include "file/write_file.h"
 #include "reader/qds_without_timegenerator.h"
-#include "reader/tsfile_reader.h"
+#include "writer/tsfile_writer.h"
 
 using namespace storage;
 using namespace common;
@@ -117,8 +117,9 @@ TEST_F(TsFileReaderTest, ResultSetMetadata) {
     common::TSEncoding encoding = common::TSEncoding::PLAIN;
     common::CompressionType compression_type =
         common::CompressionType::UNCOMPRESSED;
-    tsfile_writer_->register_timeseries(device_path, storage::MeasurementSchema(measurement_name,
-                                        data_type, encoding, compression_type));
+    tsfile_writer_->register_timeseries(
+        device_path, storage::MeasurementSchema(measurement_name, data_type,
+                                                encoding, compression_type));
 
     for (int i = 0; i < 50000; ++i) {
         TsRecord record(1622505600000 + i * 1000, device_path);
@@ -127,20 +128,22 @@ TEST_F(TsFileReaderTest, ResultSetMetadata) {
         ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     }
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
-    
+
     std::vector<std::string> select_list = {"device1.temperature"};
-    
+
     storage::TsFileReader reader;
     int ret = reader.open(file_name_);
     ASSERT_EQ(ret, common::E_OK);
     storage::ResultSet *tmp_qds = nullptr;
 
-    ret = reader.query(select_list, 1622505600000, 1622505600000 + 50000 * 1000, tmp_qds);
+    ret = reader.query(select_list, 1622505600000, 1622505600000 + 50000 * 1000,
+                       tmp_qds);
     auto *qds = (QDSWithoutTimeGenerator *)tmp_qds;
-        
+
     ResultSetMetadata *result_set_metadaa = qds->get_metadata();
     ASSERT_EQ(result_set_metadaa->get_column_type(0), data_type);
-    ASSERT_EQ(result_set_metadaa->get_column_name(0), device_path + "." + measurement_name);
+    ASSERT_EQ(result_set_metadaa->get_column_name(0),
+              device_path + "." + measurement_name);
     reader.destroy_query_data_set(qds);
 }
 
@@ -151,13 +154,17 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
     common::TSEncoding encoding = common::TSEncoding::PLAIN;
     common::CompressionType compression_type =
         common::CompressionType::UNCOMPRESSED;
-    tsfile_writer_->register_timeseries(device_path[0], storage::MeasurementSchema(measurement_name[0],
-                                        data_type, encoding, compression_type));
-    tsfile_writer_->register_timeseries(device_path[1], storage::MeasurementSchema(measurement_name[1],
-    data_type, encoding, compression_type));
+    tsfile_writer_->register_timeseries(
+        device_path[0],
+        storage::MeasurementSchema(measurement_name[0], data_type, encoding,
+                                   compression_type));
+    tsfile_writer_->register_timeseries(
+        device_path[1],
+        storage::MeasurementSchema(measurement_name[1], data_type, encoding,
+                                   compression_type));
     ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
-    
+
     storage::TsFileReader reader;
     int ret = reader.open(file_name_);
     ASSERT_EQ(ret, common::E_OK);
@@ -174,22 +181,26 @@ TEST_F(TsFileReaderTest, GetTimeseriesSchema) {
     common::TSEncoding encoding = common::TSEncoding::PLAIN;
     common::CompressionType compression_type =
         common::CompressionType::UNCOMPRESSED;
-    tsfile_writer_->register_timeseries(device_path[0], storage::MeasurementSchema(measurement_name[0],
-                                        data_type, encoding, compression_type));
-    tsfile_writer_->register_timeseries(device_path[1], storage::MeasurementSchema(measurement_name[1],
-    data_type, encoding, compression_type));
+    tsfile_writer_->register_timeseries(
+        device_path[0],
+        storage::MeasurementSchema(measurement_name[0], data_type, encoding,
+                                   compression_type));
+    tsfile_writer_->register_timeseries(
+        device_path[1],
+        storage::MeasurementSchema(measurement_name[1], data_type, encoding,
+                                   compression_type));
     ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
-    
+
     storage::TsFileReader reader;
     int ret = reader.open(file_name_);
     ASSERT_EQ(ret, common::E_OK);
     std::vector<MeasurementSchema> measurement_schemas;
     reader.get_timeseries_schema(device_path[0], measurement_schemas);
     ASSERT_EQ(measurement_schemas[0].measurement_name_, measurement_name[0]);
-    ASSERT_EQ(measurement_schemas[0].data_type_ , TSDataType::INT32);
-    
+    ASSERT_EQ(measurement_schemas[0].data_type_, TSDataType::INT32);
+
     reader.get_timeseries_schema(device_path[1], measurement_schemas);
     ASSERT_EQ(measurement_schemas[1].measurement_name_, measurement_name[1]);
-    ASSERT_EQ(measurement_schemas[1].data_type_ , TSDataType::INT32);
+    ASSERT_EQ(measurement_schemas[1].data_type_, TSDataType::INT32);
 }

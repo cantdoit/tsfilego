@@ -47,8 +47,9 @@ class QDSWithoutTimeGenerator : public ResultSet {
     bool next();
     bool is_null(const std::string &column_name);
     bool is_null(uint32_t column_index);
-    RowRecord* get_row_record();
-    ResultSetMetadata* get_metadata();
+    RowRecord *get_row_record();
+    ResultSetMetadata *get_metadata();
+
    private:
     int get_next_tsblock(uint32_t index, bool alloc_mem);
 

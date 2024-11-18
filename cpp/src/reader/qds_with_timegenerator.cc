@@ -380,11 +380,9 @@ bool QDSWithTimeGenerator::is_null(uint32_t column_index) {
     return row_record_->get_field(column_index) == nullptr;
 }
 
-RowRecord* QDSWithTimeGenerator::get_row_record() {
-    return row_record_;
-}
+RowRecord *QDSWithTimeGenerator::get_row_record() { return row_record_; }
 
-ResultSetMetadata* QDSWithTimeGenerator::get_metadata() {
+ResultSetMetadata *QDSWithTimeGenerator::get_metadata() {
     return result_set_metadata_;
 }
 Node *QDSWithTimeGenerator::construct_node_tree(Expression *expr) {

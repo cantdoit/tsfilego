@@ -1,5 +1,5 @@
 #[[
-Licensed to the Apache Software Foundation (ASF) under one
+Licensed to the Apache Software Foundation(ASF) under one
 or more contributor license agreements.  See the NOTICE file
 distributed with this work for additional information
 regarding copyright ownership.  The ASF licenses this file
@@ -30,7 +30,8 @@ set(TIMEOUT 30)
 
 foreach(URL ${URL_LIST})
     message(STATUS "Trying to download from ${URL}")
-    file(DOWNLOAD ${URL} "${CMAKE_BINARY_DIR}/googletest-release-1.12.1.zip" STATUS DOWNLOAD_STATUS TIMEOUT ${TIMEOUT})
+    file(DOWNLOAD ${
+    URL} "${CMAKE_BINARY_DIR}/googletest-release-1.12.1.zip" STATUS DOWNLOAD_STATUS TIMEOUT ${TIMEOUT})
 
     list(GET DOWNLOAD_STATUS 0 DOWNLOAD_RESULT)
     if(${DOWNLOAD_RESULT} EQUAL 0)
@@ -81,7 +82,7 @@ if (${COV_ENABLED})
 endif ()
 
 if(NOT WIN32)
-# enable address sanitizer default
+#enable address sanitizer default
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -g")
 endif()
 

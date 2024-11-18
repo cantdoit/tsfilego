@@ -88,45 +88,57 @@ int Tablet::add_timestamp(uint32_t row_index, int64_t timestamp) {
 template <typename T>
 int Tablet::add_value(uint32_t row_index, uint32_t schema_index, T val) {
     int ret = common::E_OK;
-    if (LIKELY(schema_index >= schema_vec_->size())) {               
-        ASSERT(false);                                               
-        ret = common::E_OUT_OF_RANGE;                                       
+    if (LIKELY(schema_index >= schema_vec_->size())) {
+        ASSERT(false);
+        ret = common::E_OUT_OF_RANGE;
     } else {
-        const MeasurementSchema &schema = schema_vec_->at(schema_index); 
-        if (LIKELY(GetDataTypeFromTemplateType<T>() !=             
-                schema.data_type_)) {                                 
-            ret = common::E_TYPE_NOT_MATCH;                                    
+        const MeasurementSchema &schema = schema_vec_->at(schema_index);
+        if (LIKELY(GetDataTypeFromTemplateType<T>() != schema.data_type_)) {
+            ret = common::E_TYPE_NOT_MATCH;
         } else {
-        T *column_values = (T *)value_matrix_[schema_index]; 
-        column_values[row_index] = val;                                  
-        bitmaps_[schema_index].set(row_index); /* mark as non-null*/     
-        }                                                        
+            T *column_values = (T *)value_matrix_[schema_index];
+            column_values[row_index] = val;
+            bitmaps_[schema_index].set(row_index); /* mark as non-null*/
+        }
     }
-    return ret;   
-}
-
-template <typename T> 
-int Tablet::add_value(uint32_t row_index, const std::string &measurement_name, T val) {
-    int ret = common::E_OK;
-    SchemaMapIterator find_iter = schema_map_.find(measurement_name); 
-    if (LIKELY(find_iter == schema_map_.end())) {                     
-        ASSERT(false);                                                
-        ret = E_INVALID_ARG;                                         
-    } else {
-        ret = add_value(row_index, find_iter->second, val);              
-    }                                                                
     return ret;
 }
 
-template int Tablet::add_value(uint32_t row_index, uint32_t schema_index, bool val);
-template int Tablet::add_value(uint32_t row_index, uint32_t schema_index, int32_t val);
-template int Tablet::add_value(uint32_t row_index, uint32_t schema_index, int64_t val);
-template int Tablet::add_value(uint32_t row_index, uint32_t schema_index, float val);
-template int Tablet::add_value(uint32_t row_index, uint32_t schema_index, double val);
+template <typename T>
+int Tablet::add_value(uint32_t row_index, const std::string &measurement_name,
+                      T val) {
+    int ret = common::E_OK;
+    SchemaMapIterator find_iter = schema_map_.find(measurement_name);
+    if (LIKELY(find_iter == schema_map_.end())) {
+        ASSERT(false);
+        ret = E_INVALID_ARG;
+    } else {
+        ret = add_value(row_index, find_iter->second, val);
+    }
+    return ret;
+}
 
-template int Tablet::add_value(uint32_t row_index, const std::string &measurement_name, bool val);
-template int Tablet::add_value(uint32_t row_index, const std::string &measurement_name, int32_t val);
-template int Tablet::add_value(uint32_t row_index, const std::string &measurement_name, int64_t val);
-template int Tablet::add_value(uint32_t row_index, const std::string &measurement_name, float val);
-template int Tablet::add_value(uint32_t row_index, const std::string &measurement_name, double val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               bool val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               int32_t val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               int64_t val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               float val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               double val);
+
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name, bool val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name,
+                               int32_t val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name,
+                               int64_t val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name, float val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name, double val);
 }  // end namespace storage

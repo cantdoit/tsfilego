@@ -206,11 +206,12 @@ ErrorCode tsfile_register_table_column(CTsFileWriter writer,
                                        const char* table_name,
                                        ColumnSchema* schema) {
     TsFileWriter* w = (TsFileWriter*)writer;
-    
-    int ret = w->register_timeseries(table_name, storage::MeasurementSchema(schema->name,
-                                     get_datatype(schema->column_def),
-                                     get_data_encoding(schema->column_def),
-                                     get_data_compression(schema->column_def)));
+
+    int ret = w->register_timeseries(
+        table_name, storage::MeasurementSchema(
+                        schema->name, get_datatype(schema->column_def),
+                        get_data_encoding(schema->column_def),
+                        get_data_compression(schema->column_def)));
     return ret;
 }
 
@@ -219,11 +220,12 @@ ErrorCode tsfile_register_table(CTsFileWriter writer,
     TsFileWriter* w = (TsFileWriter*)writer;
     for (int column_id = 0; column_id < table_schema->column_num; column_id++) {
         ColumnSchema* schema = table_schema->column_schema[column_id];
-        ErrorCode ret =
-            w->register_timeseries(table_schema->table_name, storage::MeasurementSchema(schema->name,
-                                   get_datatype(schema->column_def),
-                                   get_data_encoding(schema->column_def),
-                                   get_data_compression(schema->column_def)));
+        ErrorCode ret = w->register_timeseries(
+            table_schema->table_name,
+            storage::MeasurementSchema(
+                schema->name, get_datatype(schema->column_def),
+                get_data_encoding(schema->column_def),
+                get_data_compression(schema->column_def)));
         if (ret != E_OK) {
             return ret;
         }
@@ -634,7 +636,8 @@ QueryDataRet ts_reader_begin_end(CTsFileReader reader, const char* table_name,
     }
     if (filter_low != nullptr && filter_high != nullptr) {
         and_filter = new storage::AndFilter(filter_low, filter_high);
-        exp = new storage::Expression(storage::GLOBALTIME_EXPR, and_filter); // exp never be deleted
+        exp = new storage::Expression(storage::GLOBALTIME_EXPR,
+                                      and_filter);  // exp never be deleted
     } else if (filter_low != nullptr && filter_high == nullptr) {
         exp = new storage::Expression(storage::GLOBALTIME_EXPR, filter_low);
     } else if (filter_high != nullptr && filter_low == nullptr) {

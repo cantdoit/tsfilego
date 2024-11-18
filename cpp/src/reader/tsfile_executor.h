@@ -22,8 +22,8 @@
 #include <map>
 
 #include "file/read_file.h"
-#include "result_set.h"
 #include "query_executor.h"
+#include "result_set.h"
 
 namespace storage {
 
@@ -36,12 +36,9 @@ class TsFileExecutor  // : public QueryExecutor
     int init(const std::string &file_path);
     int execute(QueryExpression *query_expr, ResultSet *&ret_qds);
     void destroy_query_data_set(ResultSet *qds);
-    TsFileMeta* get_tsfile_meta() {
-        return io_reader_.get_tsfile_meta();
-    }
-    TsFileIOReader* get_tsfile_io_reader() {
-        return &io_reader_;
-    }
+    TsFileMeta *get_tsfile_meta() { return io_reader_.get_tsfile_meta(); }
+    TsFileIOReader *get_tsfile_io_reader() { return &io_reader_; }
+
    private:
     int execute_may_with_global_timefilter(QueryExpression *qe,
                                            ResultSet *&ret_qds);

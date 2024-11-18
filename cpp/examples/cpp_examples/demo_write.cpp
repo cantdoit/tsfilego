@@ -73,8 +73,7 @@ int demo_write() {
                 MeasurementSchema(measure_name, common::TSDataType::INT32,
                                   common::TSEncoding::PLAIN,
                                   common::CompressionType::UNCOMPRESSED));
-            tsfile_writer_->register_timeseries(
-                device_name, schema_vec[i][j]);
+            tsfile_writer_->register_timeseries(device_name, schema_vec[i][j]);
         }
     }
 
