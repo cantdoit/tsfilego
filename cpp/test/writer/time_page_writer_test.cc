@@ -47,33 +47,28 @@ TEST_F(TimePageWriterTest, WriteSuccess) {
 }
 
 TEST_F(TimePageWriterTest, WriteLargeDataSet) {
-    TimePageWriter page_writer;
-    page_writer.init(TSEncoding::PLAIN, UNCOMPRESSED);
     for (int i = 0; i < 10000; ++i) {
-        page_writer.write(i);
+        page_writer_->write(i);
     }
-    EXPECT_EQ(page_writer.get_point_numer(), 10000);
+    EXPECT_EQ(page_writer_->get_point_numer(), 10000);
 }
 
 TEST_F(TimePageWriterTest, ResetTimePageWriter) {
-    TimePageWriter page_writer;
-    page_writer.init(TSEncoding::PLAIN, UNCOMPRESSED);
-    page_writer.write(1234567890);
-    page_writer.reset();
-    EXPECT_EQ(page_writer.get_point_numer(), 0);
-    EXPECT_EQ(page_writer.get_time_out_stream_size(), 0);
+    page_writer_->write(1234567890);
+    page_writer_->reset();
+    EXPECT_EQ(page_writer_->get_point_numer(), 0);
+    EXPECT_EQ(page_writer_->get_time_out_stream_size(), 0);
 }
 
 TEST_F(TimePageWriterTest, DestroyTimePageWriter) {
-    TimePageWriter page_writer;
-    page_writer.init(TSEncoding::PLAIN, UNCOMPRESSED);
-    page_writer.write(1234567890);
-    TimeStatistic* stat = (TimeStatistic*)page_writer.get_statistic();
+    page_writer_->write(1234567890);
+    TimeStatistic* stat = (TimeStatistic*)page_writer_->get_statistic();
     EXPECT_NE(stat, nullptr);
     EXPECT_EQ(stat->count_, 1);
 }
 
 TEST_F(TimePageWriterTest, WritePageHeaderAndData) {
+    page_writer_->init(TSEncoding::PLAIN, UNCOMPRESSED);
     EXPECT_EQ(page_writer_->write(1L), common::E_OK);
     EXPECT_EQ(page_writer_->get_page_memory_size(), 8);
     EXPECT_EQ(page_writer_->write(2L), common::E_OK);
