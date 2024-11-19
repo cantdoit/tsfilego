@@ -20,6 +20,8 @@
 #ifndef COMMON_TABLET_H
 #define COMMON_TABLET_H
 
+#include <algorithm>
+#include <memory>
 #include <vector>
 
 #include "common/container/bit_map.h"
