@@ -197,6 +197,7 @@ TEST_F(TsFileWriterTest, WriteDiffDataType) {
     } while (true);
     EXPECT_EQ(cur_record_num, row_num);
     reader.destroy_query_data_set(qds);
+    reader.close();
 }
 
 TEST_F(TsFileWriterTest, RegisterTimeSeries) {
@@ -307,7 +308,6 @@ TEST_F(TsFileWriterTest, WriteMultipleTabletsMultiFlush) {
                       field_to_string(record->get_field(i)));
         }
     }
-    storage::QueryExpression::destory(query_expr);
     reader.destroy_query_data_set(qds);
 }
 
@@ -477,7 +477,6 @@ TEST_F(TsFileWriterTest, WriteAlignedTimeseries) {
                       field_to_string(record->get_field(i)));
         }
     }
-    storage::QueryExpression::destory(query_expr);
     reader.destroy_query_data_set(qds);
 }
 
@@ -542,7 +541,6 @@ TEST_F(TsFileWriterTest, WriteAlignedMultiFlush) {
                       field_to_string(record->get_field(i)));
         }
     }
-    storage::QueryExpression::destory(query_expr);
     reader.destroy_query_data_set(qds);
 }
 
@@ -608,6 +606,5 @@ TEST_F(TsFileWriterTest, WriteAlignedPartialData) {
         }
         cur_row++;
     } while (true);
-    storage::QueryExpression::destory(query_expr);
     reader.destroy_query_data_set(qds);
 }

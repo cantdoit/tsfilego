@@ -337,6 +337,10 @@ void QDSWithTimeGenerator::close() {
     for (size_t i = 0; i < value_at_vec_.size(); i++) {
         value_at_vec_[i].destroy();
     }
+    if (qe_ != nullptr) {
+        delete qe_;
+        qe_ = nullptr;
+    }
     value_at_vec_.clear();
 }
 

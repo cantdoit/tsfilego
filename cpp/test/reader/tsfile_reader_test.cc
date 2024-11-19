@@ -146,6 +146,7 @@ TEST_F(TsFileReaderTest, ResultSetMetadata) {
     ASSERT_EQ(result_set_metadaa->get_column_name(0),
               device_path + "." + measurement_name);
     reader.destroy_query_data_set(qds);
+    reader.close();
 }
 
 TEST_F(TsFileReaderTest, GetAllDevice) {
@@ -204,4 +205,5 @@ TEST_F(TsFileReaderTest, GetTimeseriesSchema) {
     reader.get_timeseries_schema(device_path[1], measurement_schemas);
     ASSERT_EQ(measurement_schemas[1].measurement_name_, measurement_name[1]);
     ASSERT_EQ(measurement_schemas[1].data_type_, TSDataType::INT32);
+    reader.close();
 }

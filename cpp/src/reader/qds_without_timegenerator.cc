@@ -101,6 +101,10 @@ void QDSWithoutTimeGenerator::close() {
         io_reader_->revert_ssi(ssi);
     }
     ssi_vec_.clear();
+    if (qe_ != nullptr) {
+        delete qe_;
+        qe_ = nullptr;
+    }
 }
 
 bool QDSWithoutTimeGenerator::next() {

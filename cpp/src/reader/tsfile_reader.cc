@@ -63,11 +63,12 @@ int TsFileReader::query(QueryExpression *qe, ResultSet *&ret_qds) {
 
 int TsFileReader::query(std::vector<std::string> &path_list, int64_t start_time,
                         int64_t end_time, ResultSet *&result_set) {
+    int ret = E_OK;
     Filter *time_filter = new TimeBetween(start_time, end_time, false);
     Expression *exp =
         new storage::Expression(storage::GLOBALTIME_EXPR, time_filter);
     std::vector<Path> path_list_vec;
-    for (auto path : path_list) {
+    for (const auto &path : path_list) {
         uint32_t last_point_pos = path.find_last_of('.');
         if (last_point_pos <= 0) {
             return E_INVALID_PATH;
@@ -79,7 +80,8 @@ int TsFileReader::query(std::vector<std::string> &path_list, int64_t start_time,
     }
     QueryExpression *query_expression =
         QueryExpression::create(path_list_vec, exp);
-    return tsfile_executor_->execute(query_expression, result_set);
+    ret = tsfile_executor_->execute(query_expression, result_set);
+    return ret;
 }
 
 void TsFileReader::destroy_query_data_set(storage::ResultSet *qds) {
