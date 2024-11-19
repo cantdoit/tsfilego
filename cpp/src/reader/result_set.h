@@ -20,6 +20,8 @@
 #ifndef READER_QUERY_DATA_SET_H
 #define READER_QUERY_DATA_SET_H
 
+#include <unordered_map>
+
 #include "common/row_record.h"
 
 namespace storage {

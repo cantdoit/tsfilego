@@ -36,12 +36,12 @@ class TabletColIterator;
 
 class Tablet {
    public:
-    static const int DEFAULT_MAX_ROWS = 1024;
+    static const uint32_t DEFAULT_MAX_ROWS = 1024;
 
    public:
     Tablet(const std::string &device_id,
            std::shared_ptr<std::vector<MeasurementSchema>> schema_vec,
-           int max_rows = DEFAULT_MAX_ROWS)
+           uint32_t max_rows = DEFAULT_MAX_ROWS)
         : max_row_num_(max_rows),
           device_id_(device_id),
           schema_vec_(schema_vec),
@@ -108,7 +108,7 @@ class Tablet {
     typedef std::map<std::string, int>::iterator SchemaMapIterator;
 
    private:
-    int max_row_num_;
+    uint32_t max_row_num_;
     std::string device_id_;
     std::shared_ptr<std::vector<MeasurementSchema>> schema_vec_;
     std::map<std::string, int> schema_map_;

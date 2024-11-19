@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include <random>
+#include <vector>
 
 #include "common/path.h"
 #include "common/record.h"
