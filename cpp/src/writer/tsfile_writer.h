@@ -86,7 +86,8 @@ class TsFileWriter {
    private:
     int write_point(storage::ChunkWriter *chunk_writer, int64_t timestamp,
                     const DataPoint &point);
-    bool check_chunk_group_empty(MeasurementSchemaGroup *chunk_group);
+    bool check_chunk_group_empty(MeasurementSchemaGroup *chunk_group,
+                                 bool is_aligned);
     int write_point_aligned(ValueChunkWriter *value_chunk_writer,
                             int64_t timestamp, const DataPoint &point);
     int flush_chunk_group(MeasurementSchemaGroup *chunk_group, bool is_aligned);
