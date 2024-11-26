@@ -608,7 +608,6 @@ QueryDataRet ts_reader_query(CTsFileReader reader, const char* table_name,
     for (int i = 0; i < column_num; i++) {
         ret->column_names[i] = strdup(columns_name[i]);
     }
-    storage::QueryExpression::destory(query_expression);
     return ret;
 }
 
@@ -653,7 +652,6 @@ QueryDataRet ts_reader_begin_end(CTsFileReader reader, const char* table_name,
     for (int i = 0; i < column_num; i++) {
         ret->column_names[i] = strdup(columns_name[i]);
     }
-    storage::QueryExpression::destory(query_expr);
     return ret;
 }
 
@@ -677,7 +675,6 @@ QueryDataRet ts_reader_read(CTsFileReader reader, const char* table_name,
     for (int i = 0; i < column_num; i++) {
         ret->column_names[i] = strdup(columns_name[i]);
     }
-    storage::QueryExpression::destory(query_expr);
     return ret;
 }
 
