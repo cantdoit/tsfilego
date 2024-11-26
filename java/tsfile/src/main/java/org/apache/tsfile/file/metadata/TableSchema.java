@@ -19,11 +19,12 @@
 
 package org.apache.tsfile.file.metadata;
 
+import org.apache.tsfile.common.TsFileApi;
 import org.apache.tsfile.compatibility.DeserializeConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
-import org.apache.tsfile.write.record.Tablet.ColumnType;
+import org.apache.tsfile.write.record.Tablet.ColumnCategory;
 import org.apache.tsfile.write.schema.IMeasurementSchema;
 import org.apache.tsfile.write.schema.MeasurementSchema;
 
@@ -42,8 +43,8 @@ public class TableSchema {
   // the tableName is not serialized since the TableSchema is always stored in a Map, from whose
   // key the tableName can be known
   protected String tableName;
-  protected List<IMeasurementSchema> columnSchemas;
-  protected List<ColumnType> columnTypes;
+  protected List<IMeasurementSchema> measurementSchemas;
+  protected List<ColumnCategory> columnCategories;
   protected boolean updatable = false;
 
   // columnName -> pos in columnSchemas
@@ -53,21 +54,63 @@ public class TableSchema {
 
   public TableSchema(String tableName) {
     this.tableName = tableName;
-    this.columnSchemas = new ArrayList<>();
-    this.columnTypes = new ArrayList<>();
+    this.measurementSchemas = new ArrayList<>();
+    this.columnCategories = new ArrayList<>();
     this.updatable = true;
   }
 
   public TableSchema(
-      String tableName, List<IMeasurementSchema> columnSchemas, List<ColumnType> columnTypes) {
+      String tableName,
+      List<IMeasurementSchema> columnSchemas,
+      List<ColumnCategory> columnCategories) {
     this.tableName = tableName;
-    this.columnSchemas = columnSchemas;
-    this.columnTypes = columnTypes;
+    this.measurementSchemas = columnSchemas;
+    this.columnCategories = columnCategories;
+  }
+
+  public TableSchema(
+      String tableName,
+      List<String> columnNameList,
+      List<TSDataType> dataTypeList,
+      List<ColumnCategory> categoryList) {
+    this.tableName = tableName;
+    this.measurementSchemas = new ArrayList<>(columnNameList.size());
+    for (int i = 0; i < columnNameList.size(); i++) {
+      measurementSchemas.add(new MeasurementSchema(columnNameList.get(i), dataTypeList.get(i)));
+    }
+    this.columnCategories = categoryList;
+  }
+
+  @TsFileApi
+  public TableSchema(String tableName, List<ColumnSchema> columnSchemaList) {
+    this.tableName = tableName;
+    this.measurementSchemas = new ArrayList<>(columnSchemaList.size());
+    this.columnCategories = new ArrayList<>(columnSchemaList.size());
+    for (ColumnSchema columnSchema : columnSchemaList) {
+      this.measurementSchemas.add(
+          new MeasurementSchema(columnSchema.getColumnName(), columnSchema.getDataType()));
+      this.columnCategories.add(columnSchema.getColumnCategory());
+    }
   }
 
   public Map<String, Integer> getColumnPosIndex() {
     if (columnPosIndex == null) {
       columnPosIndex = new HashMap<>();
+    }
+    return columnPosIndex;
+  }
+
+  // Only for deserialized TableSchema
+  public Map<String, Integer> buildColumnPosIndex() {
+    if (columnPosIndex == null) {
+      columnPosIndex = new HashMap<>();
+    }
+    if (columnPosIndex.size() >= measurementSchemas.size()) {
+      return columnPosIndex;
+    }
+    for (int i = 0; i < measurementSchemas.size(); i++) {
+      IMeasurementSchema currentColumnSchema = measurementSchemas.get(i);
+      columnPosIndex.putIfAbsent(currentColumnSchema.getMeasurementName(), i);
     }
     return columnPosIndex;
   }
@@ -87,8 +130,8 @@ public class TableSchema {
         .computeIfAbsent(
             columnName,
             colName -> {
-              for (int i = 0; i < columnSchemas.size(); i++) {
-                if (columnSchemas.get(i).getMeasurementId().equals(columnName)) {
+              for (int i = 0; i < measurementSchemas.size(); i++) {
+                if (measurementSchemas.get(i).getMeasurementName().equals(columnName)) {
                   return i;
                 }
               }
@@ -106,11 +149,11 @@ public class TableSchema {
             columnName,
             colName -> {
               int columnOrder = 0;
-              for (int i = 0; i < columnSchemas.size(); i++) {
-                if (columnSchemas.get(i).getMeasurementId().equals(columnName)
-                    && columnTypes.get(i) == ColumnType.ID) {
+              for (int i = 0; i < measurementSchemas.size(); i++) {
+                if (measurementSchemas.get(i).getMeasurementName().equals(columnName)
+                    && columnCategories.get(i) == ColumnCategory.ID) {
                   return columnOrder;
-                } else if (columnTypes.get(i) == ColumnType.ID) {
+                } else if (columnCategories.get(i) == ColumnCategory.ID) {
                   columnOrder++;
                 }
               }
@@ -120,7 +163,7 @@ public class TableSchema {
 
   public IMeasurementSchema findColumnSchema(String columnName) {
     final int columnIndex = findColumnIndex(columnName);
-    return columnIndex >= 0 ? columnSchemas.get(columnIndex) : null;
+    return columnIndex >= 0 ? measurementSchemas.get(columnIndex) : null;
   }
 
   public void update(ChunkGroupMetadata chunkGroupMetadata) {
@@ -132,35 +175,35 @@ public class TableSchema {
       int columnIndex = findColumnIndex(chunkMetadata.getMeasurementUid());
       // if the measurement is not found in the column list, add it
       if (columnIndex == -1) {
-        columnSchemas.add(chunkMetadata.toMeasurementSchema());
-        columnTypes.add(ColumnType.MEASUREMENT);
-        getColumnPosIndex().put(chunkMetadata.getMeasurementUid(), columnSchemas.size() - 1);
+        measurementSchemas.add(chunkMetadata.toMeasurementSchema());
+        columnCategories.add(ColumnCategory.MEASUREMENT);
+        getColumnPosIndex().put(chunkMetadata.getMeasurementUid(), measurementSchemas.size() - 1);
       } else {
-        final IMeasurementSchema originSchema = columnSchemas.get(columnIndex);
+        final IMeasurementSchema originSchema = measurementSchemas.get(columnIndex);
         if (originSchema.getType() != chunkMetadata.getDataType()) {
-          originSchema.setType(TSDataType.STRING);
+          originSchema.setDataType(TSDataType.STRING);
         }
       }
     }
   }
 
   public List<IMeasurementSchema> getColumnSchemas() {
-    return columnSchemas;
+    return measurementSchemas;
   }
 
-  public List<ColumnType> getColumnTypes() {
-    return columnTypes;
+  public List<ColumnCategory> getColumnTypes() {
+    return columnCategories;
   }
 
   public int serialize(OutputStream out) throws IOException {
     int cnt = 0;
-    if (columnSchemas != null) {
-      cnt += ReadWriteForEncodingUtils.writeUnsignedVarInt(columnSchemas.size(), out);
-      for (int i = 0; i < columnSchemas.size(); i++) {
-        IMeasurementSchema columnSchema = columnSchemas.get(i);
-        ColumnType columnType = columnTypes.get(i);
+    if (measurementSchemas != null) {
+      cnt += ReadWriteForEncodingUtils.writeUnsignedVarInt(measurementSchemas.size(), out);
+      for (int i = 0; i < measurementSchemas.size(); i++) {
+        IMeasurementSchema columnSchema = measurementSchemas.get(i);
+        ColumnCategory columnCategory = columnCategories.get(i);
         cnt += columnSchema.serializeTo(out);
-        cnt += ReadWriteIOUtils.write(columnType.ordinal(), out);
+        cnt += ReadWriteIOUtils.write(columnCategory.ordinal(), out);
       }
     } else {
       cnt += ReadWriteForEncodingUtils.writeUnsignedVarInt(0, out);
@@ -180,14 +223,14 @@ public class TableSchema {
   public static TableSchema deserialize(ByteBuffer buffer, DeserializeConfig context) {
     final int columnCnt = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
     List<IMeasurementSchema> measurementSchemas = new ArrayList<>(columnCnt);
-    List<ColumnType> columnTypes = new ArrayList<>();
+    List<ColumnCategory> columnCategories = new ArrayList<>();
     for (int i = 0; i < columnCnt; i++) {
       MeasurementSchema measurementSchema =
           context.measurementSchemaBufferDeserializer.deserialize(buffer, context);
       measurementSchemas.add(measurementSchema);
-      columnTypes.add(ColumnType.values()[buffer.getInt()]);
+      columnCategories.add(ColumnCategory.values()[buffer.getInt()]);
     }
-    return new TableSchema(null, measurementSchemas, columnTypes);
+    return new TableSchema(null, measurementSchemas, columnCategories);
   }
 
   public String getTableName() {
@@ -205,9 +248,9 @@ public class TableSchema {
         + tableName
         + '\''
         + ", columnSchemas="
-        + columnSchemas
+        + measurementSchemas
         + ", columnTypes="
-        + columnTypes
+        + columnCategories
         + '}';
   }
 
@@ -221,12 +264,12 @@ public class TableSchema {
     }
     TableSchema that = (TableSchema) o;
     return Objects.equals(tableName, that.tableName)
-        && Objects.equals(columnSchemas, that.columnSchemas)
-        && Objects.equals(columnTypes, that.columnTypes);
+        && Objects.equals(measurementSchemas, that.measurementSchemas)
+        && Objects.equals(columnCategories, that.columnCategories);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(tableName, columnSchemas, columnTypes);
+    return Objects.hash(tableName, measurementSchemas, columnCategories);
   }
 }

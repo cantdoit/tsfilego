@@ -27,6 +27,7 @@ import org.apache.tsfile.read.controller.IChunkLoader;
 import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.reader.chunk.AlignedChunkReader;
 import org.apache.tsfile.read.reader.chunk.ChunkReader;
+import org.apache.tsfile.read.reader.chunk.TableChunkReader;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -43,6 +44,14 @@ public class FileSeriesReader extends AbstractFileSeriesReader {
     super(chunkLoader, chunkMetadataList, filter);
   }
 
+  public FileSeriesReader(
+      IChunkLoader chunkLoader,
+      List<IChunkMetadata> chunkMetadataList,
+      Filter filter,
+      boolean ignoreAllNullRows) {
+    super(chunkLoader, chunkMetadataList, filter, ignoreAllNullRows);
+  }
+
   @Override
   protected void initChunkReader(IChunkMetadata chunkMetaData) throws IOException {
     currentChunkMeasurementNames.clear();
@@ -56,10 +65,19 @@ public class FileSeriesReader extends AbstractFileSeriesReader {
           chunkLoader.loadChunk((ChunkMetadata) (alignedChunkMetadata.getTimeChunkMetadata()));
       List<Chunk> valueChunkList = new ArrayList<>();
       for (IChunkMetadata metadata : alignedChunkMetadata.getValueChunkMetadataList()) {
-        valueChunkList.add(chunkLoader.loadChunk((ChunkMetadata) metadata));
-        currentChunkMeasurementNames.add(metadata.getMeasurementUid());
+        if (metadata != null) {
+          valueChunkList.add(chunkLoader.loadChunk((ChunkMetadata) metadata));
+          currentChunkMeasurementNames.add(metadata.getMeasurementUid());
+          continue;
+        }
+        valueChunkList.add(null);
+        currentChunkMeasurementNames.add(null);
       }
-      this.chunkReader = new AlignedChunkReader(timeChunk, valueChunkList, filter);
+      if (ignoreAllNullRows) {
+        this.chunkReader = new AlignedChunkReader(timeChunk, valueChunkList, filter);
+      } else {
+        this.chunkReader = new TableChunkReader(timeChunk, valueChunkList, filter);
+      }
     }
   }
 

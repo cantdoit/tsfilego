@@ -140,7 +140,7 @@ int BitSet::from_bytes(uint8_t *filter_data, uint32_t filter_data_bytes_len) {
         *(words_ + word_idx) = cur_word;
     }
 
-    if (filter_data_bytes_len - word_idx * 8 > 0) {
+    if (filter_data_bytes_len > word_idx * 8) {
         uint64_t cur_word = 0;
         uint8_t *cur_word_start_byte = filter_data + (word_idx * 8);
         for (uint32_t r = 0; r < filter_data_bytes_len - word_idx * 8; r++) {
@@ -223,8 +223,6 @@ int BloomFilter::serialize_to(ByteStream &out) {
     uint8_t *filter_data_bytes = nullptr;
     int32_t filter_data_bytes_len = 0;
     bitset_.to_bytes(filter_data_bytes, filter_data_bytes_len);
-    ASSERT(filter_data_bytes_len > 0);
-
     if (RET_FAIL(
             SerializationUtil::write_var_uint(filter_data_bytes_len, out))) {
     } else if (RET_FAIL(
@@ -233,7 +231,9 @@ int BloomFilter::serialize_to(ByteStream &out) {
     } else if (RET_FAIL(
                    SerializationUtil::write_var_uint(hash_func_count_, out))) {
     }
-    bitset_.revert_bytes(filter_data_bytes);
+    if (filter_data_bytes_len > 0) {
+        bitset_.revert_bytes(filter_data_bytes);
+    }
     return ret;
 }
 

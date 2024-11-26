@@ -369,8 +369,8 @@ public class TsFileWriteApiTest {
       int sensorNum = measurementSchemas.size();
       long startTime = 0;
       for (long r = 0; r < 10000; r++) {
-        int row = tablet.rowSize++;
-        timestamps[row] = startTime++;
+        int row = tablet.getRowSize();
+        tablet.addTimestamp(row, startTime++);
         for (int i = 0; i < sensorNum - 1; i++) {
           if (i == 1 && r > 1000) {
             tablet.bitMaps[i].mark((int) r % tablet.getMaxRowNumber());
@@ -386,14 +386,67 @@ public class TsFileWriteApiTest {
           dateSensor[row] = LocalDate.of(2024, 4, 1);
         }
         // write
-        if (tablet.rowSize == tablet.getMaxRowNumber()) {
-          tsFileWriter.write(tablet);
+        if (tablet.getRowSize() == tablet.getMaxRowNumber()) {
+          tsFileWriter.writeTree(tablet);
           tablet.reset();
         }
       }
       // write
-      if (tablet.rowSize != 0) {
-        tsFileWriter.write(tablet);
+      if (tablet.getRowSize() != 0) {
+        tsFileWriter.writeTree(tablet);
+        tablet.reset();
+      }
+
+    } catch (Throwable e) {
+      e.printStackTrace();
+      Assert.fail("Meet errors in test: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void writeNonAlignedWithTabletWithNegativeTimestamps() {
+    setEnv(100, 30);
+    try (TsFileWriter tsFileWriter = new TsFileWriter(f)) {
+      measurementSchemas.add(new MeasurementSchema("s1", TSDataType.TEXT, TSEncoding.PLAIN));
+      measurementSchemas.add(new MeasurementSchema("s2", TSDataType.STRING, TSEncoding.PLAIN));
+      measurementSchemas.add(new MeasurementSchema("s3", TSDataType.BLOB, TSEncoding.PLAIN));
+      measurementSchemas.add(new MeasurementSchema("s4", TSDataType.DATE, TSEncoding.PLAIN));
+
+      // register nonAligned timeseries
+      tsFileWriter.registerTimeseries(new Path(deviceId), measurementSchemas);
+
+      Tablet tablet = new Tablet(deviceId, measurementSchemas);
+      long[] timestamps = tablet.timestamps;
+      Object[] values = tablet.values;
+      tablet.initBitMaps();
+      int sensorNum = measurementSchemas.size();
+      long startTime = -100;
+      for (long r = 0; r < 10000; r++) {
+        int row = tablet.getRowSize();
+        tablet.addTimestamp(row, startTime++);
+        for (int i = 0; i < sensorNum - 1; i++) {
+          if (i == 1 && r > 1000) {
+            tablet.bitMaps[i].mark((int) r % tablet.getMaxRowNumber());
+            continue;
+          }
+          Binary[] textSensor = (Binary[]) values[i];
+          textSensor[row] = new Binary("testString.........", TSFileConfig.STRING_CHARSET);
+        }
+        if (r > 1000) {
+          tablet.bitMaps[sensorNum - 1].mark((int) r % tablet.getMaxRowNumber());
+        } else {
+          LocalDate[] dateSensor = (LocalDate[]) values[sensorNum - 1];
+          dateSensor[row] = LocalDate.of(2024, 4, 1);
+        }
+        // write
+        if (tablet.getRowSize() == tablet.getMaxRowNumber()) {
+          tsFileWriter.writeTree(tablet);
+          tablet.reset();
+        }
+      }
+      // write
+      if (tablet.getRowSize() != 0) {
+        tsFileWriter.writeTree(tablet);
         tablet.reset();
       }
 
@@ -422,7 +475,8 @@ public class TsFileWriteApiTest {
       int sensorNum = measurementSchemas.size();
       long startTime = 0;
       for (long r = 0; r < 10000; r++) {
-        int row = tablet.rowSize++;
+        int row = tablet.getRowSize();
+        tablet.addTimestamp(row, startTime++);
         timestamps[row] = startTime++;
         for (int i = 0; i < sensorNum - 1; i++) {
           if (i == 1 && r > 1000) {
@@ -439,13 +493,66 @@ public class TsFileWriteApiTest {
           dateSensor[row] = LocalDate.of(2024, 4, 1);
         }
         // write
-        if (tablet.rowSize == tablet.getMaxRowNumber()) {
+        if (tablet.getRowSize() == tablet.getMaxRowNumber()) {
           tsFileWriter.writeAligned(tablet);
           tablet.reset();
         }
       }
       // write
-      if (tablet.rowSize != 0) {
+      if (tablet.getRowSize() != 0) {
+        tsFileWriter.writeAligned(tablet);
+        tablet.reset();
+      }
+
+    } catch (Throwable e) {
+      e.printStackTrace();
+      Assert.fail("Meet errors in test: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void writeDataToTabletsWithNegativeTimestamps() {
+    setEnv(100, 30);
+    try (TsFileWriter tsFileWriter = new TsFileWriter(f)) {
+      measurementSchemas.add(new MeasurementSchema("s1", TSDataType.TEXT, TSEncoding.PLAIN));
+      measurementSchemas.add(new MeasurementSchema("s2", TSDataType.STRING, TSEncoding.PLAIN));
+      measurementSchemas.add(new MeasurementSchema("s3", TSDataType.BLOB, TSEncoding.PLAIN));
+      measurementSchemas.add(new MeasurementSchema("s4", TSDataType.DATE, TSEncoding.PLAIN));
+
+      // register aligned timeseries
+      tsFileWriter.registerAlignedTimeseries(new Path(deviceId), measurementSchemas);
+
+      Tablet tablet = new Tablet(deviceId, measurementSchemas);
+      long[] timestamps = tablet.timestamps;
+      Object[] values = tablet.values;
+      tablet.initBitMaps();
+      int sensorNum = measurementSchemas.size();
+      long startTime = -1000;
+      for (long r = 0; r < 10000; r++) {
+        int row = tablet.getRowSize();
+        tablet.addTimestamp(row, startTime++);
+        for (int i = 0; i < sensorNum - 1; i++) {
+          if (i == 1 && r > 1000) {
+            tablet.bitMaps[i].mark((int) r % tablet.getMaxRowNumber());
+            continue;
+          }
+          Binary[] textSensor = (Binary[]) values[i];
+          textSensor[row] = new Binary("testString.........", TSFileConfig.STRING_CHARSET);
+        }
+        if (r > 1000) {
+          tablet.bitMaps[sensorNum - 1].mark((int) r % tablet.getMaxRowNumber());
+        } else {
+          LocalDate[] dateSensor = (LocalDate[]) values[sensorNum - 1];
+          dateSensor[row] = LocalDate.of(2024, 4, 1);
+        }
+        // write
+        if (tablet.getRowSize() == tablet.getMaxRowNumber()) {
+          tsFileWriter.writeAligned(tablet);
+          tablet.reset();
+        }
+      }
+      // write
+      if (tablet.getRowSize() != 0) {
         tsFileWriter.writeAligned(tablet);
         tablet.reset();
       }
@@ -490,7 +597,7 @@ public class TsFileWriteApiTest {
       QueryExpression queryExpression =
           QueryExpression.create(
               Collections.singletonList(
-                  new Path(deviceId, alignedMeasurementSchemas.get(i).getMeasurementId(), true)),
+                  new Path(deviceId, alignedMeasurementSchemas.get(i).getMeasurementName(), true)),
               null);
       QueryDataSet queryDataSet = tsFileReader.query(queryExpression);
 
@@ -536,7 +643,7 @@ public class TsFileWriteApiTest {
       QueryExpression queryExpression =
           QueryExpression.create(
               Collections.singletonList(
-                  new Path(deviceId, alignedMeasurementSchemas.get(i).getMeasurementId(), true)),
+                  new Path(deviceId, alignedMeasurementSchemas.get(i).getMeasurementName(), true)),
               null);
       QueryDataSet queryDataSet = tsFileReader.query(queryExpression);
       int cnt = 0;
@@ -602,7 +709,7 @@ public class TsFileWriteApiTest {
       QueryExpression queryExpression =
           QueryExpression.create(
               Collections.singletonList(
-                  new Path(deviceId, alignedMeasurementSchemas.get(i).getMeasurementId(), true)),
+                  new Path(deviceId, alignedMeasurementSchemas.get(i).getMeasurementName(), true)),
               null);
       QueryDataSet queryDataSet = tsFileReader.query(queryExpression);
       int cnt = 0;
@@ -687,7 +794,7 @@ public class TsFileWriteApiTest {
       QueryExpression queryExpression =
           QueryExpression.create(
               Collections.singletonList(
-                  new Path(deviceId, measurementSchemas.get(0).getMeasurementId(), true)),
+                  new Path(deviceId, measurementSchemas.get(0).getMeasurementName(), true)),
               null);
       QueryDataSet queryDataSet = tsFileReader.query(queryExpression);
       int cnt = 0;

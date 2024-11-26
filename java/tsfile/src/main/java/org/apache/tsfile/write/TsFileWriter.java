@@ -18,6 +18,7 @@
  */
 package org.apache.tsfile.write;
 
+import org.apache.tsfile.common.TsFileApi;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.common.conf.TSFileDescriptor;
 import org.apache.tsfile.encrypt.EncryptParameter;
@@ -53,6 +54,7 @@ import java.io.File;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,6 +109,7 @@ public class TsFileWriter implements AutoCloseable {
    *
    * @param file the File to be written by this TsFileWriter
    */
+  @TsFileApi
   public TsFileWriter(File file) throws IOException {
     this(new TsFileIOWriter(file), new Schema(), TSFileDescriptor.getInstance().getConfig());
   }
@@ -190,15 +193,16 @@ public class TsFileWriter implements AutoCloseable {
       encryptLevel = "2";
       encryptType = config.getEncryptType();
       try {
-        MessageDigest md = MessageDigest.getInstance("MD5");
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
         md.update("IoTDB is the best".getBytes());
         md.update(config.getEncryptKey().getBytes());
-        dataEncryptKey = md.digest();
+        dataEncryptKey = Arrays.copyOfRange(md.digest(), 0, 16);
         encryptKey =
             IEncryptor.getEncryptor(config.getEncryptType(), config.getEncryptKey().getBytes())
                 .encrypt(dataEncryptKey);
       } catch (Exception e) {
-        throw new EncryptException("md5 function not found while using md5 to generate data key");
+        throw new EncryptException(
+            "SHA-256 function not found while using SHA-256 to generate data key");
       }
     } else {
       encryptLevel = "0";
@@ -247,6 +251,12 @@ public class TsFileWriter implements AutoCloseable {
     getSchema().registerDevice(deviceID, templateName);
   }
 
+  @TsFileApi
+  public void registerTimeseries(String deviceId, IMeasurementSchema measurementSchema)
+      throws WriteProcessException {
+    registerTimeseries(IDeviceID.Factory.DEFAULT_FACTORY.create(deviceId), measurementSchema);
+  }
+
   @Deprecated
   public void registerTimeseries(Path devicePath, IMeasurementSchema measurementSchema)
       throws WriteProcessException {
@@ -254,6 +264,7 @@ public class TsFileWriter implements AutoCloseable {
   }
 
   /** Register nonAligned timeseries by single. */
+  @TsFileApi
   public void registerTimeseries(IDeviceID deviceID, IMeasurementSchema measurementSchema)
       throws WriteProcessException {
     MeasurementGroup measurementGroup;
@@ -264,10 +275,10 @@ public class TsFileWriter implements AutoCloseable {
             "given device " + deviceID + " has been registered for aligned timeseries.");
       } else if (measurementGroup
           .getMeasurementSchemaMap()
-          .containsKey(measurementSchema.getMeasurementId())) {
+          .containsKey(measurementSchema.getMeasurementName())) {
         throw new WriteProcessException(
             "given nonAligned timeseries "
-                + (deviceID + "." + measurementSchema.getMeasurementId())
+                + (deviceID + "." + measurementSchema.getMeasurementName())
                 + " has been registered.");
       }
     } else {
@@ -275,7 +286,7 @@ public class TsFileWriter implements AutoCloseable {
     }
     measurementGroup
         .getMeasurementSchemaMap()
-        .put(measurementSchema.getMeasurementId(), measurementSchema);
+        .put(measurementSchema.getMeasurementName(), measurementSchema);
     getSchema().registerMeasurementGroup(deviceID, measurementGroup);
   }
 
@@ -291,6 +302,13 @@ public class TsFileWriter implements AutoCloseable {
     }
   }
 
+  @TsFileApi
+  public void registerAlignedTimeseries(
+      String deviceId, List<IMeasurementSchema> measurementSchemas) throws WriteProcessException {
+    registerAlignedTimeseries(
+        IDeviceID.Factory.DEFAULT_FACTORY.create(deviceId), measurementSchemas);
+  }
+
   public void registerAlignedTimeseries(
       Path devicePath, List<IMeasurementSchema> measurementSchemas) throws WriteProcessException {
     registerAlignedTimeseries(devicePath.getIDeviceID(), measurementSchemas);
@@ -300,6 +318,7 @@ public class TsFileWriter implements AutoCloseable {
    * Register aligned timeseries. Once the device is registered for aligned timeseries, it cannot be
    * expanded.
    */
+  @TsFileApi
   public void registerAlignedTimeseries(
       IDeviceID deviceID, List<IMeasurementSchema> measurementSchemas)
       throws WriteProcessException {
@@ -319,7 +338,7 @@ public class TsFileWriter implements AutoCloseable {
         measurementSchema -> {
           measurementGroup
               .getMeasurementSchemaMap()
-              .put(measurementSchema.getMeasurementId(), measurementSchema);
+              .put(measurementSchema.getMeasurementName(), measurementSchema);
         });
     getSchema().registerMeasurementGroup(deviceID, measurementGroup);
   }
@@ -339,10 +358,10 @@ public class TsFileWriter implements AutoCloseable {
       if (isAligned) {
         for (IMeasurementSchema s : measurementSchemas) {
           if (flushedMeasurementsInDeviceMap.containsKey(deviceID)
-              && !flushedMeasurementsInDeviceMap.get(deviceID).contains(s.getMeasurementId())) {
+              && !flushedMeasurementsInDeviceMap.get(deviceID).contains(s.getMeasurementName())) {
             throw new WriteProcessException(
                 "TsFile has flushed chunk group and should not add new measurement "
-                    + s.getMeasurementId()
+                    + s.getMeasurementName()
                     + " in device "
                     + deviceID);
           }
@@ -363,17 +382,20 @@ public class TsFileWriter implements AutoCloseable {
     return true;
   }
 
-  private void checkIsTableExist(Tablet tablet) throws WriteProcessException {
+  private void checkIsTableExistAndSetColumnCategoryList(Tablet tablet)
+      throws WriteProcessException {
     String tableName = tablet.getTableName();
     final TableSchema tableSchema = getSchema().getTableSchemaMap().get(tableName);
     if (tableSchema == null) {
       throw new NoTableException(tableName);
     }
 
+    List<Tablet.ColumnCategory> columnCategoryListForTablet =
+        new ArrayList<>(tablet.getSchemas().size());
     for (IMeasurementSchema writingColumnSchema : tablet.getSchemas()) {
-      final int columnIndex = tableSchema.findColumnIndex(writingColumnSchema.getMeasurementId());
+      final int columnIndex = tableSchema.findColumnIndex(writingColumnSchema.getMeasurementName());
       if (columnIndex < 0) {
-        throw new NoMeasurementException(writingColumnSchema.getMeasurementId());
+        throw new NoMeasurementException(writingColumnSchema.getMeasurementName());
       }
       final IMeasurementSchema registeredColumnSchema =
           tableSchema.getColumnSchemas().get(columnIndex);
@@ -381,7 +403,9 @@ public class TsFileWriter implements AutoCloseable {
         throw new ConflictDataTypeException(
             writingColumnSchema.getType(), registeredColumnSchema.getType());
       }
+      columnCategoryListForTablet.add(tableSchema.getColumnTypes().get(columnIndex));
     }
+    tablet.setColumnCategories(columnCategoryListForTablet);
   }
 
   private void checkIsTimeseriesExist(Tablet tablet, boolean isAligned)
@@ -395,10 +419,10 @@ public class TsFileWriter implements AutoCloseable {
       if (isAligned) {
         for (IMeasurementSchema s : schemas) {
           if (flushedMeasurementsInDeviceMap.containsKey(deviceID)
-              && !flushedMeasurementsInDeviceMap.get(deviceID).contains(s.getMeasurementId())) {
+              && !flushedMeasurementsInDeviceMap.get(deviceID).contains(s.getMeasurementName())) {
             throw new WriteProcessException(
                 "TsFile has flushed chunk group and should not add new measurement "
-                    + s.getMeasurementId()
+                    + s.getMeasurementName()
                     + " in device "
                     + deviceID);
           }
@@ -434,9 +458,9 @@ public class TsFileWriter implements AutoCloseable {
     for (IMeasurementSchema measurementSchema : measurementSchemas) {
       if (!measurementGroup
           .getMeasurementSchemaMap()
-          .containsKey(measurementSchema.getMeasurementId())) {
+          .containsKey(measurementSchema.getMeasurementName())) {
         if (isAligned) {
-          throw new NoMeasurementException(measurementSchema.getMeasurementId());
+          throw new NoMeasurementException(measurementSchema.getMeasurementName());
         } else {
           measurementSchemas.remove(measurementSchema);
         }
@@ -478,7 +502,7 @@ public class TsFileWriter implements AutoCloseable {
         groupWriter = new AlignedChunkGroupWriterImpl(deviceId, encryptParam);
         if (!isUnseq) { // Sequence File
           ((AlignedChunkGroupWriterImpl) groupWriter)
-              .setLastTime(alignedDeviceLastTimeMap.getOrDefault(deviceId, -1L));
+              .setLastTime(alignedDeviceLastTimeMap.get(deviceId));
         }
       } else {
         groupWriter = new NonAlignedChunkGroupWriterImpl(deviceId, encryptParam);
@@ -501,14 +525,13 @@ public class TsFileWriter implements AutoCloseable {
    * @throws IOException exception in IO
    * @throws WriteProcessException exception in write process
    */
-  public boolean write(TSRecord record) throws IOException, WriteProcessException {
-    checkIsTimeseriesExist(record, false);
-    recordCount += groupWriters.get(record.deviceId).write(record.time, record.dataPointList);
-    return checkMemorySizeAndMayFlushChunks();
-  }
-
-  public boolean writeAligned(TSRecord record) throws IOException, WriteProcessException {
-    checkIsTimeseriesExist(record, true);
+  @TsFileApi
+  public boolean writeRecord(TSRecord record) throws IOException, WriteProcessException {
+    MeasurementGroup measurementGroup = getSchema().getSeriesSchema(record.deviceId);
+    if (measurementGroup == null) {
+      throw new NoDeviceException(record.deviceId.toString());
+    }
+    checkIsTimeseriesExist(record, measurementGroup.isAligned());
     recordCount += groupWriters.get(record.deviceId).write(record.time, record.dataPointList);
     return checkMemorySizeAndMayFlushChunks();
   }
@@ -520,17 +543,21 @@ public class TsFileWriter implements AutoCloseable {
    * @throws IOException exception in IO
    * @throws WriteProcessException exception in write process
    */
-  public boolean write(Tablet tablet) throws IOException, WriteProcessException {
+  @TsFileApi
+  public boolean writeTree(Tablet tablet) throws IOException, WriteProcessException {
+    IDeviceID deviceID = IDeviceID.Factory.DEFAULT_FACTORY.create(tablet.getDeviceId());
+    MeasurementGroup measurementGroup = getSchema().getSeriesSchema(deviceID);
+    if (measurementGroup == null) {
+      throw new NoDeviceException(deviceID.toString());
+    }
     // make sure the ChunkGroupWriter for this Tablet exist
-    checkIsTimeseriesExist(tablet, false);
+    checkIsTimeseriesExist(tablet, measurementGroup.isAligned());
     // get corresponding ChunkGroupWriter and write this Tablet
-    recordCount +=
-        groupWriters
-            .get(IDeviceID.Factory.DEFAULT_FACTORY.create(tablet.getDeviceId()))
-            .write(tablet);
+    recordCount += groupWriters.get(deviceID).write(tablet);
     return checkMemorySizeAndMayFlushChunks();
   }
 
+  @Deprecated
   public boolean writeAligned(Tablet tablet) throws IOException, WriteProcessException {
     // make sure the ChunkGroupWriter for this Tablet exist
     checkIsTimeseriesExist(tablet, true);
@@ -569,7 +596,7 @@ public class TsFileWriter implements AutoCloseable {
       if (memSize > chunkGroupSizeThreshold) {
         LOG.debug("start to flush chunk groups, memory space occupy:{}", memSize);
         recordCountForNextMemCheck = recordCount * chunkGroupSizeThreshold / memSize;
-        return flushAllChunkGroups();
+        return flush();
       } else {
         recordCountForNextMemCheck = recordCount * chunkGroupSizeThreshold / memSize;
         return false;
@@ -586,7 +613,8 @@ public class TsFileWriter implements AutoCloseable {
    *     function just return false, the Override of IoTDB may return true.
    * @throws IOException exception in IO
    */
-  public boolean flushAllChunkGroups() throws IOException {
+  @TsFileApi
+  public boolean flush() throws IOException {
     if (recordCount > 0) {
       for (Map.Entry<IDeviceID, IChunkGroupWriter> entry : groupWriters.entrySet()) {
         IDeviceID deviceId = entry.getKey();
@@ -643,9 +671,10 @@ public class TsFileWriter implements AutoCloseable {
    * @throws IOException exception in IO
    */
   @Override
+  @TsFileApi
   public void close() throws IOException {
     LOG.info("start close file");
-    flushAllChunkGroups();
+    flush();
     fileWriter.endFile();
   }
 
@@ -668,13 +697,14 @@ public class TsFileWriter implements AutoCloseable {
    * tablet, List<Pair<IDeviceID, Integer>> deviceIdEndIndexPairs). One typical case where the other
    * method should be used is that all rows in the tablet belong to the same device.
    *
-   * @param tablet data to write
+   * @param table data to write
    * @return true if a flush is triggered after write, false otherwise
    * @throws IOException if the file cannot be written
    * @throws WriteProcessException if the schema is not registered first
    */
-  public boolean writeTable(Tablet tablet) throws IOException, WriteProcessException {
-    return writeTable(tablet, null);
+  @TsFileApi
+  public boolean writeTable(Tablet table) throws IOException, WriteProcessException {
+    return writeTable(table, null);
   }
 
   /**
@@ -693,7 +723,7 @@ public class TsFileWriter implements AutoCloseable {
   public boolean writeTable(Tablet tablet, List<Pair<IDeviceID, Integer>> deviceIdEndIndexPairs)
       throws IOException, WriteProcessException {
     // make sure the ChunkGroupWriter for this Tablet exist and there is no type conflict
-    checkIsTableExist(tablet);
+    checkIsTableExistAndSetColumnCategoryList(tablet);
     // spilt the tablet by deviceId
     if (deviceIdEndIndexPairs == null) {
       deviceIdEndIndexPairs = WriteUtils.splitTabletByDevice(tablet);

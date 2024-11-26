@@ -87,7 +87,7 @@ public class TsFileReaderTest {
         new MeasurementSchema("id", TSDataType.INT32, TSEncoding.PLAIN, CompressionType.LZ4));
 
     for (int i = 0; i < 11000000; i++) {
-      TSRecord t = new TSRecord(i, "t");
+      TSRecord t = new TSRecord("t", i);
       if (i % 100 == 0) {
         // Add a large max_value to the page statistics,
         // and get a very large number of invalid pages when the query is executed
@@ -95,13 +95,13 @@ public class TsFileReaderTest {
       } else {
         t.addTuple(new IntDataPoint("id", i));
       }
-      tsFileWriter.write(t);
+      tsFileWriter.writeRecord(t);
     }
     // make same value to filter
-    TSRecord t = new TSRecord(101011000000L, "t");
+    TSRecord t = new TSRecord("t", 101011000000L);
     t.addTuple(new IntDataPoint("id", 8000001));
-    tsFileWriter.write(t);
-    tsFileWriter.flushAllChunkGroups();
+    tsFileWriter.writeRecord(t);
+    tsFileWriter.flush();
     tsFileWriter.close();
 
     TsFileReader tsFileReader = new TsFileReader(new TsFileSequenceReader(filePath));

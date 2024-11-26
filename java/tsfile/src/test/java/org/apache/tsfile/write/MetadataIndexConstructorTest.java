@@ -437,13 +437,13 @@ public class MetadataIndexConstructorTest {
           // the number of record rows
           int rowNum = 10;
           for (int row = 0; row < rowNum; row++) {
-            TSRecord tsRecord = new TSRecord(row, device);
+            TSRecord tsRecord = new TSRecord(device, row);
             for (String measurement : singleMeasurement[i]) {
               DataPoint dPoint = new LongDataPoint(measurement, row);
               tsRecord.addTuple(dPoint);
             }
             if (tsRecord.dataPointList.size() > 0) {
-              tsFileWriter.write(tsRecord);
+              tsFileWriter.writeRecord(tsRecord);
             }
           }
         }
@@ -482,20 +482,20 @@ public class MetadataIndexConstructorTest {
           long timestamp = 1;
           long value = 1000000L;
           for (int r = 0; r < rowNum; r++, value++) {
-            int row = tablet.rowSize++;
-            timestamps[row] = timestamp++;
+            int row = tablet.getRowSize();
+            tablet.addTimestamp(row, timestamp++);
             for (int j = 0; j < measurementNum; j++) {
               long[] sensor = (long[]) values[j];
               sensor[row] = value;
             }
             // write Tablet to TsFile
-            if (tablet.rowSize == tablet.getMaxRowNumber()) {
+            if (tablet.getRowSize() == tablet.getMaxRowNumber()) {
               tsFileWriter.writeAligned(tablet);
               tablet.reset();
             }
           }
           // write Tablet to TsFile
-          if (tablet.rowSize != 0) {
+          if (tablet.getRowSize() != 0) {
             tsFileWriter.writeAligned(tablet);
             tablet.reset();
           }

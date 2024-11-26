@@ -33,7 +33,7 @@ import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.DateUtils;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 import org.apache.tsfile.write.record.Tablet;
-import org.apache.tsfile.write.record.Tablet.ColumnType;
+import org.apache.tsfile.write.record.Tablet.ColumnCategory;
 import org.apache.tsfile.write.record.datapoint.DataPoint;
 import org.apache.tsfile.write.schema.IMeasurementSchema;
 import org.apache.tsfile.write.writer.TsFileIOWriter;
@@ -62,7 +62,8 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
 
   private final EncryptParameter encryprParam;
 
-  private long lastTime = -1;
+  private long lastTime = Long.MIN_VALUE;
+  private boolean isInitLastTime = false;
 
   public AlignedChunkGroupWriterImpl(IDeviceID deviceId) {
     this.deviceId = deviceId;
@@ -100,16 +101,16 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
   public ValueChunkWriter tryToAddSeriesWriterInternal(IMeasurementSchema measurementSchema)
       throws IOException {
     ValueChunkWriter valueChunkWriter =
-        valueChunkWriterMap.get(measurementSchema.getMeasurementId());
+        valueChunkWriterMap.get(measurementSchema.getMeasurementName());
     if (valueChunkWriter == null) {
       valueChunkWriter =
           new ValueChunkWriter(
-              measurementSchema.getMeasurementId(),
+              measurementSchema.getMeasurementName(),
               measurementSchema.getCompressor(),
               measurementSchema.getType(),
               measurementSchema.getEncodingType(),
               measurementSchema.getValueEncoder());
-      valueChunkWriterMap.put(measurementSchema.getMeasurementId(), valueChunkWriter);
+      valueChunkWriterMap.put(measurementSchema.getMeasurementName(), valueChunkWriter);
       tryToAddEmptyPageAndData(valueChunkWriter);
     }
     return valueChunkWriter;
@@ -118,15 +119,15 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
   @Override
   public void tryToAddSeriesWriter(List<IMeasurementSchema> measurementSchemas) throws IOException {
     for (IMeasurementSchema schema : measurementSchemas) {
-      if (!valueChunkWriterMap.containsKey(schema.getMeasurementId())) {
+      if (!valueChunkWriterMap.containsKey(schema.getMeasurementName())) {
         ValueChunkWriter valueChunkWriter =
             new ValueChunkWriter(
-                schema.getMeasurementId(),
+                schema.getMeasurementName(),
                 schema.getCompressor(),
                 schema.getType(),
                 schema.getEncodingType(),
                 schema.getValueEncoder());
-        valueChunkWriterMap.put(schema.getMeasurementId(), valueChunkWriter);
+        valueChunkWriterMap.put(schema.getMeasurementName(), valueChunkWriter);
         tryToAddEmptyPageAndData(valueChunkWriter);
       }
     }
@@ -179,6 +180,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
     }
     timeChunkWriter.write(time);
     lastTime = time;
+    isInitLastTime = true;
     if (checkPageSizeAndMayOpenANewPage()) {
       writePageToPageBuffer();
     }
@@ -187,7 +189,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
 
   @Override
   public int write(Tablet tablet) throws IOException, WriteProcessException {
-    return write(tablet, 0, tablet.rowSize);
+    return write(tablet, 0, tablet.getRowSize());
   }
 
   @Override
@@ -199,7 +201,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
     // TODO: should we allow duplicated measurements in a Tablet?
     Set<String> existingMeasurements =
         measurementSchemas.stream()
-            .map(IMeasurementSchema::getMeasurementId)
+            .map(IMeasurementSchema::getMeasurementName)
             .collect(Collectors.toSet());
     for (Map.Entry<String, ValueChunkWriter> entry : valueChunkWriterMap.entrySet()) {
       if (!existingMeasurements.contains(entry.getKey())) {
@@ -213,7 +215,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
       checkIsHistoryData(time);
       for (int columnIndex = 0; columnIndex < tablet.getSchemas().size(); columnIndex++) {
         if (tablet.getColumnTypes() != null
-            && tablet.getColumnTypes().get(columnIndex) != ColumnType.MEASUREMENT) {
+            && tablet.getColumnTypes().get(columnIndex) != ColumnCategory.MEASUREMENT) {
           continue;
         }
 
@@ -269,6 +271,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
       }
       timeChunkWriter.write(time);
       lastTime = time;
+      isInitLastTime = true;
       if (checkPageSizeAndMayOpenANewPage()) {
         writePageToPageBuffer();
       }
@@ -385,7 +388,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
   }
 
   private void checkIsHistoryData(long time) throws WriteProcessException {
-    if (time <= lastTime) {
+    if (isInitLastTime && time <= lastTime) {
       throw new WriteProcessException(
           "Not allowed to write out-of-order data in timeseries "
               + deviceId
@@ -405,6 +408,9 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
   }
 
   public void setLastTime(Long lastTime) {
-    this.lastTime = lastTime;
+    if (lastTime != null) {
+      this.lastTime = lastTime;
+      isInitLastTime = true;
+    }
   }
 }
