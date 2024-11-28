@@ -164,6 +164,12 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
         device_path[1],
         storage::MeasurementSchema(measurement_name[1], data_type, encoding,
                                    compression_type));
+    TsRecord record_0(1622505600000, device_path[0]);
+    record_0.add_point(measurement_name[0], (int32_t)0);
+    TsRecord record_1(1622505600000, device_path[1]);
+    record_1.add_point(measurement_name[1], (int32_t)1);
+    ASSERT_EQ(tsfile_writer_->write_record(record_0), E_OK);
+    ASSERT_EQ(tsfile_writer_->write_record(record_1), E_OK);
     ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
 
@@ -191,6 +197,12 @@ TEST_F(TsFileReaderTest, GetTimeseriesSchema) {
         device_path[1],
         storage::MeasurementSchema(measurement_name[1], data_type, encoding,
                                    compression_type));
+    TsRecord record_0(1622505600000, device_path[0]);
+    record_0.add_point(measurement_name[0], (int32_t)0);
+    TsRecord record_1(1622505600000, device_path[1]);
+    record_1.add_point(measurement_name[1], (int32_t)1);
+    ASSERT_EQ(tsfile_writer_->write_record(record_0), E_OK);
+    ASSERT_EQ(tsfile_writer_->write_record(record_1), E_OK);
     ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
 

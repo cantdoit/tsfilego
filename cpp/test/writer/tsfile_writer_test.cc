@@ -415,22 +415,22 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
                                   common::TSEncoding::PLAIN,
                                   common::CompressionType::UNCOMPRESSED));
             tsfile_writer_->register_timeseries(
-                device_name, measure_name, common::TSDataType::INT64,
+                device_name, MeasurementSchema(measure_name, common::TSDataType::INT64,
                 common::TSEncoding::PLAIN,
-                common::CompressionType::UNCOMPRESSED);
+                common::CompressionType::UNCOMPRESSED));
         }
     }
 
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
-        Tablet tablet(device_name, &schema_vec[i], max_rows);
+        Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
         tablet.init();
         for (int j = 0; j < measurement_num; j++) {
             for (int row = 0; row < max_rows; row++) {
-                tablet.set_timestamp(row, 16225600 + row);
+                tablet.add_timestamp(row, 16225600 + row);
             }
             for (int row = 0; row < max_rows; row++) {
-                tablet.set_value(row, j, static_cast<int64_t>(row));
+                tablet.add_value(row, j, static_cast<int64_t>(row));
             }
         }
         ASSERT_EQ(tsfile_writer_->write_tablet(tablet), E_OK);
@@ -454,7 +454,7 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
     storage::TsFileReader reader;
     int ret = reader.open(file_name_);
     ASSERT_EQ(ret, common::E_OK);
-    storage::QueryDataSet *tmp_qds = nullptr;
+    storage::ResultSet *tmp_qds = nullptr;
 
     ret = reader.query(query_expr, tmp_qds);
     auto *qds = (QDSWithoutTimeGenerator *)tmp_qds;
@@ -462,7 +462,10 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
     storage::RowRecord *record;
     int64_t cur_record_num = 0;
     do {
-        record = qds->get_next();
+        if (!qds->next()) {
+            break;
+        }
+        record = qds->get_row_record();
         // if empty chunk is writen, the timestamp should be NULL
         if (!record) {
             break;
@@ -471,7 +474,6 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
         cur_record_num++;
     } while (true);
     EXPECT_EQ(cur_record_num, max_rows);
-    storage::QueryExpression::destory(query_expr);
     reader.destroy_query_data_set(qds);
 }
 
@@ -490,22 +492,22 @@ TEST_F(TsFileWriterTest, AnalyzeTsfileForload) {
                                   common::TSEncoding::PLAIN,
                                   common::CompressionType::UNCOMPRESSED));
             tsfile_writer_->register_timeseries(
-                device_name, measure_name, common::TSDataType::INT64,
+                device_name, MeasurementSchema(measure_name, common::TSDataType::INT64,
                 common::TSEncoding::PLAIN,
-                common::CompressionType::UNCOMPRESSED);
+                common::CompressionType::UNCOMPRESSED));
         }
     }
 
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
-        Tablet tablet(device_name, &schema_vec[i], max_rows);
+        Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
         tablet.init();
         for (int j = 0; j < measurement_num; j++) {
             for (int row = 0; row < max_rows; row++) {
-                tablet.set_timestamp(row, 16225600 + row);
+                tablet.add_timestamp(row, 16225600 + row);
             }
             for (int row = 0; row < max_rows; row++) {
-                tablet.set_value(row, j, static_cast<int64_t>(row));
+                tablet.add_value(row, j, static_cast<int64_t>(row));
             }
         }
         ASSERT_EQ(tsfile_writer_->write_tablet(tablet), E_OK);
