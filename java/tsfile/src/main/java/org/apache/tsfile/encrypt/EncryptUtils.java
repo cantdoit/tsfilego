@@ -79,9 +79,6 @@ public class EncryptUtils {
           sb.append("\n").append(line);
         }
       }
-      if (sb.toString().length() != 16) {
-        throw new EncryptKeyLengthNotMatchException(16, sb.toString().length());
-      }
       return sb.toString();
     } catch (IOException e) {
       throw new EncryptException("Read main encrypt key error", e);
