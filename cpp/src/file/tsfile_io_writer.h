@@ -78,6 +78,7 @@ class TsFileIOWriter {
     int init(WriteFile *write_file);
     void destroy();
 
+    void set_generate_table_schema(bool generate_table_schema);
     int start_file();
     int start_flush_chunk_group(const std::string &device_name,
                                 bool is_aligned = false);
@@ -188,6 +189,7 @@ class TsFileIOWriter {
     WriteFile *file_;
     std::vector<TimeseriesTimeIndexEntry> ts_time_index_vector_;
     bool write_file_created_;
+    bool generate_table_schema_;
 };
 
 }  // end namespace storage

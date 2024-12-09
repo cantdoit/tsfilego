@@ -52,6 +52,8 @@ class TsFileWriter {
     int open(const std::string &file_path, int flags, mode_t mode);
     int init(storage::WriteFile *write_file);
 
+    void set_generate_table_schema(bool generate_table_schema);
+
     int register_timeseries(const std::string &device_path,
                             const std::string &measurement_name,
                             common::TSDataType data_type,
@@ -65,6 +67,7 @@ class TsFileWriter {
     int register_aligned_timeseries(
         const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
+    void register_table(TableSchema table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
@@ -142,6 +145,7 @@ class TsFileWriter {
     storage::TsFileIOWriter *io_writer_;
     // device_name -> MeasurementSchemaGroup
     std::map<std::string, MeasurementSchemaGroup *> schemas_;
+    std::unordered_map<std::string, TableSchema*> tableDeviceIdSchemas_;
     bool start_file_done_;
     // record count since last flush
     int64_t record_count_since_last_flush_;

@@ -620,6 +620,10 @@ int TsFileIOWriter::add_device_node(
     return ret;
 }
 
+void TsFileIOWriter::set_generate_table_schema(bool generate_table_schema) {
+    generate_table_schema_ = generate_table_schema;
+}
+
 int TsFileIOWriter::generate_root(SimpleList<MetaIndexNode *> *node_queue,
                                   MetaIndexNode *&root_node,
                                   MetaIndexNodeType node_type,

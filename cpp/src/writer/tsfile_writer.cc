@@ -111,6 +111,15 @@ int TsFileWriter::init(WriteFile *write_file) {
     return E_OK;
 }
 
+void TsFileWriter::set_generate_table_schema(bool generate_table_schema) {
+    io_writer_->set_generate_table_schema(generate_table_schema);
+}
+
+void TsFileWriter::register_table(TableSchema table_schema) {
+
+    tableDeviceIdSchemas_.emplace(table_schema.table_name_, &table_schema);
+}
+
 bool check_file_exist(const std::string &file_path) {
     return access(file_path.c_str(), F_OK) == 0;
 }
