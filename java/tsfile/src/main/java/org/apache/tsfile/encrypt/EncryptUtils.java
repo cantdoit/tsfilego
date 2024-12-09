@@ -21,7 +21,6 @@ package org.apache.tsfile.encrypt;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.common.conf.TSFileDescriptor;
 import org.apache.tsfile.exception.encrypt.EncryptException;
-import org.apache.tsfile.exception.encrypt.EncryptKeyLengthNotMatchException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
