@@ -25,12 +25,14 @@
 #include <iostream>
 #include <map>
 #include <string>
+#include <unordered_map>
 
 #include "common/allocator/my_string.h"
 #include "common/allocator/page_arena.h"
 #include "common/config/config.h"
 #include "common/container/list.h"
 #include "reader/bloom_filter.h"
+#include "schema.h"
 #include "statistic.h"
 #include "utils/db_utils.h"
 #include "utils/storage_utils.h"
@@ -834,6 +836,9 @@ struct MetaIndexNode {
 
 struct TsFileMeta {
     MetaIndexNode *index_node_;
+    std::unordered_map<std::string, MetaIndexNode*> table_index_roots_;
+    std::unordered_map<std::string, std::string> tsfile_properties_;
+    std::unordered_map<std::string, TableSchema*> table_schemas_;
     int64_t meta_offset_;
     BloomFilter *bloom_filter_;
     common::PageArena *page_arena_;

@@ -24,6 +24,7 @@
 #include <string>
 
 #include "common/db_common.h"
+#include "common/tablet.h"
 #include "writer/time_chunk_writer.h"
 #include "writer/value_chunk_writer.h"
 
@@ -73,6 +74,12 @@ struct MeasurementSchemaGroup {
     MeasurementSchemaMap measurement_schema_map_;
     bool is_aligned_ = false;
     TimeChunkWriter *time_chunk_writer_ = nullptr;
+};
+
+struct TableSchema {
+    std::string table_name_;
+    std::vector<MeasurementSchema*> measurementSchemas_;
+    std::vector<ColumnCategory> columnCategories_;
 };
 
 }  // end namespace storage
