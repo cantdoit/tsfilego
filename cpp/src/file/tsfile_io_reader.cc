@@ -525,7 +525,6 @@ int TsFileIOReader::do_load_all_timeseries_index(
     for (const auto &index_node_entry : index_node_entry_list) {
         int64_t start_offset = index_node_entry.first->offset_,
                 end_offset = index_node_entry.second;
-        std::cout << index_node_entry.first->name_ << std::endl;
         const std::string target_measurement_name(
             index_node_entry.first->name_.to_std_string());
         ITimeseriesIndex *ts_idx;
@@ -556,7 +555,7 @@ int TsFileIOReader::get_all_leaf(
             }
         }
     } else {
-        // reader next level index node
+        // read next level index node
         for (size_t i = 0; i < index_node->children_.size(); i++) {
             int64_t end_offset = index_node->end_offset_;
             if (i + 1 < index_node->children_.size()) {

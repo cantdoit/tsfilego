@@ -76,6 +76,8 @@ set(PROJECT_INCLUDE_DIR ${PROJECT_INCLUDE_DIR}
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 include_directories(${PROJECT_INCLUDE_DIR})
 
+include_directories(${PROJECT_SOURCE_DIR}/third_party/antlr4-cpp-runtime-4/runtime/src)
+
 add_subdirectory(third_party)
 
 add_subdirectory(src)

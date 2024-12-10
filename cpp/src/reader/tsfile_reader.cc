@@ -54,7 +54,7 @@ int TsFileReader::close() {
         delete read_file_;
         read_file_ = nullptr;
     }
-    return ret;  // TO DO
+    return ret;
 }
 
 int TsFileReader::query(QueryExpression *qe, ResultSet *&ret_qds) {
@@ -69,14 +69,7 @@ int TsFileReader::query(std::vector<std::string> &path_list, int64_t start_time,
         new storage::Expression(storage::GLOBALTIME_EXPR, time_filter);
     std::vector<Path> path_list_vec;
     for (const auto &path : path_list) {
-        uint32_t last_point_pos = path.find_last_of('.');
-        if (last_point_pos <= 0) {
-            return E_INVALID_PATH;
-        }
-        std::string device_name = path.substr(0, last_point_pos);
-        std::string measurement_name =
-            path.substr(last_point_pos + 1, path.size() - last_point_pos);
-        path_list_vec.emplace_back(Path(device_name, measurement_name));
+        path_list_vec.emplace_back(Path(path, true));
     }
     QueryExpression *query_expression =
         QueryExpression::create(path_list_vec, exp);
@@ -92,13 +85,47 @@ std::vector<std::string> TsFileReader::get_all_devices() {
     TsFileMeta *tsfile_meta = tsfile_executor_->get_tsfile_meta();
     std::vector<std::string> device_ids;
     if (tsfile_meta != nullptr) {
-        device_ids.reserve(tsfile_meta->index_node_->children_.size());
-        for (const auto &meta_index_entry :
-             tsfile_meta->index_node_->children_) {
-            device_ids.push_back(meta_index_entry->name_.to_std_string());
-        }
+        PageArena pa;
+        pa.init(512, MOD_TSFILE_READER);
+        get_all_devices(device_ids, tsfile_meta->index_node_, pa);  
     }
     return device_ids;
+}
+
+int TsFileReader::get_all_devices(std::vector<std::string> &device_ids, MetaIndexNode *index_node, PageArena &pa) {
+    int ret = E_OK;
+    if (index_node != nullptr) {
+        if (index_node->node_type_ == LEAF_DEVICE) {
+            for (const auto &meta_index_entry : index_node->children_) {
+                device_ids.push_back(meta_index_entry->name_.to_std_string());
+            }
+        } else {
+            for (size_t idx = 0; idx < index_node->children_.size(); idx++) {
+                MetaIndexEntry* meta_index_entry = index_node->children_[idx];
+                int start_offset = meta_index_entry->offset_;
+                int end_offset = index_node->end_offset_;
+                if (idx + 1 < index_node->children_.size()) {
+                    end_offset = index_node->children_[idx + 1]->offset_;
+                }
+                ASSERT(end_offset - start_offset > 0);
+                const int32_t read_size = (int32_t)end_offset - start_offset;
+                int32_t ret_read_len = 0;
+                char *data_buf = (char *)pa.alloc(read_size);
+                void *m_idx_node_buf = pa.alloc(sizeof(MetaIndexNode));
+                if (IS_NULL(data_buf) || IS_NULL(m_idx_node_buf)) {
+                    return E_OOM;
+                }
+                MetaIndexNode *top_node = new (m_idx_node_buf) MetaIndexNode(&pa);
+                if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
+                                ret_read_len))) {
+                } else if (RET_FAIL(top_node->deserialize_from(data_buf, read_size))) {
+                } else {
+                    ret = get_all_devices(device_ids, top_node, pa);
+                }
+            }
+        }
+    }
+    return ret;
 }
 
 int TsFileReader::get_timeseries_schema(

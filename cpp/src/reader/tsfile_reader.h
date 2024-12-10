@@ -23,7 +23,7 @@
 #include "common/row_record.h"
 #include "expression.h"
 #include "file/read_file.h"
-
+#include "common/tsfile_common.h"
 namespace storage {
 class TsFileExecutor;
 class ReadFile;
@@ -53,6 +53,7 @@ class TsFileReader {
                               std::vector<MeasurementSchema> &result);
 
    private:
+    int get_all_devices(std::vector<std::string> &device_ids, MetaIndexNode *index_node, common::PageArena &pa);
     storage::ReadFile *read_file_;
     storage::TsFileExecutor *tsfile_executor_;
 };

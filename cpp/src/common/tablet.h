@@ -41,7 +41,7 @@ class Tablet {
    public:
     Tablet(const std::string &device_id,
            std::shared_ptr<std::vector<MeasurementSchema>> schema_vec,
-           uint32_t max_rows = DEFAULT_MAX_ROWS)
+           int max_rows = DEFAULT_MAX_ROWS)
         : max_row_num_(max_rows),
           device_id_(device_id),
           schema_vec_(schema_vec),
@@ -60,7 +60,7 @@ class Tablet {
     Tablet(const std::string &device_id,
            const std::vector<std::string> *measurement_list,
            const std::vector<common::TSDataType> *data_type_list,
-           uint32_t max_row_num = DEFAULT_MAX_ROWS)
+           int max_row_num = DEFAULT_MAX_ROWS)
         : max_row_num_(max_row_num),
           device_id_(device_id),
           timestamps_(NULL),
@@ -108,7 +108,7 @@ class Tablet {
     typedef std::map<std::string, int>::iterator SchemaMapIterator;
 
    private:
-    uint32_t max_row_num_;
+    int max_row_num_;
     std::string device_id_;
     std::shared_ptr<std::vector<MeasurementSchema>> schema_vec_;
     std::map<std::string, int> schema_map_;

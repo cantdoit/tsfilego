@@ -697,8 +697,6 @@ DataResult* ts_next(QueryDataRet data, int expect_line_count) {
     for (int i = 0; i < expect_line_count; i++) {
         if (!qds->next()) {
             break;
-            std::cout << "no more record now"
-                      << "i = " << i << std::endl;
         }
         record = qds->get_row_record();
         int column_num = record->get_fields()->size();

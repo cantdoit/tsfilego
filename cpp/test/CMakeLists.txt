@@ -71,6 +71,7 @@ file(GLOB_RECURSE TEST_SRCS
         "encoding/*_test.cc"
         "utils/*_test.cc"
         "file/*_test.cc"
+        "parser/*_test.cc"
         "compress/*_test.cc"
         "reader/*_test.cc"
         "writer/*_test.cc"

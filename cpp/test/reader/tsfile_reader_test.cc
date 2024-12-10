@@ -150,26 +150,24 @@ TEST_F(TsFileReaderTest, ResultSetMetadata) {
 }
 
 TEST_F(TsFileReaderTest, GetAllDevice) {
-    std::vector<std::string> device_path = {"device", "device.ln"};
-    std::vector<std::string> measurement_name = {"temperature", "humidity"};
+    std::string measurement_name = "temperature";
     common::TSDataType data_type = common::TSDataType::INT32;
     common::TSEncoding encoding = common::TSEncoding::PLAIN;
     common::CompressionType compression_type =
         common::CompressionType::UNCOMPRESSED;
-    tsfile_writer_->register_timeseries(
-        device_path[0],
-        storage::MeasurementSchema(measurement_name[0], data_type, encoding,
-                                   compression_type));
-    tsfile_writer_->register_timeseries(
-        device_path[1],
-        storage::MeasurementSchema(measurement_name[1], data_type, encoding,
-                                   compression_type));
-    TsRecord record_0(1622505600000, device_path[0]);
-    record_0.add_point(measurement_name[0], (int32_t)0);
-    TsRecord record_1(1622505600000, device_path[1]);
-    record_1.add_point(measurement_name[1], (int32_t)1);
-    ASSERT_EQ(tsfile_writer_->write_record(record_0), E_OK);
-    ASSERT_EQ(tsfile_writer_->write_record(record_1), E_OK);
+
+    for (size_t i = 0; i < 1024; i++) {
+        tsfile_writer_->register_timeseries(
+            "device.ln" + to_string(i),
+            storage::MeasurementSchema(measurement_name, data_type, encoding,
+                                    compression_type));
+    }
+
+    for (size_t i = 0; i < 1024; i++) {
+        TsRecord record(1622505600000, "device.ln" + to_string(i));
+        record.add_point(measurement_name, (int32_t)0);
+        ASSERT_EQ(tsfile_writer_->write_record(record), E_OK);
+    }
     ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
 
@@ -177,9 +175,18 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
     int ret = reader.open(file_name_);
     ASSERT_EQ(ret, common::E_OK);
     std::vector<std::string> devices = reader.get_all_devices();
-    ASSERT_EQ(devices.size(), 2);
-    ASSERT_EQ(devices[0], device_path[0]);
-    ASSERT_EQ(devices[1], device_path[1]);
+    ASSERT_EQ(devices.size(), 1024);
+    std::vector<std::string> devices_name_expected;
+    for (size_t i = 0; i < 1024; i++) {
+        devices_name_expected.push_back("device.ln" + std::to_string(i));
+    }
+    std::sort(devices_name_expected.begin(), devices_name_expected.end(), [](const std::string& left_str, const std::string& right_str) {
+        return left_str < right_str;
+    });
+
+    for (size_t i = 0; i < devices.size(); i++) {
+        ASSERT_EQ(devices[i], devices_name_expected[i]);
+    }
 }
 
 TEST_F(TsFileReaderTest, GetTimeseriesSchema) {
