@@ -34,7 +34,7 @@ namespace storage
         std::vector<std::string> path;
         path.reserve(node_names.size() + 1);
         path.push_back(ctx->ROOT()->getText());
-        for (int i = 0; i < node_names.size(); i++) {
+        for (uint64_t i = 0; i < node_names.size(); i++) {
             path.push_back(parse_node_name(node_names[i]));
         }
         return path;
@@ -44,7 +44,7 @@ namespace storage
         std::vector<PathParser::NodeNameContext *> node_names = ctx->nodeName();
         std::vector<std::string> path;
         path.reserve(node_names.size());
-        for (int i = 0; i < node_names.size(); i++) {
+        for (uint64_t i = 0; i < node_names.size(); i++) {
             path.push_back(parse_node_name(node_names[i]));
         }
         return path;

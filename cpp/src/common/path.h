@@ -47,7 +47,7 @@ struct Path {
             } else {
                 std::vector<std::string> nodes = PathNodesGenerator::invokeParser(path_sc);
                 if (nodes.size() > 0) {
-                    for (int i = 0; i + 1 < nodes.size(); i++) {
+                    for (uint64_t i = 0; i + 1 < nodes.size(); i++) {
                         device_ += nodes[i] + (i + 2 < nodes.size() ? "." : "");
                     }
                     measurement_ = nodes[nodes.size() - 1];

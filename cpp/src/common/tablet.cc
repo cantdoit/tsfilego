@@ -77,7 +77,7 @@ void Tablet::destroy() {
 
 int Tablet::add_timestamp(uint32_t row_index, int64_t timestamp) {
     ASSERT(timestamps_ != NULL);
-    if (UNLIKELY(row_index >= max_row_num_)) {
+    if (UNLIKELY(row_index >= static_cast<uint32_t>(max_row_num_))) {
         ASSERT(false);
         return E_OUT_OF_RANGE;
     }

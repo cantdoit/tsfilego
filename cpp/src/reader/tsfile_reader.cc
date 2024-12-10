@@ -122,6 +122,7 @@ int TsFileReader::get_all_devices(std::vector<std::string> &device_ids, MetaInde
                 } else {
                     ret = get_all_devices(device_ids, top_node, pa);
                 }
+                top_node->destroy();
             }
         }
     }
