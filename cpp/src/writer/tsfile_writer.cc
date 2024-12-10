@@ -556,7 +556,7 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     return ret;
 }
 
-bool TsFileWriter::write_table(
+int TsFileWriter::write_table(
     const Tablet &tablet,
     std::vector<std::pair<IDeviceID, int>> device_id_end_index_pairs) {
     int ret = E_OK;
@@ -572,6 +572,12 @@ bool TsFileWriter::write_table(
         return ret;
     }
     return false;
+}
+
+std::vector<std::pair<IDeviceID, int>> TsFileWriter::split_tablet_by_device(const Tablet& tablet) {
+    std::vector<std::pair<IDeviceID, int>> ret;
+
+    return ret;
 }
 
 int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,
