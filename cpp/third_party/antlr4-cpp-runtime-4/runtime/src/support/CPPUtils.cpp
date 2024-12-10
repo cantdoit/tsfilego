@@ -48,8 +48,10 @@ namespace antlrcpp {
           if (escapeSpaces) {
             result += "\u00B7";
             break;
+          } else {
+            result += c;
+            break;
           }
-          [[fallthrough]];
           // else fall through
 #ifndef _MSC_VER
 #if __has_cpp_attribute(clang::fallthrough)

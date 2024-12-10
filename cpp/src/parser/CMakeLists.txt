@@ -16,7 +16,7 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 ]]
-message("Running in src/storage/tsfile/Parser directory")
+message("Running in src/parser directory")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-aux_source_directory(. PARSER_SRC_LIST)
+file(GLOB_RECURSE PARSER_SRC_LIST "*.cpp")
 add_library(parser_obj OBJECT ${PARSER_SRC_LIST})

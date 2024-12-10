@@ -20,8 +20,8 @@
 #define COMMON_READ_COMMON_PATH_H
 
 #include "utils/errno_define.h"
-#include "parser/PathParser.h"
-#include "parser/PathNodesGenerator.h"
+#include "parser/generator/PathParser.h"
+#include "parser/path_nodes_generator.h"
 
 #include <string>
 

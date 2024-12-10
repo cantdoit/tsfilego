@@ -45,23 +45,22 @@ namespace storage
         std::vector<std::string> path;
         path.reserve(node_names.size());
         for (uint64_t i = 0; i < node_names.size(); i++) {
-            path.push_back(parse_node_name(node_names[i]));
+            path.emplace_back(parse_node_name(node_names[i]));
         }
         return path;
     }
     std::string PathVisitor::parse_node_name(PathParser::NodeNameContext *ctx) {
-        std::string nodeName = ctx->getText();
-        if (starts_with(nodeName, BACK_QUOTE_STRING) && ends_with(nodeName, BACK_QUOTE_STRING)) {
-            std::string unWrapped = nodeName.substr(1, nodeName.length() - 1);
-            
+        std::string node_name = ctx->getText();
+        if (starts_with(node_name, BACK_QUOTE_STRING) && ends_with(node_name, BACK_QUOTE_STRING)) {
+            std::string unWrapped = node_name.substr(1, node_name.length() - 2);
             if (is_real_number(unWrapped) || !std::regex_match(unWrapped, IDENTIFIER_PATTERN)) {
-                return nodeName;
+                return node_name;
             }
             
             return unWrapped;
         }
 
-        return nodeName;
+        return node_name;
     }
     bool PathVisitor::is_real_number(const std::string& str) {
         std::string s = str;
@@ -73,7 +72,11 @@ namespace storage
                 s = removeSign;
             }
         }
-        size_t index = std::find_if(s.begin(), s.end(), [](const char& c) { return c != '0'; }) - s.begin();
+        size_t index = 0;
+        auto it = std::find_if(s.begin(), s.end(), [](const char& c) { return c != '0'; });
+        if (it != s.end()) {
+            index = it - s.begin();
+        }
 
         if (index > 0 && (s[index] == 'e' || s[index] == 'E')) {
             return is_creatable(s.substr(index - 1));

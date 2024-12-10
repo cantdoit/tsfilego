@@ -19,11 +19,11 @@
 #include <string>
 #include <vector>
 
-#include "PathNodesGenerator.h"
+#include "path_nodes_generator.h"
 #include "utils/errno_define.h"
-#include "PathLexer.h"
-#include "PathParser.h"
-#include "PathParserError.h"
+#include "generator/PathLexer.h"
+#include "generator/PathParser.h"
+#include "path_parser_error.h"
 #include "path_visitor.h"
 
 namespace storage {
@@ -31,18 +31,16 @@ namespace storage {
         antlr4::ANTLRInputStream inputStream(path);
         PathLexer lexer(&inputStream);
         lexer.removeErrorListeners(); 
-        // lexer.addErrorListener(&PathParseError::getInstance());
+        lexer.addErrorListener(&PathParseError::getInstance());
         antlr4::CommonTokenStream tokens(&lexer);
         PathParser parser(&tokens);
         parser.removeErrorListeners(); 
-        // parser.addErrorListener(&PathParseError::getInstance());
+        parser.addErrorListener(&PathParseError::getInstance());
         parser.getInterpreter<antlr4::atn::ParserATNSimulator>()->setPredictionMode(antlr4::atn::PredictionMode::LL);
-
         /* if use SLL Mode to parse path, it will throw exception
             but c++ tsfile forbid throw exception, so we use LL Mode
             to parse path.
         */
-       
         PathVisitor path_visitor;
         return path_visitor.visit(parser.path()).as<std::vector<std::string>>();
     }

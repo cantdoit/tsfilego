@@ -47,7 +47,6 @@ public:
                 expectedTokenNames.insert(vocabulary.getDisplayName(token));
             }
 
-            // 修改错误消息
             if (expectedTokenNames.count("ID") && expectedTokenNames.count("QUOTED_ID")) {
                 std::ostringstream expectedStr;
                 expectedStr << "{ID, QUOTED_ID";
