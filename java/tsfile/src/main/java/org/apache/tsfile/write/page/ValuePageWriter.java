@@ -27,7 +27,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.file.metadata.enums.CompressionType;
 import org.apache.tsfile.file.metadata.enums.EncryptionType;
 import org.apache.tsfile.file.metadata.statistics.Statistics;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.PublicBAOS;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
@@ -150,7 +150,7 @@ public class ValuePageWriter {
   }
 
   /** write a time value pair into encoder */
-  public void write(long time, Binary value, boolean isNull) {
+  public void write(long time, PooledBinary value, boolean isNull) {
     setBit(isNull);
     if (!isNull) {
       valueEncoder.encode(value, valueOut);
@@ -231,7 +231,7 @@ public class ValuePageWriter {
 
   /** write time series into encoder */
   public void write(
-      long[] timestamps, Binary[] values, boolean[] isNull, int batchSize, int arrayOffset) {
+      long[] timestamps, PooledBinary[] values, boolean[] isNull, int batchSize, int arrayOffset) {
     for (int i = arrayOffset; i < batchSize + arrayOffset; i++) {
       setBit(isNull[i]);
       if (!isNull[i]) {

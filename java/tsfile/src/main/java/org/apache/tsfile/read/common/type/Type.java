@@ -21,7 +21,7 @@ package org.apache.tsfile.read.common.type;
 
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.block.column.ColumnBuilder;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.util.List;
 
@@ -53,7 +53,7 @@ public interface Type {
   }
 
   /** Gets a Binary at {@code position}. */
-  default Binary getBinary(Column c, int position) {
+  default PooledBinary getBinary(Column c, int position) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
@@ -88,7 +88,7 @@ public interface Type {
   }
 
   /** Write a Binary to the current entry; */
-  default void writeBinary(ColumnBuilder builder, Binary value) {
+  default void writeBinary(ColumnBuilder builder, PooledBinary value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 

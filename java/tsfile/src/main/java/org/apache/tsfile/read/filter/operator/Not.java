@@ -24,7 +24,7 @@ import org.apache.tsfile.read.common.TimeRange;
 import org.apache.tsfile.read.common.block.TsBlock;
 import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.basic.OperatorType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -81,7 +81,7 @@ public class Not extends Filter {
   }
 
   @Override
-  public boolean satisfyBinary(long time, Binary value) {
+  public boolean satisfyBinary(long time, PooledBinary value) {
     return !filter.satisfyBinary(time, value);
   }
 
@@ -116,7 +116,7 @@ public class Not extends Filter {
   }
 
   @Override
-  public boolean satisfyBinaryRow(long time, Binary[] values) {
+  public boolean satisfyBinaryRow(long time, PooledBinary[] values) {
     return !filter.satisfyBinaryRow(time, values);
   }
 

@@ -30,7 +30,7 @@ import org.apache.tsfile.file.header.PageHeader;
 import org.apache.tsfile.file.metadata.enums.CompressionType;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.read.common.block.column.TimeColumn;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.write.schema.IMeasurementSchema;
 import org.apache.tsfile.write.schema.VectorMeasurementSchema;
@@ -271,7 +271,7 @@ public class AlignedChunkWriterImpl implements IChunkWriter {
     valueChunkWriterList.get(valueIndex++).write(time, value, isNull);
   }
 
-  public void write(long time, Binary value, boolean isNull) {
+  public void write(long time, PooledBinary value, boolean isNull) {
     valueChunkWriterList.get(valueIndex++).write(time, value, isNull);
   }
 
@@ -295,7 +295,7 @@ public class AlignedChunkWriterImpl implements IChunkWriter {
     valueChunkWriterList.get(valueIndex).write(time, value, isNull);
   }
 
-  public void write(long time, Binary value, boolean isNull, int valueIndex) {
+  public void write(long time, PooledBinary value, boolean isNull, int valueIndex) {
     valueChunkWriterList.get(valueIndex).write(time, value, isNull);
   }
 
@@ -326,7 +326,9 @@ public class AlignedChunkWriterImpl implements IChunkWriter {
         case STRING:
           writer.write(
               time,
-              point != null ? point.getBinary() : new Binary("".getBytes(StandardCharsets.UTF_8)),
+              point != null
+                  ? point.getBinary()
+                  : new PooledBinary("".getBytes(StandardCharsets.UTF_8)),
               point == null);
           break;
       }
@@ -425,7 +427,7 @@ public class AlignedChunkWriterImpl implements IChunkWriter {
     valueChunkWriterList.get(valueIndex).write(time, value, isNull);
   }
 
-  public void writeByColumn(long time, Binary value, boolean isNull) {
+  public void writeByColumn(long time, PooledBinary value, boolean isNull) {
     valueChunkWriterList.get(valueIndex).write(time, value, isNull);
   }
 

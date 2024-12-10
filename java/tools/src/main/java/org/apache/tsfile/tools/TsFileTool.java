@@ -22,7 +22,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.file.metadata.TableSchema;
 import org.apache.tsfile.file.metadata.enums.CompressionType;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.write.TsFileWriter;
 import org.apache.tsfile.write.record.Tablet;
 import org.apache.tsfile.write.schema.IMeasurementSchema;
@@ -270,7 +270,7 @@ public class TsFileTool {
         return Boolean.valueOf(i);
       case TEXT:
         if (columnCategory.equals(Tablet.ColumnCategory.MEASUREMENT)) {
-          return new Binary(String.valueOf(i), StandardCharsets.UTF_8);
+          return new PooledBinary(String.valueOf(i), StandardCharsets.UTF_8);
         } else {
           return String.valueOf(i);
         }

@@ -22,7 +22,7 @@ import org.apache.tsfile.common.TsFileApi;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.file.metadata.IDeviceID;
 import org.apache.tsfile.file.metadata.IDeviceID.Factory;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.StringContainer;
 import org.apache.tsfile.write.record.datapoint.BooleanDataPoint;
 import org.apache.tsfile.write.record.datapoint.DataPoint;
@@ -112,12 +112,12 @@ public class TSRecord {
   @TsFileApi
   public TSRecord addPoint(String measurementName, String val) {
     return addTuple(
-        new StringDataPoint(measurementName, new Binary(val, TSFileConfig.STRING_CHARSET)));
+        new StringDataPoint(measurementName, new PooledBinary(val, TSFileConfig.STRING_CHARSET)));
   }
 
   @TsFileApi
   public TSRecord addPoint(String measurementName, byte[] val) {
-    return addTuple(new StringDataPoint(measurementName, new Binary(val)));
+    return addTuple(new StringDataPoint(measurementName, new PooledBinary(val)));
   }
 
   @TsFileApi

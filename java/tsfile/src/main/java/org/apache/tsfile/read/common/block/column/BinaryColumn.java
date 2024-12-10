@@ -22,7 +22,7 @@ package org.apache.tsfile.read.common.block.column;
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.block.column.ColumnEncoding;
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.RamUsageEstimator;
 import org.apache.tsfile.utils.TsPrimitiveType;
 
@@ -41,19 +41,19 @@ public class BinaryColumn implements Column {
   private final int arrayOffset;
   private int positionCount;
   private boolean[] valueIsNull;
-  private final Binary[] values;
+  private final PooledBinary[] values;
 
   private final long retainedSizeInBytes;
 
   public BinaryColumn(int initialCapacity) {
-    this(0, 0, null, new Binary[initialCapacity]);
+    this(0, 0, null, new PooledBinary[initialCapacity]);
   }
 
-  public BinaryColumn(int positionCount, Optional<boolean[]> valueIsNull, Binary[] values) {
+  public BinaryColumn(int positionCount, Optional<boolean[]> valueIsNull, PooledBinary[] values) {
     this(0, positionCount, valueIsNull.orElse(null), values);
   }
 
-  BinaryColumn(int arrayOffset, int positionCount, boolean[] valueIsNull, Binary[] values) {
+  BinaryColumn(int arrayOffset, int positionCount, boolean[] valueIsNull, PooledBinary[] values) {
     if (arrayOffset < 0) {
       throw new IllegalArgumentException("arrayOffset is negative");
     }
@@ -89,12 +89,12 @@ public class BinaryColumn implements Column {
   }
 
   @Override
-  public Binary getBinary(int position) {
+  public PooledBinary getBinary(int position) {
     return values[position + arrayOffset];
   }
 
   @Override
-  public Binary[] getBinaries() {
+  public PooledBinary[] getBinaries() {
     return values;
   }
 
@@ -152,7 +152,7 @@ public class BinaryColumn implements Column {
     int to = from + length;
     boolean[] valueIsNullCopy =
         valueIsNull != null ? Arrays.copyOfRange(valueIsNull, from, to) : null;
-    Binary[] valuesCopy = Arrays.copyOfRange(values, from, to);
+    PooledBinary[] valuesCopy = Arrays.copyOfRange(values, from, to);
 
     return new BinaryColumn(0, length, valueIsNullCopy, valuesCopy);
   }
@@ -175,7 +175,7 @@ public class BinaryColumn implements Column {
     int from = arrayOffset + fromIndex;
     boolean[] valueIsNullCopy =
         valueIsNull != null ? Arrays.copyOfRange(valueIsNull, from, positionCount) : null;
-    Binary[] valuesCopy = Arrays.copyOfRange(values, from, positionCount);
+    PooledBinary[] valuesCopy = Arrays.copyOfRange(values, from, positionCount);
 
     int length = positionCount - fromIndex;
     return new BinaryColumn(0, length, valueIsNullCopy, valuesCopy);
@@ -184,7 +184,7 @@ public class BinaryColumn implements Column {
   @Override
   public void reverse() {
     for (int i = arrayOffset, j = arrayOffset + positionCount - 1; i < j; i++, j--) {
-      Binary valueTmp = values[i];
+      PooledBinary valueTmp = values[i];
       values[i] = values[j];
       values[j] = valueTmp;
     }

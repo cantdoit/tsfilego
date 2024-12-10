@@ -31,7 +31,7 @@ import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.query.executor.task.DeviceQueryTask;
 import org.apache.tsfile.read.reader.series.AbstractFileSeriesReader;
 import org.apache.tsfile.read.reader.series.FileSeriesReader;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 
 import org.slf4j.Logger;
@@ -234,7 +234,7 @@ public class SingleDeviceTsBlockReader implements TsBlockReader {
     switch (column.getDataType()) {
       case TEXT:
         if (val instanceof String) {
-          val = new Binary(((String) val), StandardCharsets.UTF_8);
+          val = new PooledBinary(((String) val), StandardCharsets.UTF_8);
         }
         Arrays.fill(column.getBinaries(), startPos, endPos, val);
         break;

@@ -22,7 +22,7 @@ package org.apache.tsfile.encoding.decoder;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileDecodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -206,7 +206,7 @@ public abstract class Decoder {
     throw new TsFileDecodingException("Method readDouble is not supported by Decoder");
   }
 
-  public Binary readBinary(ByteBuffer buffer) {
+  public PooledBinary readBinary(ByteBuffer buffer) {
     throw new TsFileDecodingException("Method readBinary is not supported by Decoder");
   }
 

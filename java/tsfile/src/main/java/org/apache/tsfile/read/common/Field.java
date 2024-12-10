@@ -21,9 +21,9 @@ package org.apache.tsfile.read.common;
 
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.NullFieldException;
-import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.BytesUtils;
 import org.apache.tsfile.utils.DateUtils;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 
@@ -41,7 +41,7 @@ public class Field {
   private long longV;
   private float floatV;
   private double doubleV;
-  private Binary binaryV;
+  private PooledBinary binaryV;
 
   public Field(TSDataType dataType) {
     this.dataType = dataType;
@@ -140,14 +140,14 @@ public class Field {
     this.doubleV = doubleV;
   }
 
-  public Binary getBinaryV() {
+  public PooledBinary getBinaryV() {
     if (dataType == null) {
       throw new NullFieldException();
     }
     return binaryV;
   }
 
-  public void setBinaryV(Binary binaryV) {
+  public void setBinaryV(PooledBinary binaryV) {
     this.binaryV = binaryV;
   }
 
@@ -184,7 +184,7 @@ public class Field {
       case STRING:
         return binaryV.toString();
       case BLOB:
-        return BytesUtils.parseBlobByteArrayToString(binaryV.getValues());
+        return BytesUtils.parseBlobByteArrayToString(binaryV.getValues(), 0, binaryV.getLength());
       default:
         throw new UnSupportedDataTypeException(dataType.toString());
     }
@@ -248,7 +248,7 @@ public class Field {
       case TEXT:
       case BLOB:
       case STRING:
-        field.setBinaryV((Binary) value);
+        field.setBinaryV((PooledBinary) value);
         break;
       default:
         throw new UnSupportedDataTypeException(dataType.toString());

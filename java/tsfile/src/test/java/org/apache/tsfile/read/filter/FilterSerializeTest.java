@@ -24,7 +24,7 @@ import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.factory.FilterFactory;
 import org.apache.tsfile.read.filter.factory.TimeFilterApi;
 import org.apache.tsfile.read.filter.factory.ValueFilterApi;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TimeDuration;
 
 import org.junit.Test;
@@ -321,26 +321,26 @@ public class FilterSerializeTest {
     Filter[] filters =
         new Filter[] {
           ValueFilterApi.gt(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.TEXT),
+              DEFAULT_MEASUREMENT_INDEX, new PooledBinary("test", STRING_CHARSET), TSDataType.TEXT),
           ValueFilterApi.gtEq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.TEXT),
+              DEFAULT_MEASUREMENT_INDEX, new PooledBinary("test", STRING_CHARSET), TSDataType.TEXT),
           ValueFilterApi.lt(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.TEXT),
+              DEFAULT_MEASUREMENT_INDEX, new PooledBinary("test", STRING_CHARSET), TSDataType.TEXT),
           ValueFilterApi.ltEq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.TEXT),
+              DEFAULT_MEASUREMENT_INDEX, new PooledBinary("test", STRING_CHARSET), TSDataType.TEXT),
           ValueFilterApi.eq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.TEXT),
+              DEFAULT_MEASUREMENT_INDEX, new PooledBinary("test", STRING_CHARSET), TSDataType.TEXT),
           ValueFilterApi.notEq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.TEXT),
+              DEFAULT_MEASUREMENT_INDEX, new PooledBinary("test", STRING_CHARSET), TSDataType.TEXT),
           ValueFilterApi.between(
               DEFAULT_MEASUREMENT_INDEX,
-              new Binary("test", STRING_CHARSET),
-              new Binary("string", STRING_CHARSET),
+              new PooledBinary("test", STRING_CHARSET),
+              new PooledBinary("string", STRING_CHARSET),
               TSDataType.TEXT),
           ValueFilterApi.notBetween(
               DEFAULT_MEASUREMENT_INDEX,
-              new Binary("test", STRING_CHARSET),
-              new Binary("string", STRING_CHARSET),
+              new PooledBinary("test", STRING_CHARSET),
+              new PooledBinary("string", STRING_CHARSET),
               TSDataType.TEXT),
           ValueFilterApi.like(
               DEFAULT_MEASUREMENT_INDEX,
@@ -357,13 +357,15 @@ public class FilterSerializeTest {
               DEFAULT_MEASUREMENT_INDEX,
               new HashSet<>(
                   Arrays.asList(
-                      new Binary("test", STRING_CHARSET), new Binary("string", STRING_CHARSET))),
+                      new PooledBinary("test", STRING_CHARSET),
+                      new PooledBinary("string", STRING_CHARSET))),
               TSDataType.TEXT),
           ValueFilterApi.notIn(
               DEFAULT_MEASUREMENT_INDEX,
               new HashSet<>(
                   Arrays.asList(
-                      new Binary("test", STRING_CHARSET), new Binary("string", STRING_CHARSET))),
+                      new PooledBinary("test", STRING_CHARSET),
+                      new PooledBinary("string", STRING_CHARSET))),
               TSDataType.TEXT),
         };
     for (Filter filter : filters) {
@@ -376,26 +378,38 @@ public class FilterSerializeTest {
     Filter[] filters =
         new Filter[] {
           ValueFilterApi.gt(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.STRING),
+              DEFAULT_MEASUREMENT_INDEX,
+              new PooledBinary("test", STRING_CHARSET),
+              TSDataType.STRING),
           ValueFilterApi.gtEq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.STRING),
+              DEFAULT_MEASUREMENT_INDEX,
+              new PooledBinary("test", STRING_CHARSET),
+              TSDataType.STRING),
           ValueFilterApi.lt(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.STRING),
+              DEFAULT_MEASUREMENT_INDEX,
+              new PooledBinary("test", STRING_CHARSET),
+              TSDataType.STRING),
           ValueFilterApi.ltEq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.STRING),
+              DEFAULT_MEASUREMENT_INDEX,
+              new PooledBinary("test", STRING_CHARSET),
+              TSDataType.STRING),
           ValueFilterApi.eq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.STRING),
+              DEFAULT_MEASUREMENT_INDEX,
+              new PooledBinary("test", STRING_CHARSET),
+              TSDataType.STRING),
           ValueFilterApi.notEq(
-              DEFAULT_MEASUREMENT_INDEX, new Binary("test", STRING_CHARSET), TSDataType.STRING),
+              DEFAULT_MEASUREMENT_INDEX,
+              new PooledBinary("test", STRING_CHARSET),
+              TSDataType.STRING),
           ValueFilterApi.between(
               DEFAULT_MEASUREMENT_INDEX,
-              new Binary("test", STRING_CHARSET),
-              new Binary("string", STRING_CHARSET),
+              new PooledBinary("test", STRING_CHARSET),
+              new PooledBinary("string", STRING_CHARSET),
               TSDataType.STRING),
           ValueFilterApi.notBetween(
               DEFAULT_MEASUREMENT_INDEX,
-              new Binary("test", STRING_CHARSET),
-              new Binary("string", STRING_CHARSET),
+              new PooledBinary("test", STRING_CHARSET),
+              new PooledBinary("string", STRING_CHARSET),
               TSDataType.STRING),
           ValueFilterApi.like(
               DEFAULT_MEASUREMENT_INDEX,
@@ -413,13 +427,15 @@ public class FilterSerializeTest {
               DEFAULT_MEASUREMENT_INDEX,
               new HashSet<>(
                   Arrays.asList(
-                      new Binary("test", STRING_CHARSET), new Binary("string", STRING_CHARSET))),
+                      new PooledBinary("test", STRING_CHARSET),
+                      new PooledBinary("string", STRING_CHARSET))),
               TSDataType.STRING),
           ValueFilterApi.notIn(
               DEFAULT_MEASUREMENT_INDEX,
               new HashSet<>(
                   Arrays.asList(
-                      new Binary("test", STRING_CHARSET), new Binary("string", STRING_CHARSET))),
+                      new PooledBinary("test", STRING_CHARSET),
+                      new PooledBinary("string", STRING_CHARSET))),
               TSDataType.STRING),
         };
     for (Filter filter : filters) {

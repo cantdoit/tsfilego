@@ -31,8 +31,8 @@ import org.apache.tsfile.read.filter.operator.GroupByMonthFilter;
 import org.apache.tsfile.read.filter.operator.Not;
 import org.apache.tsfile.read.filter.operator.Or;
 import org.apache.tsfile.read.filter.operator.TimeFilterOperators;
-import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.FilterDeserialize;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -75,7 +75,7 @@ public abstract class Filter {
 
   public abstract boolean satisfyDouble(long time, double value);
 
-  public abstract boolean satisfyBinary(long time, Binary value);
+  public abstract boolean satisfyBinary(long time, PooledBinary value);
 
   /**
    * To examine whether the row(with time and values) is satisfied with the filter.
@@ -96,7 +96,7 @@ public abstract class Filter {
 
   public abstract boolean satisfyDoubleRow(long time, double[] values);
 
-  public abstract boolean satisfyBinaryRow(long time, Binary[] values);
+  public abstract boolean satisfyBinaryRow(long time, PooledBinary[] values);
 
   /**
    * @deprecated this method is out of date. Use {@link #satisfyTsBlock(boolean[],TsBlock)} instead.

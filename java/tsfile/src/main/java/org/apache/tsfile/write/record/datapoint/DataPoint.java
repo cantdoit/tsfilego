@@ -21,8 +21,8 @@ package org.apache.tsfile.write.record.datapoint;
 
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.DateUtils;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.StringContainer;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 import org.apache.tsfile.write.chunk.ChunkWriterImpl;
@@ -89,7 +89,8 @@ public abstract class DataPoint {
         case BLOB:
         case STRING:
           dataPoint =
-              new StringDataPoint(measurementId, new Binary(value, TSFileConfig.STRING_CHARSET));
+              new StringDataPoint(
+                  measurementId, new PooledBinary(value, TSFileConfig.STRING_CHARSET));
           break;
         default:
           throw new UnSupportedDataTypeException(
@@ -150,7 +151,7 @@ public abstract class DataPoint {
     throw new UnsupportedOperationException("set Double not support in DataPoint");
   }
 
-  public void setString(Binary value) {
+  public void setString(PooledBinary value) {
     throw new UnsupportedOperationException("set String not support in DataPoint");
   }
 

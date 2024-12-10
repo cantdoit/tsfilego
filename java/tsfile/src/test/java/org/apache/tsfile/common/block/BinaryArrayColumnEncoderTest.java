@@ -24,7 +24,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.read.common.block.column.BinaryColumn;
 import org.apache.tsfile.read.common.block.column.ColumnEncoder;
 import org.apache.tsfile.read.common.block.column.ColumnEncoderFactory;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -44,14 +44,14 @@ public class BinaryArrayColumnEncoderTest {
     Random random = new Random();
 
     boolean[] nullIndicators = new boolean[positionCount];
-    Binary[] values = new Binary[positionCount];
+    PooledBinary[] values = new PooledBinary[positionCount];
     for (int i = 0; i < positionCount; i++) {
       nullIndicators[i] = i % 2 == 0;
       if (i % 2 != 0) {
         int length = random.nextInt(1024) + 1;
         byte[] value = new byte[length];
         random.nextBytes(value);
-        values[i] = new Binary(value);
+        values[i] = new PooledBinary(value);
       }
     }
     BinaryColumn input = new BinaryColumn(positionCount, Optional.of(nullIndicators), values);

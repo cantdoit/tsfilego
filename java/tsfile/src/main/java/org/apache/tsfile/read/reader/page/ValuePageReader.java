@@ -28,7 +28,7 @@ import org.apache.tsfile.read.common.BatchData;
 import org.apache.tsfile.read.common.BatchDataFactory;
 import org.apache.tsfile.read.common.TimeRange;
 import org.apache.tsfile.read.filter.basic.Filter;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
@@ -158,7 +158,7 @@ public class ValuePageReader {
         case TEXT:
         case BLOB:
         case STRING:
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           if (!isDeleted(timestamp)
               && (filter == null || filter.satisfyBinary(timestamp, aBinary))) {
             pageData.putBinary(timestamp, aBinary);
@@ -213,7 +213,7 @@ public class ValuePageReader {
       case TEXT:
       case BLOB:
       case STRING:
-        Binary aBinary = valueDecoder.readBinary(valueBuffer);
+        PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
         if (!isDeleted(timestamp)) {
           resultValue = new TsPrimitiveType.TsBinary(aBinary);
         }
@@ -275,7 +275,7 @@ public class ValuePageReader {
         case TEXT:
         case BLOB:
         case STRING:
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           if (!isDeleted(timeBatch[i])) {
             valueBatch[i] = new TsPrimitiveType.TsBinary(aBinary);
           }
@@ -362,7 +362,7 @@ public class ValuePageReader {
         case TEXT:
         case BLOB:
         case STRING:
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           if (keepCurrentRow[i]) {
             if (isDeleted[i]) {
               columnBuilder.appendNull();
@@ -431,7 +431,7 @@ public class ValuePageReader {
         case TEXT:
         case BLOB:
         case STRING:
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           if (keepCurrentRow[i]) {
             columnBuilder.writeBinary(aBinary);
           }
@@ -559,7 +559,7 @@ public class ValuePageReader {
             columnBuilder.appendNull();
             continue;
           }
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           columnBuilder.writeBinary(aBinary);
         }
         break;

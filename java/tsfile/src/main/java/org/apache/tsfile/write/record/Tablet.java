@@ -24,10 +24,10 @@ import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.file.metadata.IDeviceID;
 import org.apache.tsfile.file.metadata.StringArrayDeviceID;
-import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.BitMap;
 import org.apache.tsfile.utils.BytesUtils;
 import org.apache.tsfile.utils.DateUtils;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.PublicBAOS;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
@@ -294,20 +294,20 @@ public class Tablet {
       case STRING:
       case BLOB:
         {
-          if (value != null && !(value instanceof Binary) && !(value instanceof String)) {
+          if (value != null && !(value instanceof PooledBinary) && !(value instanceof String)) {
             throw new IllegalArgumentException(
                 String.format(
                     "Expected value of type Binary for data type %s, but got %s",
                     dataType, value.getClass().getName()));
           }
-          final Binary[] sensor = (Binary[]) values[indexOfSchema];
-          if (value instanceof Binary) {
-            sensor[rowIndex] = (Binary) value;
+          final PooledBinary[] sensor = (PooledBinary[]) values[indexOfSchema];
+          if (value instanceof PooledBinary) {
+            sensor[rowIndex] = (PooledBinary) value;
           } else {
             sensor[rowIndex] =
                 value != null
-                    ? new Binary(((String) value).getBytes(TSFileConfig.STRING_CHARSET))
-                    : Binary.EMPTY_VALUE;
+                    ? new PooledBinary(((String) value).getBytes(TSFileConfig.STRING_CHARSET))
+                    : PooledBinary.EMPTY_VALUE;
           }
           break;
         }
@@ -462,8 +462,8 @@ public class Tablet {
 
   @TsFileApi
   public void addValue(int rowIndex, int columnIndex, String val) {
-    final Binary[] sensor = (Binary[]) values[columnIndex];
-    sensor[rowIndex] = new Binary(val, TSFileConfig.STRING_CHARSET);
+    final PooledBinary[] sensor = (PooledBinary[]) values[columnIndex];
+    sensor[rowIndex] = new PooledBinary(val, TSFileConfig.STRING_CHARSET);
     updateBitMap(rowIndex, columnIndex, false);
   }
 
@@ -475,8 +475,8 @@ public class Tablet {
 
   @TsFileApi
   public void addValue(int rowIndex, int columnIndex, byte[] val) {
-    final Binary[] sensor = (Binary[]) values[columnIndex];
-    sensor[rowIndex] = new Binary(val);
+    final PooledBinary[] sensor = (PooledBinary[]) values[columnIndex];
+    sensor[rowIndex] = new PooledBinary(val);
     updateBitMap(rowIndex, columnIndex, false);
   }
 
@@ -588,7 +588,7 @@ public class Tablet {
       case TEXT:
       case STRING:
       case BLOB:
-        valueColumn = new Binary[maxRowNumber];
+        valueColumn = new PooledBinary[maxRowNumber];
         break;
       case DATE:
         valueColumn = new LocalDate[maxRowNumber];
@@ -656,7 +656,8 @@ public class Tablet {
         } else {
           ReadWriteIOUtils.write(BytesUtils.boolToByte(true), stream);
           ReadWriteIOUtils.write(rowSize, stream);
-          ReadWriteIOUtils.write(new Binary(bitMaps[i].getTruncatedByteArray(rowSize)), stream);
+          ReadWriteIOUtils.write(
+              new PooledBinary(bitMaps[i].getTruncatedByteArray(rowSize)), stream);
         }
       }
     }
@@ -720,7 +721,7 @@ public class Tablet {
         case TEXT:
         case STRING:
         case BLOB:
-          Binary[] binaryValues = (Binary[]) column;
+          PooledBinary[] binaryValues = (PooledBinary[]) column;
           for (int j = 0; j < rowSize; j++) {
             ReadWriteIOUtils.write(BytesUtils.boolToByte(binaryValues[j] != null), stream);
             if (binaryValues[j] != null) {
@@ -795,7 +796,7 @@ public class Tablet {
       boolean hasBitMap = BytesUtils.byteToBool(ReadWriteIOUtils.readByte(byteBuffer));
       if (hasBitMap) {
         final int size = ReadWriteIOUtils.readInt(byteBuffer);
-        final Binary valueBinary = ReadWriteIOUtils.readBinary(byteBuffer);
+        final PooledBinary valueBinary = ReadWriteIOUtils.readBinary(byteBuffer);
         bitMaps[i] = new BitMap(size, valueBinary.getValues());
       }
     }
@@ -867,13 +868,13 @@ public class Tablet {
           case TEXT:
           case STRING:
           case BLOB:
-            Binary[] binaryValues = new Binary[rowSize];
+            PooledBinary[] binaryValues = new PooledBinary[rowSize];
             for (int index = 0; index < rowSize; index++) {
               boolean isNotNull = BytesUtils.byteToBool(ReadWriteIOUtils.readByte(byteBuffer));
               if (isNotNull) {
                 binaryValues[index] = ReadWriteIOUtils.readBinary(byteBuffer);
               } else {
-                binaryValues[index] = Binary.EMPTY_VALUE;
+                binaryValues[index] = PooledBinary.EMPTY_VALUE;
               }
             }
             values[i] = binaryValues;
@@ -1024,8 +1025,8 @@ public class Tablet {
         case TEXT:
         case STRING:
         case BLOB:
-          Binary[] thisBinaryValues = (Binary[]) values[i];
-          Binary[] thatBinaryValues = (Binary[]) thatValues[i];
+          PooledBinary[] thisBinaryValues = (PooledBinary[]) values[i];
+          PooledBinary[] thatBinaryValues = (PooledBinary[]) thatValues[i];
           if (thisBinaryValues.length < rowSize || thatBinaryValues.length < rowSize) {
             return false;
           }
@@ -1119,7 +1120,7 @@ public class Tablet {
       case BLOB:
       case TEXT:
       case STRING:
-        return ((Binary[]) values[j])[i];
+        return ((PooledBinary[]) values[j])[i];
       case INT32:
         return ((int[]) values[j])[i];
       case FLOAT:

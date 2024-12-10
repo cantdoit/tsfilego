@@ -20,7 +20,7 @@
 package org.apache.tsfile.block.column;
 
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 
 import java.util.Arrays;
@@ -59,7 +59,7 @@ public interface Column {
   }
 
   /** Gets a Binary at {@code position}. */
-  default Binary getBinary(int position) {
+  default PooledBinary getBinary(int position) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
@@ -94,7 +94,7 @@ public interface Column {
   }
 
   /** Gets the Binary list. */
-  default Binary[] getBinaries() {
+  default PooledBinary[] getBinaries() {
     throw new UnsupportedOperationException(getClass().getName());
   }
 

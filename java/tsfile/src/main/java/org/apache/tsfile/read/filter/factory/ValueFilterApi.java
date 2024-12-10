@@ -31,7 +31,7 @@ import org.apache.tsfile.read.filter.operator.LongFilterOperators;
 import org.apache.tsfile.read.filter.operator.StringFilterOperators;
 import org.apache.tsfile.read.filter.operator.ValueIsNotNullOperator;
 import org.apache.tsfile.read.filter.operator.ValueIsNullOperator;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.util.Objects;
 import java.util.Set;
@@ -66,9 +66,9 @@ public class ValueFilterApi {
         return new FloatFilterOperators.ValueGt(measurementIndex, (float) value);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueGt(measurementIndex, (Binary) value);
+        return new BinaryFilterOperators.ValueGt(measurementIndex, (PooledBinary) value);
       case STRING:
-        return new StringFilterOperators.ValueGt(measurementIndex, (Binary) value);
+        return new StringFilterOperators.ValueGt(measurementIndex, (PooledBinary) value);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -92,9 +92,9 @@ public class ValueFilterApi {
         return new FloatFilterOperators.ValueGtEq(measurementIndex, (float) value);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueGtEq(measurementIndex, (Binary) value);
+        return new BinaryFilterOperators.ValueGtEq(measurementIndex, (PooledBinary) value);
       case STRING:
-        return new StringFilterOperators.ValueGtEq(measurementIndex, (Binary) value);
+        return new StringFilterOperators.ValueGtEq(measurementIndex, (PooledBinary) value);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -118,9 +118,9 @@ public class ValueFilterApi {
         return new FloatFilterOperators.ValueLt(measurementIndex, (float) value);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueLt(measurementIndex, (Binary) value);
+        return new BinaryFilterOperators.ValueLt(measurementIndex, (PooledBinary) value);
       case STRING:
-        return new StringFilterOperators.ValueLt(measurementIndex, (Binary) value);
+        return new StringFilterOperators.ValueLt(measurementIndex, (PooledBinary) value);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -144,9 +144,9 @@ public class ValueFilterApi {
         return new FloatFilterOperators.ValueLtEq(measurementIndex, (float) value);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueLtEq(measurementIndex, (Binary) value);
+        return new BinaryFilterOperators.ValueLtEq(measurementIndex, (PooledBinary) value);
       case STRING:
-        return new StringFilterOperators.ValueLtEq(measurementIndex, (Binary) value);
+        return new StringFilterOperators.ValueLtEq(measurementIndex, (PooledBinary) value);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -170,9 +170,9 @@ public class ValueFilterApi {
         return new FloatFilterOperators.ValueEq(measurementIndex, (float) value);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueEq(measurementIndex, (Binary) value);
+        return new BinaryFilterOperators.ValueEq(measurementIndex, (PooledBinary) value);
       case STRING:
-        return new StringFilterOperators.ValueEq(measurementIndex, (Binary) value);
+        return new StringFilterOperators.ValueEq(measurementIndex, (PooledBinary) value);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -196,9 +196,9 @@ public class ValueFilterApi {
         return new FloatFilterOperators.ValueNotEq(measurementIndex, (float) value);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueNotEq(measurementIndex, (Binary) value);
+        return new BinaryFilterOperators.ValueNotEq(measurementIndex, (PooledBinary) value);
       case STRING:
-        return new StringFilterOperators.ValueNotEq(measurementIndex, (Binary) value);
+        return new StringFilterOperators.ValueNotEq(measurementIndex, (PooledBinary) value);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -238,10 +238,10 @@ public class ValueFilterApi {
       case TEXT:
       case BLOB:
         return new BinaryFilterOperators.ValueBetweenAnd(
-            measurementIndex, (Binary) value1, (Binary) value2);
+            measurementIndex, (PooledBinary) value1, (PooledBinary) value2);
       case STRING:
         return new StringFilterOperators.ValueBetweenAnd(
-            measurementIndex, (Binary) value1, (Binary) value2);
+            measurementIndex, (PooledBinary) value1, (PooledBinary) value2);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -273,10 +273,10 @@ public class ValueFilterApi {
       case TEXT:
       case BLOB:
         return new BinaryFilterOperators.ValueNotBetweenAnd(
-            measurementIndex, (Binary) value1, (Binary) value2);
+            measurementIndex, (PooledBinary) value1, (PooledBinary) value2);
       case STRING:
         return new StringFilterOperators.ValueNotBetweenAnd(
-            measurementIndex, (Binary) value1, (Binary) value2);
+            measurementIndex, (PooledBinary) value1, (PooledBinary) value2);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -401,9 +401,9 @@ public class ValueFilterApi {
         return new DoubleFilterOperators.ValueIn(measurementIndex, (Set<Double>) values);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueIn(measurementIndex, (Set<Binary>) values);
+        return new BinaryFilterOperators.ValueIn(measurementIndex, (Set<PooledBinary>) values);
       case STRING:
-        return new StringFilterOperators.ValueIn(measurementIndex, (Set<Binary>) values);
+        return new StringFilterOperators.ValueIn(measurementIndex, (Set<PooledBinary>) values);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }
@@ -428,9 +428,9 @@ public class ValueFilterApi {
         return new DoubleFilterOperators.ValueNotIn(measurementIndex, (Set<Double>) values);
       case TEXT:
       case BLOB:
-        return new BinaryFilterOperators.ValueNotIn(measurementIndex, (Set<Binary>) values);
+        return new BinaryFilterOperators.ValueNotIn(measurementIndex, (Set<PooledBinary>) values);
       case STRING:
-        return new StringFilterOperators.ValueNotIn(measurementIndex, (Set<Binary>) values);
+        return new StringFilterOperators.ValueNotIn(measurementIndex, (Set<PooledBinary>) values);
       default:
         throw new UnsupportedOperationException("Unsupported data type: " + type);
     }

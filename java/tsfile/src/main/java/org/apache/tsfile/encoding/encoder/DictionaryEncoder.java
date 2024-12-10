@@ -20,7 +20,7 @@
 package org.apache.tsfile.encoding.encoder;
 
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
@@ -45,8 +45,8 @@ import java.util.List;
 public class DictionaryEncoder extends Encoder {
   private static final Logger logger = LoggerFactory.getLogger(DictionaryEncoder.class);
 
-  private HashMap<Binary, Integer> entryIndex;
-  private List<Binary> indexEntry;
+  private HashMap<PooledBinary, Integer> entryIndex;
+  private List<PooledBinary> indexEntry;
   private IntRleEncoder valuesEncoder;
   private long mapSize;
 
@@ -60,7 +60,7 @@ public class DictionaryEncoder extends Encoder {
   }
 
   @Override
-  public void encode(Binary value, ByteArrayOutputStream out) {
+  public void encode(PooledBinary value, ByteArrayOutputStream out) {
     int i =
         entryIndex.computeIfAbsent(
             value,
@@ -97,9 +97,9 @@ public class DictionaryEncoder extends Encoder {
 
   private void writeMap(ByteArrayOutputStream out) throws IOException {
     ReadWriteForEncodingUtils.writeVarInt(indexEntry.size(), out);
-    for (Binary value : indexEntry) {
+    for (PooledBinary value : indexEntry) {
       ReadWriteForEncodingUtils.writeVarInt(value.getLength(), out);
-      out.write(value.getValues());
+      out.write(value.getValues(), 0, value.getLength());
     }
   }
 

@@ -20,7 +20,7 @@
 package org.apache.tsfile.read.common;
 
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 
@@ -76,7 +76,7 @@ public class DescReadWriteBatchData extends DescReadBatchData {
       case BLOB:
       case STRING:
         binaryRet = new LinkedList<>();
-        binaryRet.add(new Binary[capacity]);
+        binaryRet.add(new PooledBinary[capacity]);
         break;
       case VECTOR:
         vectorRet = new LinkedList<>();
@@ -279,18 +279,18 @@ public class DescReadWriteBatchData extends DescReadBatchData {
    * @param v binary data.
    */
   @Override
-  public void putBinary(long t, Binary v) {
+  public void putBinary(long t, PooledBinary v) {
     if (writeCurArrayIndex == -1) {
       if (capacity >= CAPACITY_THRESHOLD) {
         ((LinkedList<long[]>) timeRet).addFirst(new long[capacity]);
-        ((LinkedList<Binary[]>) binaryRet).addFirst(new Binary[capacity]);
+        ((LinkedList<PooledBinary[]>) binaryRet).addFirst(new PooledBinary[capacity]);
         writeCurListIndex++;
         writeCurArrayIndex = capacity - 1;
       } else {
         int newCapacity = capacity << 1;
 
         long[] newTimeData = new long[newCapacity];
-        Binary[] newValueData = new Binary[newCapacity];
+        PooledBinary[] newValueData = new PooledBinary[newCapacity];
 
         System.arraycopy(timeRet.get(0), 0, newTimeData, newCapacity - capacity, capacity);
         System.arraycopy(binaryRet.get(0), 0, newValueData, newCapacity - capacity, capacity);
@@ -399,7 +399,7 @@ public class DescReadWriteBatchData extends DescReadBatchData {
   }
 
   @Override
-  public Binary getBinaryByIndex(int idx) {
+  public PooledBinary getBinaryByIndex(int idx) {
     return binaryRet
         .get((idx + writeCurArrayIndex + 1) / capacity)[(idx + writeCurArrayIndex + 1) % capacity];
   }
@@ -442,9 +442,9 @@ public class DescReadWriteBatchData extends DescReadBatchData {
       case STRING:
         for (int i = length() - 1; i >= 0; i--) {
           outputStream.writeLong(getTimeByIndex(i));
-          Binary binary = getBinaryByIndex(i);
+          PooledBinary binary = getBinaryByIndex(i);
           outputStream.writeInt(binary.getLength());
-          outputStream.write(binary.getValues());
+          outputStream.write(binary.getValues(), 0, binary.getLength());
         }
         break;
       case INT64:
@@ -485,9 +485,9 @@ public class DescReadWriteBatchData extends DescReadBatchData {
                 case TEXT:
                 case BLOB:
                 case STRING:
-                  Binary binary = value.getBinary();
+                  PooledBinary binary = value.getBinary();
                   outputStream.writeInt(binary.getLength());
-                  outputStream.write(binary.getValues());
+                  outputStream.write(binary.getValues(), 0, binary.getLength());
                   break;
                 case INT64:
                 case TIMESTAMP:

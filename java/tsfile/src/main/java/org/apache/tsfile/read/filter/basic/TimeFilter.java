@@ -22,7 +22,7 @@ package org.apache.tsfile.read.filter.basic;
 import org.apache.tsfile.file.metadata.IMetadata;
 import org.apache.tsfile.file.metadata.statistics.Statistics;
 import org.apache.tsfile.read.common.block.TsBlock;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.io.Serializable;
 
@@ -69,7 +69,7 @@ public abstract class TimeFilter extends Filter {
   }
 
   @Override
-  public boolean satisfyBinary(long time, Binary value) {
+  public boolean satisfyBinary(long time, PooledBinary value) {
     // only use time to filter
     return timeSatisfy(time);
   }
@@ -111,7 +111,7 @@ public abstract class TimeFilter extends Filter {
   }
 
   @Override
-  public boolean satisfyBinaryRow(long time, Binary[] values) {
+  public boolean satisfyBinaryRow(long time, PooledBinary[] values) {
     // only use time to filter
     return timeSatisfy(time);
   }

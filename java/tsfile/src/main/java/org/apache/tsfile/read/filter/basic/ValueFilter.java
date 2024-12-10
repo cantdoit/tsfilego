@@ -23,7 +23,7 @@ import org.apache.tsfile.file.metadata.IMetadata;
 import org.apache.tsfile.file.metadata.statistics.Statistics;
 import org.apache.tsfile.read.common.TimeRange;
 import org.apache.tsfile.read.common.block.TsBlock;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 
@@ -85,7 +85,7 @@ public abstract class ValueFilter extends Filter {
   }
 
   @Override
-  public boolean satisfyBinary(long time, Binary value) {
+  public boolean satisfyBinary(long time, PooledBinary value) {
     throw new UnSupportedDataTypeException(getClass().getName());
   }
 
@@ -120,7 +120,7 @@ public abstract class ValueFilter extends Filter {
   }
 
   @Override
-  public boolean satisfyBinaryRow(long time, Binary[] values) {
+  public boolean satisfyBinaryRow(long time, PooledBinary[] values) {
     return satisfyBinary(time, values[measurementIndex]);
   }
 

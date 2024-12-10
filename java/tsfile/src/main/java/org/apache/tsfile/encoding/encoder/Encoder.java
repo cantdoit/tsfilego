@@ -20,7 +20,7 @@ package org.apache.tsfile.encoding.encoder;
 
 import org.apache.tsfile.exception.encoding.TsFileEncodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public abstract class Encoder {
     throw new TsFileEncodingException("Method encode double is not supported by Encoder");
   }
 
-  public void encode(Binary value, ByteArrayOutputStream out) {
+  public void encode(PooledBinary value, ByteArrayOutputStream out) {
     throw new TsFileEncodingException("Method encode Binary is not supported by Encoder");
   }
 

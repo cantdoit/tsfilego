@@ -23,7 +23,7 @@ import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.common.conf.TSFileDescriptor;
 import org.apache.tsfile.exception.encoding.TsFileDecodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
@@ -221,7 +221,7 @@ public abstract class RleDecoder extends Decoder {
   }
 
   @Override
-  public Binary readBinary(ByteBuffer buffer) {
+  public PooledBinary readBinary(ByteBuffer buffer) {
     throw new TsFileDecodingException("Method readBinary is not supproted by RleDecoder");
   }
 

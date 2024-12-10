@@ -93,7 +93,7 @@ public class TsFileGeneratorUtils {
             dPoint =
                 new StringDataPoint(
                     schema.getMeasurementName(),
-                    new Binary(String.valueOf(startValue), TSFileConfig.STRING_CHARSET));
+                    new PooledBinary(String.valueOf(startValue), TSFileConfig.STRING_CHARSET));
             break;
         }
         tsRecord.addTuple(dPoint);
@@ -380,7 +380,8 @@ public class TsFileGeneratorUtils {
           for (IMeasurementSchema schema : alignedMeasurementSchemas) {
             DataPoint dPoint =
                 new StringDataPoint(
-                    schema.getMeasurementName(), new Binary(value, TSFileConfig.STRING_CHARSET));
+                    schema.getMeasurementName(),
+                    new PooledBinary(value, TSFileConfig.STRING_CHARSET));
             tsRecord.addTuple(dPoint);
           }
           // write
@@ -438,7 +439,8 @@ public class TsFileGeneratorUtils {
           for (IMeasurementSchema schema : measurementSchemas) {
             DataPoint dPoint =
                 new StringDataPoint(
-                    schema.getMeasurementName(), new Binary(value, TSFileConfig.STRING_CHARSET));
+                    schema.getMeasurementName(),
+                    new PooledBinary(value, TSFileConfig.STRING_CHARSET));
             tsRecord.addTuple(dPoint);
           }
           // write

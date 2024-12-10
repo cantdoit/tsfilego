@@ -22,7 +22,7 @@ package org.apache.tsfile.read.common.block.column;
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.block.column.ColumnEncoding;
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.RamUsageEstimator;
 import org.apache.tsfile.utils.TsPrimitiveType;
 
@@ -101,7 +101,7 @@ public class RunLengthEncodedColumn implements Column {
   }
 
   @Override
-  public Binary getBinary(int position) {
+  public PooledBinary getBinary(int position) {
     return value.getBinary(0);
   }
 
@@ -146,8 +146,8 @@ public class RunLengthEncodedColumn implements Column {
   }
 
   @Override
-  public Binary[] getBinaries() {
-    Binary[] res = new Binary[positionCount];
+  public PooledBinary[] getBinaries() {
+    PooledBinary[] res = new PooledBinary[positionCount];
     Arrays.fill(res, value.getBinary(0));
     return res;
   }

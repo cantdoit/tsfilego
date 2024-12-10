@@ -37,7 +37,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.read.common.BatchData;
 import org.apache.tsfile.read.common.TimeRange;
 import org.apache.tsfile.read.reader.page.PageReader;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.write.page.PageWriter;
 
 import org.junit.Assert;
@@ -177,7 +177,7 @@ public class PageReaderTest {
             POINTS_COUNT_IN_ONE_PAGE) {
           @Override
           public Object generateValueByIndex(int i) {
-            return new Binary("TEST TEXT" + i, TSFileConfig.STRING_CHARSET);
+            return new PooledBinary("TEST TEXT" + i, TSFileConfig.STRING_CHARSET);
           }
         };
     test.test(TSDataType.TEXT);
@@ -290,7 +290,7 @@ public class PageReaderTest {
             pageWriter.write(i, (Double) generateValueByIndex(i));
             break;
           case TEXT:
-            pageWriter.write(i, (Binary) generateValueByIndex(i));
+            pageWriter.write(i, (PooledBinary) generateValueByIndex(i));
             break;
         }
       }

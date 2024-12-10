@@ -19,7 +19,7 @@
 package org.apache.tsfile.file.metadata.statistics;
 
 import org.apache.tsfile.common.conf.TSFileConfig;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Test;
 
@@ -30,10 +30,10 @@ public class StringStatisticsTest {
 
   @Test
   public void testUpdate() {
-    Statistics<Binary> binaryStats = new BinaryStatistics();
-    binaryStats.updateStats(new Binary("aaa", TSFileConfig.STRING_CHARSET));
+    Statistics<PooledBinary> binaryStats = new BinaryStatistics();
+    binaryStats.updateStats(new PooledBinary("aaa", TSFileConfig.STRING_CHARSET));
     assertFalse(binaryStats.isEmpty());
-    binaryStats.updateStats(new Binary("bbb", TSFileConfig.STRING_CHARSET));
+    binaryStats.updateStats(new PooledBinary("bbb", TSFileConfig.STRING_CHARSET));
     assertFalse(binaryStats.isEmpty());
     assertEquals("aaa", binaryStats.getFirstValue().getStringValue(TSFileConfig.STRING_CHARSET));
     assertEquals("bbb", binaryStats.getLastValue().getStringValue(TSFileConfig.STRING_CHARSET));
@@ -41,19 +41,19 @@ public class StringStatisticsTest {
 
   @Test
   public void testMerge() {
-    Statistics<Binary> stringStats1 = new BinaryStatistics();
+    Statistics<PooledBinary> stringStats1 = new BinaryStatistics();
     stringStats1.setStartTime(0);
     stringStats1.setEndTime(2);
-    Statistics<Binary> stringStats2 = new BinaryStatistics();
+    Statistics<PooledBinary> stringStats2 = new BinaryStatistics();
     stringStats2.setStartTime(3);
     stringStats2.setEndTime(5);
 
-    stringStats1.updateStats(new Binary("aaa", TSFileConfig.STRING_CHARSET));
-    stringStats1.updateStats(new Binary("ccc", TSFileConfig.STRING_CHARSET));
+    stringStats1.updateStats(new PooledBinary("aaa", TSFileConfig.STRING_CHARSET));
+    stringStats1.updateStats(new PooledBinary("ccc", TSFileConfig.STRING_CHARSET));
 
-    stringStats2.updateStats(new Binary("ddd", TSFileConfig.STRING_CHARSET));
+    stringStats2.updateStats(new PooledBinary("ddd", TSFileConfig.STRING_CHARSET));
 
-    Statistics<Binary> stringStats3 = new BinaryStatistics();
+    Statistics<PooledBinary> stringStats3 = new BinaryStatistics();
     stringStats3.mergeStatistics(stringStats1);
     assertFalse(stringStats3.isEmpty());
     assertEquals("aaa", stringStats3.getFirstValue().getStringValue(TSFileConfig.STRING_CHARSET));
@@ -63,17 +63,17 @@ public class StringStatisticsTest {
     assertEquals("aaa", stringStats3.getFirstValue().getStringValue(TSFileConfig.STRING_CHARSET));
     assertEquals("ddd", stringStats3.getLastValue().getStringValue(TSFileConfig.STRING_CHARSET));
 
-    Statistics<Binary> stringStats4 = new BinaryStatistics();
+    Statistics<PooledBinary> stringStats4 = new BinaryStatistics();
     stringStats4.setStartTime(0);
     stringStats4.setEndTime(5);
-    Statistics<Binary> stringStats5 = new BinaryStatistics();
+    Statistics<PooledBinary> stringStats5 = new BinaryStatistics();
     stringStats5.setStartTime(1);
     stringStats5.setEndTime(4);
 
-    stringStats4.updateStats(new Binary("eee", TSFileConfig.STRING_CHARSET));
-    stringStats4.updateStats(new Binary("fff", TSFileConfig.STRING_CHARSET));
+    stringStats4.updateStats(new PooledBinary("eee", TSFileConfig.STRING_CHARSET));
+    stringStats4.updateStats(new PooledBinary("fff", TSFileConfig.STRING_CHARSET));
 
-    stringStats5.updateStats(new Binary("ggg", TSFileConfig.STRING_CHARSET));
+    stringStats5.updateStats(new PooledBinary("ggg", TSFileConfig.STRING_CHARSET));
 
     stringStats3.mergeStatistics(stringStats4);
     assertEquals("eee", stringStats3.getFirstValue().getStringValue(TSFileConfig.STRING_CHARSET));

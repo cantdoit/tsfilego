@@ -21,7 +21,7 @@ package org.apache.tsfile.read.common.block.column;
 
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -50,13 +50,13 @@ public class BinaryArrayColumnEncoder implements ColumnEncoder {
     }
 
     boolean[] nullIndicators = ColumnEncoder.deserializeNullIndicators(input, positionCount);
-    Binary[] values = new Binary[positionCount];
+    PooledBinary[] values = new PooledBinary[positionCount];
     if (nullIndicators == null) {
       for (int i = 0; i < positionCount; i++) {
         int length = input.getInt();
         byte[] value = new byte[length];
         input.get(value);
-        values[i] = new Binary(value);
+        values[i] = new PooledBinary(value);
       }
     } else {
       for (int i = 0; i < positionCount; i++) {
@@ -64,7 +64,7 @@ public class BinaryArrayColumnEncoder implements ColumnEncoder {
           int length = input.getInt();
           byte[] value = new byte[length];
           input.get(value);
-          values[i] = new Binary(value);
+          values[i] = new PooledBinary(value);
         }
       }
     }
@@ -81,9 +81,9 @@ public class BinaryArrayColumnEncoder implements ColumnEncoder {
     if (TSDataType.TEXT.equals(dataType)) {
       for (int i = 0; i < positionCount; i++) {
         if (!column.isNull(i)) {
-          Binary binary = column.getBinary(i);
+          PooledBinary binary = column.getBinary(i);
           output.writeInt(binary.getLength());
-          output.write(binary.getValues());
+          output.write(binary.getValues(), 0, binary.getLength());
         }
       }
     } else {

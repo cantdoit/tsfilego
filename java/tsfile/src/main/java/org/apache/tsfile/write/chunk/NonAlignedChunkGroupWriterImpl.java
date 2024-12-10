@@ -24,8 +24,8 @@ import org.apache.tsfile.encrypt.EncryptUtils;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.write.WriteProcessException;
 import org.apache.tsfile.file.metadata.IDeviceID;
-import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.DateUtils;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 import org.apache.tsfile.write.record.Tablet;
 import org.apache.tsfile.write.record.Tablet.ColumnCategory;
@@ -156,7 +156,9 @@ public class NonAlignedChunkGroupWriterImpl implements IChunkGroupWriter {
           case TEXT:
           case BLOB:
           case STRING:
-            chunkWriters.get(measurementId).write(time, ((Binary[]) tablet.values[column])[row]);
+            chunkWriters
+                .get(measurementId)
+                .write(time, ((PooledBinary[]) tablet.values[column])[row]);
             break;
           default:
             throw new UnSupportedDataTypeException(

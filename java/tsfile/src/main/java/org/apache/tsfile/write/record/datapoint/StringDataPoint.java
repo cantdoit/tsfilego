@@ -19,7 +19,7 @@
 package org.apache.tsfile.write.record.datapoint;
 
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.write.chunk.ChunkWriterImpl;
 
 import org.slf4j.Logger;
@@ -35,10 +35,10 @@ public class StringDataPoint extends DataPoint {
   private static final Logger LOG = LoggerFactory.getLogger(StringDataPoint.class);
 
   /** actual value. */
-  private Binary value;
+  private PooledBinary value;
 
   /** constructor of StringDataPoint, the value type will be set automatically. */
-  public StringDataPoint(String measurementId, Binary v) {
+  public StringDataPoint(String measurementId, PooledBinary v) {
     super(TSDataType.TEXT, measurementId);
     this.value = v;
   }
@@ -58,7 +58,7 @@ public class StringDataPoint extends DataPoint {
   }
 
   @Override
-  public void setString(Binary value) {
+  public void setString(PooledBinary value) {
     this.value = value;
   }
 }

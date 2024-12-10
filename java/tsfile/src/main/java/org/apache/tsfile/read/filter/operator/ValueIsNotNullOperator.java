@@ -22,7 +22,7 @@ import org.apache.tsfile.read.common.block.TsBlock;
 import org.apache.tsfile.read.filter.basic.CompareNullFilter;
 import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.basic.OperatorType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
@@ -69,7 +69,7 @@ public class ValueIsNotNullOperator extends CompareNullFilter {
   }
 
   @Override
-  public boolean satisfyBinary(long time, Binary value) {
+  public boolean satisfyBinary(long time, PooledBinary value) {
     return value != null;
   }
 

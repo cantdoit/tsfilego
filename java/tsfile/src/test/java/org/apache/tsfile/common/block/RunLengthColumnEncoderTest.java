@@ -31,7 +31,7 @@ import org.apache.tsfile.read.common.block.column.FloatColumn;
 import org.apache.tsfile.read.common.block.column.IntColumn;
 import org.apache.tsfile.read.common.block.column.LongColumn;
 import org.apache.tsfile.read.common.block.column.RunLengthEncodedColumn;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -99,6 +99,8 @@ public class RunLengthColumnEncoderTest {
   public void testTextColumn() {
     testInternal(
         new BinaryColumn(
-            1, Optional.empty(), new Binary[] {new Binary("foo", TSFileConfig.STRING_CHARSET)}));
+            1,
+            Optional.empty(),
+            new PooledBinary[] {new PooledBinary("foo", TSFileConfig.STRING_CHARSET)}));
   }
 }

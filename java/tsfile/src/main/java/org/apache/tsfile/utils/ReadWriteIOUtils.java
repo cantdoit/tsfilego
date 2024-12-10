@@ -285,9 +285,9 @@ public class ReadWriteIOUtils {
    *
    * @return The number of bytes used to represent n.
    */
-  public static int write(Binary n, ByteBuffer buffer) {
+  public static int write(PooledBinary n, ByteBuffer buffer) {
     buffer.putInt(n.getLength());
-    buffer.put(n.getValues());
+    buffer.put(n.getValues(), 0, n.getLength());
     return INT_LEN + n.getLength();
   }
 
@@ -303,11 +303,11 @@ public class ReadWriteIOUtils {
   }
 
   /** write the size (int) of the binary and then the bytes in binary */
-  public static int write(Binary binary, OutputStream outputStream) throws IOException {
-    byte[] size = BytesUtils.intToBytes(binary.getValues().length);
+  public static int write(PooledBinary binary, OutputStream outputStream) throws IOException {
+    byte[] size = BytesUtils.intToBytes(binary.getLength());
     outputStream.write(size);
-    outputStream.write(binary.getValues());
-    return size.length + binary.getValues().length;
+    outputStream.write(binary.getValues(), 0, binary.getLength());
+    return size.length + binary.getLength();
   }
 
   /**
@@ -499,7 +499,7 @@ public class ReadWriteIOUtils {
     return write(n, buffer);
   }
 
-  public static int sizeToWrite(Binary n) {
+  public static int sizeToWrite(PooledBinary n) {
     return INT_LEN + n.getLength();
   }
 
@@ -787,16 +787,16 @@ public class ReadWriteIOUtils {
     return readBytes(inputStream, length);
   }
 
-  public static Binary readBinary(ByteBuffer buffer) {
+  public static PooledBinary readBinary(ByteBuffer buffer) {
     int length = readInt(buffer);
     byte[] bytes = readBytes(buffer, length);
-    return new Binary(bytes);
+    return new PooledBinary(bytes);
   }
 
-  public static Binary readBinary(InputStream inputStream) throws IOException {
+  public static PooledBinary readBinary(InputStream inputStream) throws IOException {
     int length = readInt(inputStream);
     byte[] bytes = readBytes(inputStream, length);
-    return new Binary(bytes);
+    return new PooledBinary(bytes);
   }
 
   /**
@@ -983,12 +983,12 @@ public class ReadWriteIOUtils {
     return set;
   }
 
-  public static Set<Binary> readBinarySet(ByteBuffer buffer) {
+  public static Set<PooledBinary> readBinarySet(ByteBuffer buffer) {
     int size = readInt(buffer);
     if (size <= 0) {
       return Collections.emptySet();
     }
-    Set<Binary> set = new HashSet<>();
+    Set<PooledBinary> set = new HashSet<>();
     for (int i = 0; i < size; i++) {
       set.add(readBinary(buffer));
     }
@@ -1070,10 +1070,10 @@ public class ReadWriteIOUtils {
     }
   }
 
-  public static void writeBinarySet(Set<Binary> set, DataOutputStream outputStream)
+  public static void writeBinarySet(Set<PooledBinary> set, DataOutputStream outputStream)
       throws IOException {
     write(set.contains(null) ? set.size() - 1 : set.size(), outputStream);
-    for (Binary e : set) {
+    for (PooledBinary e : set) {
       if (e != null) {
         write(e, outputStream);
       }
@@ -1160,11 +1160,11 @@ public class ReadWriteIOUtils {
       } else if (value instanceof Float) {
         outputStream.write(FLOAT.ordinal());
         outputStream.writeFloat((Float) value);
-      } else if (value instanceof Binary) {
+      } else if (value instanceof PooledBinary) {
         outputStream.write(BINARY.ordinal());
-        byte[] bytes = ((Binary) value).getValues();
-        outputStream.writeInt(bytes.length);
-        outputStream.write(bytes);
+        PooledBinary binary = ((PooledBinary) value);
+        outputStream.writeInt(binary.getLength());
+        outputStream.write(binary.getValues(), 0, binary.getLength());
       } else if (value instanceof Boolean) {
         outputStream.write(BOOLEAN.ordinal());
         outputStream.write(Boolean.TRUE.equals(value) ? 1 : 0);
@@ -1194,11 +1194,11 @@ public class ReadWriteIOUtils {
     } else if (value instanceof Float) {
       byteBuffer.putInt(FLOAT.ordinal());
       byteBuffer.putFloat((Float) value);
-    } else if (value instanceof Binary) {
+    } else if (value instanceof PooledBinary) {
       byteBuffer.putInt(BINARY.ordinal());
-      byte[] bytes = ((Binary) value).getValues();
-      byteBuffer.putInt(bytes.length);
-      byteBuffer.put(bytes);
+      PooledBinary binary = ((PooledBinary) value);
+      byteBuffer.putInt(binary.getLength());
+      byteBuffer.put(binary.getValues(), 0, binary.getLength());
     } else if (value instanceof Boolean) {
       byteBuffer.putInt(BOOLEAN.ordinal());
       byteBuffer.put(Boolean.TRUE.equals(value) ? (byte) 1 : (byte) 0);
@@ -1229,7 +1229,7 @@ public class ReadWriteIOUtils {
         int length = buffer.getInt();
         byte[] bytes = new byte[length];
         buffer.get(bytes);
-        return new Binary(bytes);
+        return new PooledBinary(bytes);
       case NULL:
         return null;
       case STRING:

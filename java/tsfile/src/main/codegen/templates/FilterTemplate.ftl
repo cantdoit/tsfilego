@@ -24,7 +24,7 @@ import static org.apache.tsfile.utils.ReadWriteIOUtils.ClassSerializeId.${filter
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.read.common.block.TsBlock;
 <#if filter.dataType == "Binary">
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 </#if>
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
@@ -47,9 +47,9 @@ public abstract class ${className} extends ValueFilter {
 
   @Override
   <#if filter.dataType == "int">
-  public boolean satisfyInteger(long time, ${filter.dataType} value){
+  public boolean satisfyInteger(long time, ${filter.valueType} value){
   <#else>
-  public boolean satisfy${filter.dataType?cap_first}(long time, ${filter.dataType} value){
+  public boolean satisfy${filter.dataType?cap_first}(long time, ${filter.valueType} value){
   </#if>
     <#if filter.dataType=="Binary">
     if (value == null) {
@@ -64,7 +64,7 @@ public abstract class ${className} extends ValueFilter {
     return ${filter.classSerializeName};
   }
 
-  protected abstract boolean valueSatisfy(${filter.dataType} value);
+  protected abstract boolean valueSatisfy(${filter.valueType} value);
 
   @Override
   public boolean[] satisfyTsBlock(boolean[] selection, TsBlock tsBlock) {

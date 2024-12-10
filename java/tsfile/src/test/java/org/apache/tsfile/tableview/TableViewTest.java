@@ -40,7 +40,7 @@ import org.apache.tsfile.read.query.executor.TableQueryExecutor;
 import org.apache.tsfile.read.query.executor.TableQueryExecutor.TableQueryOrdering;
 import org.apache.tsfile.read.query.executor.TsFileExecutor;
 import org.apache.tsfile.read.reader.block.TsBlockReader;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsFileSketchTool;
 import org.apache.tsfile.write.TsFileWriter;
 import org.apache.tsfile.write.record.TSRecord;
@@ -516,7 +516,7 @@ public class TableViewTest {
       case INT64:
         return (long) i;
       case TEXT:
-        return new Binary(String.valueOf(i), StandardCharsets.UTF_8);
+        return new PooledBinary(String.valueOf(i), StandardCharsets.UTF_8);
       default:
         return i;
     }

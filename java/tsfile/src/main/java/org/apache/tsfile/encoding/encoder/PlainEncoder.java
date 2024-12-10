@@ -23,14 +23,13 @@ import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileEncodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 
 public class PlainEncoder extends Encoder {
@@ -87,16 +86,11 @@ public class PlainEncoder extends Encoder {
   }
 
   @Override
-  public void encode(Binary value, ByteArrayOutputStream out) {
-    try {
-      // write the length of the bytes
-      encode(value.getLength(), out);
-      // write value
-      out.write(value.getValues());
-    } catch (IOException e) {
-      logger.error(
-          "tsfile-encoding PlainEncoder: error occurs when encode Binary value {}", value, e);
-    }
+  public void encode(PooledBinary value, ByteArrayOutputStream out) {
+    // write the length of the bytes
+    encode(value.getLength(), out);
+    // write value
+    out.write(value.getValues(), 0, value.getLength());
   }
 
   @Override

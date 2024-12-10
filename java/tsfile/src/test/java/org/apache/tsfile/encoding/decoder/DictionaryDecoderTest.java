@@ -21,7 +21,7 @@ package org.apache.tsfile.encoding.decoder;
 
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.encoding.encoder.DictionaryEncoder;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Test;
 
@@ -69,7 +69,7 @@ public class DictionaryDecoderTest {
 
   private void testAll(String... all) {
     for (String s : all) {
-      encoder.encode(new Binary(s, TSFileConfig.STRING_CHARSET), baos);
+      encoder.encode(new PooledBinary(s, TSFileConfig.STRING_CHARSET), baos);
     }
     encoder.flush(baos);
 

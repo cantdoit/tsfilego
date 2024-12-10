@@ -33,7 +33,7 @@ import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.factory.FilterFactory;
 import org.apache.tsfile.read.filter.factory.TimeFilterApi;
 import org.apache.tsfile.read.filter.factory.ValueFilterApi;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsFileGeneratorForTest;
 
 import org.junit.After;
@@ -74,7 +74,7 @@ public class TimeGeneratorTest {
     Filter filter2 =
         ValueFilterApi.gt(
             DEFAULT_MEASUREMENT_INDEX,
-            new Binary("dog", TSFileConfig.STRING_CHARSET),
+            new PooledBinary("dog", TSFileConfig.STRING_CHARSET),
             TSDataType.TEXT);
     Filter filter3 =
         FilterFactory.and(TimeFilterApi.gtEq(1480562618000L), TimeFilterApi.ltEq(1480562618100L));

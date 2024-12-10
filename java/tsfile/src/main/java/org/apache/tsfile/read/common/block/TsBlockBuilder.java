@@ -33,7 +33,7 @@ import org.apache.tsfile.read.common.block.column.IntColumnBuilder;
 import org.apache.tsfile.read.common.block.column.LongColumnBuilder;
 import org.apache.tsfile.read.common.block.column.TimeColumn;
 import org.apache.tsfile.read.common.block.column.TimeColumnBuilder;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.util.List;
 
@@ -346,7 +346,8 @@ public class TsBlockBuilder {
     if (value == null) {
       getColumnBuilder(columnIndex).appendNull();
     } else {
-      getColumnBuilder(columnIndex).writeBinary(new Binary(value, TSFileConfig.STRING_CHARSET));
+      getColumnBuilder(columnIndex)
+          .writeBinary(new PooledBinary(value, TSFileConfig.STRING_CHARSET));
     }
   }
 }

@@ -23,7 +23,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.filter.StatisticsClassException;
 import org.apache.tsfile.exception.write.UnknownColumnTypeException;
 import org.apache.tsfile.read.filter.basic.Filter;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
@@ -250,7 +250,7 @@ public abstract class Statistics<T extends Serializable> {
     updateStats(value);
   }
 
-  public void update(long time, Binary value) {
+  public void update(long time, PooledBinary value) {
     update(time);
     updateStats(value);
   }
@@ -290,7 +290,7 @@ public abstract class Statistics<T extends Serializable> {
     updateStats(values, batchSize);
   }
 
-  public void update(long[] time, Binary[] values, int batchSize) {
+  public void update(long[] time, PooledBinary[] values, int batchSize) {
     update(time, batchSize);
     updateStats(values, batchSize);
   }
@@ -345,7 +345,7 @@ public abstract class Statistics<T extends Serializable> {
     throw new UnsupportedOperationException();
   }
 
-  void updateStats(Binary value) {
+  void updateStats(PooledBinary value) {
     throw new UnsupportedOperationException();
   }
 
@@ -369,7 +369,7 @@ public abstract class Statistics<T extends Serializable> {
     throw new UnsupportedOperationException();
   }
 
-  void updateStats(Binary[] values, int batchSize) {
+  void updateStats(PooledBinary[] values, int batchSize) {
     throw new UnsupportedOperationException();
   }
 

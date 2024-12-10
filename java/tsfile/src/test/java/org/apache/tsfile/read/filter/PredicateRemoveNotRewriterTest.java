@@ -25,7 +25,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.read.filter.factory.FilterFactory;
 import org.apache.tsfile.read.filter.factory.TimeFilterApi;
 import org.apache.tsfile.read.filter.factory.ValueFilterApi;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -83,15 +83,15 @@ public class PredicateRemoveNotRewriterTest {
             DEFAULT_MEASUREMENT_INDEX,
             new HashSet<>(
                 Arrays.asList(
-                    new Binary("a", TSFileConfig.STRING_CHARSET),
-                    new Binary("b", TSFileConfig.STRING_CHARSET))),
+                    new PooledBinary("a", TSFileConfig.STRING_CHARSET),
+                    new PooledBinary("b", TSFileConfig.STRING_CHARSET))),
             TSDataType.TEXT),
         ValueFilterApi.notIn(
                 DEFAULT_MEASUREMENT_INDEX,
                 new HashSet<>(
                     Arrays.asList(
-                        new Binary("a", TSFileConfig.STRING_CHARSET),
-                        new Binary("b", TSFileConfig.STRING_CHARSET))),
+                        new PooledBinary("a", TSFileConfig.STRING_CHARSET),
+                        new PooledBinary("b", TSFileConfig.STRING_CHARSET))),
                 TSDataType.TEXT)
             .reverse());
     Assert.assertEquals(
@@ -99,15 +99,15 @@ public class PredicateRemoveNotRewriterTest {
             DEFAULT_MEASUREMENT_INDEX,
             new HashSet<>(
                 Arrays.asList(
-                    new Binary("a", TSFileConfig.STRING_CHARSET),
-                    new Binary("b", TSFileConfig.STRING_CHARSET))),
+                    new PooledBinary("a", TSFileConfig.STRING_CHARSET),
+                    new PooledBinary("b", TSFileConfig.STRING_CHARSET))),
             TSDataType.TEXT),
         ValueFilterApi.notIn(
                 DEFAULT_MEASUREMENT_INDEX,
                 new HashSet<>(
                     Arrays.asList(
-                        new Binary("a", TSFileConfig.STRING_CHARSET),
-                        new Binary("b", TSFileConfig.STRING_CHARSET))),
+                        new PooledBinary("a", TSFileConfig.STRING_CHARSET),
+                        new PooledBinary("b", TSFileConfig.STRING_CHARSET))),
                 TSDataType.TEXT)
             .reverse());
     Assert.assertEquals(
@@ -115,15 +115,15 @@ public class PredicateRemoveNotRewriterTest {
             DEFAULT_MEASUREMENT_INDEX,
             new HashSet<>(
                 Arrays.asList(
-                    new Binary("a", TSFileConfig.STRING_CHARSET),
-                    new Binary("b", TSFileConfig.STRING_CHARSET))),
+                    new PooledBinary("a", TSFileConfig.STRING_CHARSET),
+                    new PooledBinary("b", TSFileConfig.STRING_CHARSET))),
             TSDataType.TEXT),
         ValueFilterApi.in(
                 DEFAULT_MEASUREMENT_INDEX,
                 new HashSet<>(
                     Arrays.asList(
-                        new Binary("a", TSFileConfig.STRING_CHARSET),
-                        new Binary("b", TSFileConfig.STRING_CHARSET))),
+                        new PooledBinary("a", TSFileConfig.STRING_CHARSET),
+                        new PooledBinary("b", TSFileConfig.STRING_CHARSET))),
                 TSDataType.TEXT)
             .reverse());
     Assert.assertEquals(TimeFilterApi.gt(1), FilterFactory.not(TimeFilterApi.gt(1)).reverse());

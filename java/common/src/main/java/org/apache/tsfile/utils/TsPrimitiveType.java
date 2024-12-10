@@ -79,7 +79,7 @@ public abstract class TsPrimitiveType implements Serializable {
       case TEXT:
       case BLOB:
       case STRING:
-        return new TsPrimitiveType.TsBinary((Binary) v);
+        return new TsPrimitiveType.TsBinary((PooledBinary) v);
       case VECTOR:
         return new TsPrimitiveType.TsVector((TsPrimitiveType[]) v);
       default:
@@ -107,7 +107,7 @@ public abstract class TsPrimitiveType implements Serializable {
     throw new UnsupportedOperationException("getDouble() is not supported for current sub-class");
   }
 
-  public Binary getBinary() {
+  public PooledBinary getBinary() {
     throw new UnsupportedOperationException("getBinary() is not supported for current sub-class");
   }
 
@@ -135,7 +135,7 @@ public abstract class TsPrimitiveType implements Serializable {
     throw new UnsupportedOperationException("setDouble() is not supported for current sub-class");
   }
 
-  public void setBinary(Binary val) {
+  public void setBinary(PooledBinary val) {
     throw new UnsupportedOperationException("setBinary() is not supported for current sub-class");
   }
 
@@ -538,28 +538,28 @@ public abstract class TsPrimitiveType implements Serializable {
 
   public static class TsBinary extends TsPrimitiveType {
 
-    private Binary value;
+    private PooledBinary value;
 
     public TsBinary() {}
 
-    public TsBinary(Binary value) {
+    public TsBinary(PooledBinary value) {
       this.value = value;
     }
 
     @Override
-    public Binary getBinary() {
+    public PooledBinary getBinary() {
       return value;
     }
 
     @Override
-    public void setBinary(Binary val) {
+    public void setBinary(PooledBinary val) {
       this.value = val;
     }
 
     @Override
     public void setObject(Object val) {
-      if (val instanceof Binary) {
-        setBinary((Binary) val);
+      if (val instanceof PooledBinary) {
+        setBinary((PooledBinary) val);
         return;
       }
       throw new UnSupportedDataTypeException("TsBinary can only be set Binary value");

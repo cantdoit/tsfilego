@@ -928,8 +928,8 @@ public class BytesUtils {
     return s;
   }
 
-  public static Binary valueOf(String value) {
-    return new Binary(stringToBytes(value));
+  public static PooledBinary valueOf(String value) {
+    return new PooledBinary(stringToBytes(value));
   }
 
   public static String parseBlobByteArrayToString(byte[] input) {
@@ -937,6 +937,16 @@ public class BytesUtils {
     if (input != null) {
       for (byte b : input) {
         hexString.append(String.format("%02x", b));
+      }
+    }
+    return hexString.toString();
+  }
+
+  public static String parseBlobByteArrayToString(byte[] input, int offset, int length) {
+    StringBuilder hexString = new StringBuilder("0x");
+    if (input != null) {
+      for (int i = offset; i < offset + length; i++) {
+        hexString.append(String.format("%02x", input[i]));
       }
     }
     return hexString.toString();

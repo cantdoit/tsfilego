@@ -20,36 +20,43 @@
   "filters": [
     {
       "dataType": "boolean",
+      "valueType": "boolean",
       "javaBoxName": "Boolean",
       "classSerializeName": "BOOLEAN"
     },
     {
       "dataType": "int",
+      "valueType": "int",
       "javaBoxName": "Integer",
       "classSerializeName": "INTEGER"
     },
     {
       "dataType": "long",
+      "valueType": "long",
       "javaBoxName": "Long",
       "classSerializeName": "LONG"
     },
     {
       "dataType": "double",
+      "valueType": "double",
       "javaBoxName": "Double",
       "classSerializeName": "DOUBLE"
     },
     {
       "dataType": "float",
+      "valueType": "float",
       "javaBoxName": "Float",
       "classSerializeName": "FLOAT"
     },
     {
       "dataType": "Binary",
+      "valueType": "PooledBinary",
       "javaBoxName": "Binary",
       "classSerializeName": "BINARY"
     },
     {
       "dataType": "Binary",
+      "valueType": "PooledBinary",
       "javaBoxName": "String",
       "classSerializeName": "STRING"
     }

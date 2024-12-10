@@ -21,7 +21,7 @@ package org.apache.tsfile.encoding.decoder;
 
 import org.apache.tsfile.exception.encoding.TsFileDecodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import java.math.BigDecimal;
@@ -64,11 +64,11 @@ public class PlainDecoder extends Decoder {
   }
 
   @Override
-  public Binary readBinary(ByteBuffer buffer) {
+  public PooledBinary readBinary(ByteBuffer buffer) {
     int length = readInt(buffer);
     byte[] buf = new byte[length];
     buffer.get(buf, 0, buf.length);
-    return new Binary(buf);
+    return new PooledBinary(buf);
   }
 
   @Override

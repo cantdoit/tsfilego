@@ -23,7 +23,7 @@ import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.block.column.ColumnBuilder;
 import org.apache.tsfile.block.column.ColumnBuilderStatus;
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.RamUsageEstimator;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
@@ -42,7 +42,7 @@ public class BinaryColumnBuilder implements ColumnBuilder {
 
   private final ColumnBuilderStatus columnBuilderStatus;
   public static final BinaryColumn NULL_VALUE_BLOCK =
-      new BinaryColumn(0, 1, new boolean[] {true}, new Binary[1]);
+      new BinaryColumn(0, 1, new boolean[] {true}, new PooledBinary[1]);
 
   private boolean initialized;
   private final int initialEntryCount;
@@ -53,7 +53,7 @@ public class BinaryColumnBuilder implements ColumnBuilder {
 
   // it is assumed that these arrays are the same length
   private boolean[] valueIsNull = new boolean[0];
-  private Binary[] values = new Binary[0];
+  private PooledBinary[] values = new PooledBinary[0];
 
   private long arraysRetainedSizeInBytes;
 
@@ -64,7 +64,7 @@ public class BinaryColumnBuilder implements ColumnBuilder {
   }
 
   @Override
-  public ColumnBuilder writeBinary(Binary value) {
+  public ColumnBuilder writeBinary(PooledBinary value) {
     if (values.length <= positionCount) {
       growCapacity();
     }
@@ -79,8 +79,8 @@ public class BinaryColumnBuilder implements ColumnBuilder {
   /** Write an Object to the current entry, which should be the Binary type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
-    if (value instanceof Binary) {
-      writeBinary((Binary) value);
+    if (value instanceof PooledBinary) {
+      writeBinary((PooledBinary) value);
       return this;
     }
     throw new UnSupportedDataTypeException("BinaryColumn only support Binary data type");

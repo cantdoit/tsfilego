@@ -22,19 +22,19 @@ package org.apache.tsfile.read.common.type;
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.block.column.ColumnBuilder;
 import org.apache.tsfile.read.common.block.column.BinaryColumnBuilder;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractVarcharType extends AbstractType {
   @Override
-  public Binary getBinary(Column c, int position) {
+  public PooledBinary getBinary(Column c, int position) {
     return c.getBinary(position);
   }
 
   @Override
-  public void writeBinary(ColumnBuilder builder, Binary value) {
+  public void writeBinary(ColumnBuilder builder, PooledBinary value) {
     builder.writeBinary(value);
   }
 

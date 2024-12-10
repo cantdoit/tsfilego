@@ -23,7 +23,7 @@ import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.read.TimeValuePair;
 import org.apache.tsfile.read.reader.IPointReader;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.utils.TsPrimitiveType.TsBinary;
 import org.apache.tsfile.utils.TsPrimitiveType.TsBoolean;
@@ -82,7 +82,7 @@ public class BatchData {
   protected List<long[]> longRet;
   protected List<float[]> floatRet;
   protected List<double[]> doubleRet;
-  protected List<Binary[]> binaryRet;
+  protected List<PooledBinary[]> binaryRet;
   protected List<TsPrimitiveType[][]> vectorRet;
 
   public BatchData() {
@@ -232,7 +232,7 @@ public class BatchData {
       case BLOB:
       case STRING:
         binaryRet = new ArrayList<>();
-        binaryRet.add(new Binary[capacity]);
+        binaryRet.add(new PooledBinary[capacity]);
         break;
       case VECTOR:
         vectorRet = new ArrayList<>();
@@ -423,18 +423,18 @@ public class BatchData {
    * @param t timestamp
    * @param v binary data.
    */
-  public void putBinary(long t, Binary v) {
+  public void putBinary(long t, PooledBinary v) {
     if (writeCurArrayIndex == capacity) {
       if (capacity >= CAPACITY_THRESHOLD) {
         timeRet.add(new long[capacity]);
-        binaryRet.add(new Binary[capacity]);
+        binaryRet.add(new PooledBinary[capacity]);
         writeCurListIndex++;
         writeCurArrayIndex = 0;
       } else {
         int newCapacity = capacity << 1;
 
         long[] newTimeData = new long[newCapacity];
-        Binary[] newValueData = new Binary[newCapacity];
+        PooledBinary[] newValueData = new PooledBinary[newCapacity];
 
         System.arraycopy(timeRet.get(0), 0, newTimeData, 0, capacity);
         System.arraycopy(binaryRet.get(0), 0, newValueData, 0, capacity);
@@ -527,11 +527,11 @@ public class BatchData {
     this.doubleRet.get(readCurListIndex)[readCurArrayIndex] = v;
   }
 
-  public Binary getBinary() {
+  public PooledBinary getBinary() {
     return this.binaryRet.get(readCurListIndex)[readCurArrayIndex];
   }
 
-  public void setBinary(Binary v) {
+  public void setBinary(PooledBinary v) {
     this.binaryRet.get(readCurListIndex)[readCurArrayIndex] = v;
   }
 
@@ -575,7 +575,7 @@ public class BatchData {
       case TEXT:
       case BLOB:
       case STRING:
-        putBinary(t, (Binary) v);
+        putBinary(t, (PooledBinary) v);
         break;
       case VECTOR:
         putVector(t, (TsPrimitiveType[]) v);
@@ -615,7 +615,7 @@ public class BatchData {
   }
 
   /** Get the idx th binary value by the time ascending order */
-  public Binary getBinaryByIndex(int idx) {
+  public PooledBinary getBinaryByIndex(int idx) {
     return binaryRet.get(idx / capacity)[idx % capacity];
   }
 
@@ -701,9 +701,9 @@ public class BatchData {
       case STRING:
         for (int i = 0; i < length(); i++) {
           outputStream.writeLong(getTimeByIndex(i));
-          Binary binary = getBinaryByIndex(i);
+          PooledBinary binary = getBinaryByIndex(i);
           outputStream.writeInt(binary.getLength());
-          outputStream.write(binary.getValues());
+          outputStream.write(binary.getValues(), 0, binary.getLength());
         }
         break;
       case INT64:
@@ -744,9 +744,9 @@ public class BatchData {
                 case TEXT:
                 case BLOB:
                 case STRING:
-                  Binary binary = value.getBinary();
+                  PooledBinary binary = value.getBinary();
                   outputStream.writeInt(binary.getLength());
-                  outputStream.write(binary.getValues());
+                  outputStream.write(binary.getValues(), 0, binary.getLength());
                   break;
                 case INT64:
                 case TIMESTAMP:

@@ -20,7 +20,7 @@
 package org.apache.tsfile.encoding.decoder;
 
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ import java.util.List;
 public class DictionaryDecoder extends Decoder {
   private static final Logger logger = LoggerFactory.getLogger(DictionaryDecoder.class);
 
-  private List<Binary> entryIndex;
+  private List<PooledBinary> entryIndex;
   private IntRleDecoder valueDecoder;
 
   public DictionaryDecoder() {
@@ -59,7 +59,7 @@ public class DictionaryDecoder extends Decoder {
   }
 
   @Override
-  public Binary readBinary(ByteBuffer buffer) {
+  public PooledBinary readBinary(ByteBuffer buffer) {
     if (entryIndex == null) {
       initMap(buffer);
     }
@@ -74,7 +74,7 @@ public class DictionaryDecoder extends Decoder {
       int binaryLength = ReadWriteForEncodingUtils.readVarInt(buffer);
       byte[] buf = new byte[binaryLength];
       buffer.get(buf, 0, binaryLength);
-      entryIndex.add(new Binary(buf));
+      entryIndex.add(new PooledBinary(buf));
     }
   }
 

@@ -22,7 +22,7 @@ package org.apache.tsfile.file.metadata.statistics;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.filter.StatisticsClassException;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.RamUsageEstimator;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
@@ -34,17 +34,17 @@ import java.util.Objects;
 
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfCharArray;
 
-public class StringStatistics extends Statistics<Binary> {
+public class StringStatistics extends Statistics<PooledBinary> {
   public static final long INSTANCE_SIZE =
       RamUsageEstimator.shallowSizeOfInstance(StringStatistics.class)
-          + 4 * RamUsageEstimator.shallowSizeOfInstance(Binary.class);
+          + 4 * RamUsageEstimator.shallowSizeOfInstance(PooledBinary.class);
 
-  private static final Binary EMPTY_VALUE = new Binary("", TSFileConfig.STRING_CHARSET);
+  private static final PooledBinary EMPTY_VALUE = new PooledBinary("", TSFileConfig.STRING_CHARSET);
 
-  private Binary firstValue = EMPTY_VALUE;
-  private Binary lastValue = EMPTY_VALUE;
-  private Binary minValue = EMPTY_VALUE;
-  private Binary maxValue = EMPTY_VALUE;
+  private PooledBinary firstValue = EMPTY_VALUE;
+  private PooledBinary lastValue = EMPTY_VALUE;
+  private PooledBinary minValue = EMPTY_VALUE;
+  private PooledBinary maxValue = EMPTY_VALUE;
 
   @Override
   public TSDataType getType() {
@@ -55,10 +55,10 @@ public class StringStatistics extends Statistics<Binary> {
   @Override
   public int getStatsSize() {
     return 4 * 4
-        + firstValue.getValues().length
-        + lastValue.getValues().length
-        + minValue.getValues().length
-        + maxValue.getValues().length;
+        + firstValue.getLength()
+        + lastValue.getLength()
+        + minValue.getLength()
+        + maxValue.getLength();
   }
 
   @Override
@@ -70,14 +70,15 @@ public class StringStatistics extends Statistics<Binary> {
         + sizeOfCharArray(maxValue.getLength());
   }
 
-  public void initializeStats(Binary first, Binary last, Binary min, Binary max) {
+  public void initializeStats(
+      PooledBinary first, PooledBinary last, PooledBinary min, PooledBinary max) {
     this.firstValue = first;
     this.lastValue = last;
     this.minValue = min;
     this.maxValue = max;
   }
 
-  private void updateStats(Binary minValue, Binary maxValue, Binary lastValue) {
+  private void updateStats(PooledBinary minValue, PooledBinary maxValue, PooledBinary lastValue) {
     if (this.minValue.compareTo(minValue) > 0) {
       this.minValue = minValue;
     }
@@ -88,10 +89,10 @@ public class StringStatistics extends Statistics<Binary> {
   }
 
   private void updateStats(
-      Binary firstValue,
-      Binary lastValue,
-      Binary minValue,
-      Binary maxValue,
+      PooledBinary firstValue,
+      PooledBinary lastValue,
+      PooledBinary minValue,
+      PooledBinary maxValue,
       long startTime,
       long endTime) {
     // only if endTime greater or equals to the current endTime need we update the last value
@@ -112,22 +113,22 @@ public class StringStatistics extends Statistics<Binary> {
   }
 
   @Override
-  public Binary getMinValue() {
+  public PooledBinary getMinValue() {
     return minValue;
   }
 
   @Override
-  public Binary getMaxValue() {
+  public PooledBinary getMaxValue() {
     return maxValue;
   }
 
   @Override
-  public Binary getFirstValue() {
+  public PooledBinary getFirstValue() {
     return firstValue;
   }
 
   @Override
-  public Binary getLastValue() {
+  public PooledBinary getLastValue() {
     return lastValue;
   }
 
@@ -144,7 +145,7 @@ public class StringStatistics extends Statistics<Binary> {
   }
 
   @Override
-  protected void mergeStatisticsValue(Statistics<Binary> stats) {
+  protected void mergeStatisticsValue(Statistics<PooledBinary> stats) {
     StringStatistics stringStats = (StringStatistics) stats;
     if (isEmpty) {
       initializeStats(
@@ -165,7 +166,7 @@ public class StringStatistics extends Statistics<Binary> {
   }
 
   @Override
-  void updateStats(Binary value) {
+  void updateStats(PooledBinary value) {
     if (isEmpty) {
       initializeStats(value, value, value, value);
       isEmpty = false;
@@ -175,7 +176,7 @@ public class StringStatistics extends Statistics<Binary> {
   }
 
   @Override
-  void updateStats(Binary[] values, int batchSize) {
+  void updateStats(PooledBinary[] values, int batchSize) {
     for (int i = 0; i < batchSize; i++) {
       updateStats(values[i]);
     }

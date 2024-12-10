@@ -28,7 +28,7 @@ import org.apache.tsfile.exception.write.PageException;
 import org.apache.tsfile.file.header.ChunkHeader;
 import org.apache.tsfile.file.header.PageHeader;
 import org.apache.tsfile.file.metadata.statistics.Statistics;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.PublicBAOS;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.write.page.PageWriter;
@@ -239,7 +239,7 @@ public class ChunkWriterImpl implements IChunkWriter {
     checkPageSizeAndMayOpenANewPage();
   }
 
-  public void write(long time, Binary value) {
+  public void write(long time, PooledBinary value) {
     pageWriter.write(time, value);
     checkPageSizeAndMayOpenANewPage();
   }
@@ -281,7 +281,7 @@ public class ChunkWriterImpl implements IChunkWriter {
     checkPageSizeAndMayOpenANewPage();
   }
 
-  public void write(long[] timestamps, Binary[] values, int batchSize) {
+  public void write(long[] timestamps, PooledBinary[] values, int batchSize) {
     pageWriter.write(timestamps, values, batchSize);
     checkPageSizeAndMayOpenANewPage();
   }

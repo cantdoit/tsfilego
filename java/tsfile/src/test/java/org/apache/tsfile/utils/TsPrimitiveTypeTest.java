@@ -52,9 +52,12 @@ public class TsPrimitiveTypeTest {
     Assert.assertEquals(456d, doubleValue.getDouble(), 0.01);
 
     TsPrimitiveType textValue =
-        TsPrimitiveType.getByType(TSDataType.TEXT, new Binary("123", TSFileConfig.STRING_CHARSET));
-    Assert.assertEquals(new TsBinary(new Binary("123", TSFileConfig.STRING_CHARSET)), textValue);
-    Assert.assertEquals(new Binary("123", TSFileConfig.STRING_CHARSET), textValue.getBinary());
+        TsPrimitiveType.getByType(
+            TSDataType.TEXT, new PooledBinary("123", TSFileConfig.STRING_CHARSET));
+    Assert.assertEquals(
+        new TsBinary(new PooledBinary("123", TSFileConfig.STRING_CHARSET)), textValue);
+    Assert.assertEquals(
+        new PooledBinary("123", TSFileConfig.STRING_CHARSET), textValue.getBinary());
 
     TsPrimitiveType booleanValue = TsPrimitiveType.getByType(TSDataType.BOOLEAN, true);
     Assert.assertEquals(new TsBoolean(true), booleanValue);

@@ -35,7 +35,7 @@ import org.apache.tsfile.file.metadata.statistics.Statistics;
 import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.basic.${filter.javaBoxName}Filter;
 import org.apache.tsfile.read.filter.basic.OperatorType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
 import java.io.DataOutputStream;
@@ -67,9 +67,9 @@ public final class ${className} {
   // base class for ValueEq, ValueNotEq, ValueLt, ValueGt, ValueLtEq, ValueGtEq
   abstract static class ValueColumnCompareFilter extends ${filterName} {
 
-    protected final ${filter.dataType} constant;
+    protected final ${filter.valueType} constant;
 
-    protected ValueColumnCompareFilter(int measurementIndex, ${filter.dataType} constant) {
+    protected ValueColumnCompareFilter(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex);
       <#if filter.dataType == "Binary">
       this.constant = Objects.requireNonNull(constant, CONSTANT_CANNOT_BE_NULL_MSG);
@@ -127,7 +127,7 @@ public final class ${className} {
 
   public static final class ValueEq extends ValueColumnCompareFilter {
 
-    public ValueEq(int measurementIndex, ${filter.dataType} constant) {
+    public ValueEq(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex, constant);
     }
 
@@ -137,11 +137,11 @@ public final class ${className} {
 
     @Override
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "Binary">
       return constant.equals(value);
       <#else>
@@ -157,8 +157,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) < 0
-          || constant.compareTo((${filter.dataType}) statistics.getMaxValue()) > 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) < 0
+          || constant.compareTo((${filter.valueType}) statistics.getMaxValue()) > 0;
         <#else>
       return false;
         </#if>
@@ -180,8 +180,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) == 0
-          && constant.compareTo((${filter.dataType}) statistics.getMaxValue()) == 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) == 0
+          && constant.compareTo((${filter.valueType}) statistics.getMaxValue()) == 0;
         <#else>
       return false;
         </#if>
@@ -208,7 +208,7 @@ public final class ${className} {
 
   public static final class ValueNotEq extends ValueColumnCompareFilter {
 
-    public ValueNotEq(int measurementIndex, ${filter.dataType} constant) {
+    public ValueNotEq(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex, constant);
     }
 
@@ -218,11 +218,11 @@ public final class ${className} {
 
     @Override
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "Binary">
       return !constant.equals(value);
       <#else>
@@ -238,8 +238,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) == 0
-          && constant.compareTo((${filter.dataType}) statistics.getMaxValue()) == 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) == 0
+          && constant.compareTo((${filter.valueType}) statistics.getMaxValue()) == 0;
         <#else>
       return false;
         </#if>
@@ -262,8 +262,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) < 0
-          || constant.compareTo((${filter.dataType}) statistics.getMaxValue()) > 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) < 0
+          || constant.compareTo((${filter.valueType}) statistics.getMaxValue()) > 0;
         <#else>
       return false;
         </#if>
@@ -289,7 +289,7 @@ public final class ${className} {
 
   public static final class ValueLt extends ValueColumnCompareFilter {
 
-    public ValueLt(int measurementIndex, ${filter.dataType} constant) {
+    public ValueLt(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex, constant);
     }
 
@@ -300,11 +300,11 @@ public final class ${className} {
     @Override
     @SuppressWarnings("unchecked")
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "boolean">
       return Boolean.compare(constant,value) > 0;
       <#elseif filter.dataType == "Binary">
@@ -322,7 +322,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) <= 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) <= 0;
         <#else>
       return false;
         </#if>
@@ -344,7 +344,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMaxValue()) > 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMaxValue()) > 0;
         <#else>
       return false;
         </#if>
@@ -369,7 +369,7 @@ public final class ${className} {
 
   public static final class ValueLtEq extends ValueColumnCompareFilter {
 
-    public ValueLtEq(int measurementIndex, ${filter.dataType} constant) {
+    public ValueLtEq(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex, constant);
     }
 
@@ -380,11 +380,11 @@ public final class ${className} {
     @Override
     @SuppressWarnings("unchecked")
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "boolean">
       return Boolean.compare(constant,value) >= 0;
       <#elseif filter.dataType == "Binary">
@@ -402,7 +402,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) < 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) < 0;
         <#else>
       return false;
         </#if>
@@ -424,7 +424,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMaxValue()) >= 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMaxValue()) >= 0;
         <#else>
       return false;
         </#if>
@@ -449,7 +449,7 @@ public final class ${className} {
 
   public static final class ValueGt extends ValueColumnCompareFilter {
 
-    public ValueGt(int measurementIndex, ${filter.dataType} constant) {
+    public ValueGt(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex, constant);
     }
 
@@ -460,11 +460,11 @@ public final class ${className} {
     @Override
     @SuppressWarnings("unchecked")
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "boolean">
       return Boolean.compare(constant,value) < 0;
       <#elseif filter.dataType == "Binary">
@@ -482,7 +482,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMaxValue()) >= 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMaxValue()) >= 0;
         <#else>
       return false;
         </#if>
@@ -504,7 +504,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) < 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) < 0;
         <#else>
       return false;
         </#if>
@@ -529,7 +529,7 @@ public final class ${className} {
 
   public static final class ValueGtEq extends ValueColumnCompareFilter {
 
-    public ValueGtEq(int measurementIndex, ${filter.dataType} constant) {
+    public ValueGtEq(int measurementIndex, ${filter.valueType} constant) {
       super(measurementIndex, constant);
     }
 
@@ -540,11 +540,11 @@ public final class ${className} {
     @Override
     @SuppressWarnings("unchecked")
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "boolean">
       return Boolean.compare(constant,value) <= 0;
       <#elseif filter.dataType == "Binary">
@@ -562,7 +562,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMaxValue()) > 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMaxValue()) > 0;
         <#else>
       return false;
         </#if>
@@ -584,7 +584,7 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return constant.compareTo((${filter.dataType}) statistics.getMinValue()) <= 0;
+      return constant.compareTo((${filter.valueType}) statistics.getMinValue()) <= 0;
         <#else>
       return false;
         </#if>
@@ -610,10 +610,10 @@ public final class ${className} {
   // base class for ValueBetweenAnd, ValueNotBetweenAnd
   abstract static class ValueColumnRangeFilter extends ${filterName} {
 
-    protected final ${filter.dataType} min;
-    protected final ${filter.dataType} max;
+    protected final ${filter.valueType} min;
+    protected final ${filter.valueType} max;
 
-    protected ValueColumnRangeFilter(int measurementIndex, ${filter.dataType} min, ${filter.dataType} max) {
+    protected ValueColumnRangeFilter(int measurementIndex, ${filter.valueType} min, ${filter.valueType} max) {
       super(measurementIndex);
       <#if filter.dataType == "Binary">
       this.min = Objects.requireNonNull(min,"min cannot be null");
@@ -677,7 +677,7 @@ public final class ${className} {
 
   public static final class ValueBetweenAnd extends ValueColumnRangeFilter {
 
-    public ValueBetweenAnd(int measurementIndex, ${filter.dataType} min, ${filter.dataType} max) {
+    public ValueBetweenAnd(int measurementIndex, ${filter.valueType} min, ${filter.valueType} max) {
       super(measurementIndex, min, max);
     }
 
@@ -688,11 +688,11 @@ public final class ${className} {
     @Override
     @SuppressWarnings("unchecked")
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "boolean">
       return Boolean.compare(min,value) <= 0
           && Boolean.compare(max,value) >= 0;
@@ -712,8 +712,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return ((${filter.dataType}) statistics.getMaxValue()).compareTo(min) < 0
-          || ((${filter.dataType}) statistics.getMinValue()).compareTo(max) > 0;
+      return ((${filter.valueType}) statistics.getMaxValue()).compareTo(min) < 0
+          || ((${filter.valueType}) statistics.getMinValue()).compareTo(max) > 0;
         <#else>
       return false;
         </#if>
@@ -735,8 +735,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return ((${filter.dataType}) statistics.getMinValue()).compareTo(min) >= 0
-          && ((${filter.dataType}) statistics.getMaxValue()).compareTo(max) <= 0;
+      return ((${filter.valueType}) statistics.getMinValue()).compareTo(min) >= 0
+          && ((${filter.valueType}) statistics.getMaxValue()).compareTo(max) <= 0;
         <#else>
       return false;
         </#if>
@@ -762,7 +762,7 @@ public final class ${className} {
 
   public static final class ValueNotBetweenAnd extends ValueColumnRangeFilter {
 
-    public ValueNotBetweenAnd(int measurementIndex, ${filter.dataType} min, ${filter.dataType} max) {
+    public ValueNotBetweenAnd(int measurementIndex, ${filter.valueType} min, ${filter.valueType} max) {
       super(measurementIndex, min, max);
     }
 
@@ -773,11 +773,11 @@ public final class ${className} {
     @Override
     @SuppressWarnings("unchecked")
     public boolean valueSatisfy(Object value){
-      return valueSatisfy((${filter.dataType}) value);
+      return valueSatisfy((${filter.valueType}) value);
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "boolean">
       return Boolean.compare(min,value) > 0
           || Boolean.compare(max,value) < 0;
@@ -796,8 +796,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return ((${filter.dataType}) statistics.getMinValue()).compareTo(min) >= 0
-          && ((${filter.dataType}) statistics.getMaxValue()).compareTo(max) <= 0;
+      return ((${filter.valueType}) statistics.getMinValue()).compareTo(min) >= 0
+          && ((${filter.valueType}) statistics.getMaxValue()).compareTo(max) <= 0;
         <#else>
       return false;
         </#if>
@@ -819,8 +819,8 @@ public final class ${className} {
       if(statistics.isEmpty()){
         return false;
       }
-      return ((${filter.dataType}) statistics.getMinValue()).compareTo(max) > 0
-          || ((${filter.dataType}) statistics.getMaxValue()).compareTo(min) < 0;
+      return ((${filter.valueType}) statistics.getMinValue()).compareTo(max) > 0
+          || ((${filter.valueType}) statistics.getMaxValue()).compareTo(min) < 0;
         <#else>
       return false;
         </#if>
@@ -847,25 +847,25 @@ public final class ${className} {
   // base class for ValueIn, ValueNotIn
   abstract static class ValueColumnSetFilter extends ${filterName} {
 
-    <#if filter.javaBoxName == "String">
-    protected final Set<${filter.dataType}> candidates;
+    <#if filter.javaBoxName == "String" || filter.javaBoxName == "Binary">
+    protected final Set<${filter.valueType}> candidates;
     <#else>
     protected final Set<${filter.javaBoxName}> candidates;
     </#if>
 
-    protected final ${filter.dataType} candidatesMin;
-    protected final ${filter.dataType} candidatesMax;
+    protected final ${filter.valueType} candidatesMin;
+    protected final ${filter.valueType} candidatesMax;
 
-    <#if filter.javaBoxName == "String">
-    protected ValueColumnSetFilter(int measurementIndex, Set<${filter.dataType}> candidates) {
+    <#if filter.javaBoxName == "String" || filter.javaBoxName == "Binary">
+    protected ValueColumnSetFilter(int measurementIndex, Set<${filter.valueType}> candidates) {
     <#else>
     protected ValueColumnSetFilter(int measurementIndex, Set<${filter.javaBoxName}> candidates) {
     </#if>
       super(measurementIndex);
       this.candidates = candidates;
 
-      <#if filter.javaBoxName == "String">
-      Set<${filter.dataType}> filteredSet = candidates.stream().filter(Objects::nonNull).collect(Collectors.toSet());
+      <#if filter.javaBoxName == "String" || filter.javaBoxName == "Binary">
+      Set<${filter.valueType}> filteredSet = candidates.stream().filter(Objects::nonNull).collect(Collectors.toSet());
       <#else>
       Set<${filter.javaBoxName}> filteredSet = candidates.stream().filter(Objects::nonNull).collect(Collectors.toSet());
       </#if>
@@ -946,8 +946,8 @@ public final class ${className} {
 
   public static final class ValueIn extends ValueColumnSetFilter {
 
-    <#if filter.javaBoxName == "String">
-    public ValueIn(int measurementIndex, Set<${filter.dataType}> candidates) {
+    <#if filter.javaBoxName == "String" || filter.javaBoxName == "Binary">
+    public ValueIn(int measurementIndex, Set<${filter.valueType}> candidates) {
       super(measurementIndex, candidates);
     }
     <#else>
@@ -962,11 +962,15 @@ public final class ${className} {
 
     @Override
     public boolean valueSatisfy(Object value){
+      <#if filter.javaBoxName == "Binary">
+      return candidates.contains((PooledBinary) value);
+      <#else>
       return candidates.contains((${filter.javaBoxName}) value);
+      </#if>
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       return candidates.contains(value);
     }
 
@@ -991,8 +995,8 @@ public final class ${className} {
       if (statistics.isPresent()) {
         Statistics<? extends Serializable> stat = statistics.get();
         <#if filter.dataType == "Binary" && filter.javaBoxName == "String">
-        ${filter.dataType} valuesMin = (${filter.dataType}) stat.getMinValue();
-        ${filter.dataType} valuesMax = (${filter.dataType}) stat.getMaxValue();
+        ${filter.valueType} valuesMin = (${filter.valueType}) stat.getMinValue();
+        ${filter.valueType} valuesMax = (${filter.valueType}) stat.getMaxValue();
         <#else>
         ${filter.javaBoxName} valuesMin = (${filter.javaBoxName}) stat.getMinValue();
         ${filter.javaBoxName} valuesMax = (${filter.javaBoxName}) stat.getMaxValue();
@@ -1045,8 +1049,8 @@ public final class ${className} {
       if (statistics.isPresent()) {
         Statistics<? extends Serializable> stat = statistics.get();
         <#if filter.dataType == "Binary" && filter.javaBoxName == "String">
-        ${filter.dataType} valuesMin = (${filter.dataType}) stat.getMinValue();
-        ${filter.dataType} valuesMax = (${filter.dataType}) stat.getMaxValue();
+        ${filter.valueType} valuesMin = (${filter.valueType}) stat.getMinValue();
+        ${filter.valueType} valuesMax = (${filter.valueType}) stat.getMaxValue();
         <#else>
         ${filter.javaBoxName} valuesMin = (${filter.javaBoxName}) stat.getMinValue();
         ${filter.javaBoxName} valuesMax = (${filter.javaBoxName}) stat.getMaxValue();
@@ -1090,8 +1094,8 @@ public final class ${className} {
 
   public static final class ValueNotIn extends ValueColumnSetFilter {
 
-    <#if filter.javaBoxName == "String">
-    public ValueNotIn(int measurementIndex, Set<${filter.dataType}> candidates) {
+    <#if filter.javaBoxName == "String" || filter.javaBoxName == "Binary">
+    public ValueNotIn(int measurementIndex, Set<${filter.valueType}> candidates) {
       super(measurementIndex, candidates);
     }
     <#else>
@@ -1106,11 +1110,15 @@ public final class ${className} {
 
     @Override
     public boolean valueSatisfy(Object value){
+      <#if filter.javaBoxName == "Binary">
+      return !candidates.contains((PooledBinary) value);
+      <#else>
       return !candidates.contains((${filter.javaBoxName}) value);
+      </#if>
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       return !candidates.contains(value);
     }
 
@@ -1202,7 +1210,7 @@ public final class ${className} {
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
     <#if filter.dataType == "Binary">
       return pattern.matcher(new MatcherInput(value.toString(), new AccessCount())).find();
     <#else>
@@ -1247,7 +1255,7 @@ public final class ${className} {
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
     <#if filter.dataType == "Binary">
       return !pattern.matcher(new MatcherInput(value.toString(), new AccessCount())).find();
     <#else>
@@ -1352,7 +1360,7 @@ public final class ${className} {
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "Binary">
       return pattern.getMatcher().match(value.toString().getBytes());
       <#else>
@@ -1397,7 +1405,7 @@ public final class ${className} {
     }
 
     @Override
-    public boolean valueSatisfy(${filter.dataType} value) {
+    public boolean valueSatisfy(${filter.valueType} value) {
       <#if filter.dataType == "Binary">
       return !pattern.getMatcher().match(value.toString().getBytes());
       <#else>

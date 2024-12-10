@@ -20,7 +20,7 @@
 package org.apache.tsfile.block.column;
 
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.TsPrimitiveType;
 
 public interface ColumnBuilder {
@@ -51,7 +51,7 @@ public interface ColumnBuilder {
   }
 
   /** Write a Binary to the current entry; */
-  default ColumnBuilder writeBinary(Binary value) {
+  default ColumnBuilder writeBinary(PooledBinary value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 

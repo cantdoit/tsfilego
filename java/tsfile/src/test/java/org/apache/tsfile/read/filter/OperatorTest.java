@@ -24,7 +24,7 @@ import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.factory.FilterFactory;
 import org.apache.tsfile.read.filter.factory.TimeFilterApi;
 import org.apache.tsfile.read.filter.factory.ValueFilterApi;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -75,14 +75,14 @@ public class OperatorTest {
     Filter binaryFilter =
         ValueFilterApi.gt(
             DEFAULT_MEASUREMENT_INDEX,
-            new Binary("test1", TSFileConfig.STRING_CHARSET),
+            new PooledBinary("test1", TSFileConfig.STRING_CHARSET),
             TSDataType.TEXT);
     Assert.assertTrue(
         binaryFilter.satisfyBinary(
-            TESTED_TIMESTAMP, new Binary("test2", TSFileConfig.STRING_CHARSET)));
+            TESTED_TIMESTAMP, new PooledBinary("test2", TSFileConfig.STRING_CHARSET)));
     Assert.assertFalse(
         binaryFilter.satisfyBinary(
-            TESTED_TIMESTAMP, new Binary("test0", TSFileConfig.STRING_CHARSET)));
+            TESTED_TIMESTAMP, new PooledBinary("test0", TSFileConfig.STRING_CHARSET)));
   }
 
   @Test

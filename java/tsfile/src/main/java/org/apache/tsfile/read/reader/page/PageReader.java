@@ -34,7 +34,7 @@ import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.factory.FilterFactory;
 import org.apache.tsfile.read.reader.IPageReader;
 import org.apache.tsfile.read.reader.series.PaginationController;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.write.UnSupportedDataTypeException;
 
@@ -196,7 +196,7 @@ public class PageReader implements IPageReader {
         case TEXT:
         case BLOB:
         case STRING:
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           if (!isDeleted(timestamp)
               && (allSatisfy || recordFilter.satisfyBinary(timestamp, aBinary))) {
             pageData.putBinary(timestamp, aBinary);
@@ -341,7 +341,7 @@ public class PageReader implements IPageReader {
       case STRING:
         while (timeDecoder.hasNext(timeBuffer)) {
           long timestamp = timeDecoder.readLong(timeBuffer);
-          Binary aBinary = valueDecoder.readBinary(valueBuffer);
+          PooledBinary aBinary = valueDecoder.readBinary(valueBuffer);
           if (isDeleted(timestamp)
               || (!allSatisfy && !recordFilter.satisfyBinary(timestamp, aBinary))) {
             continue;

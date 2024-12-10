@@ -27,7 +27,7 @@ import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.factory.FilterFactory;
 import org.apache.tsfile.read.filter.factory.TimeFilterApi;
 import org.apache.tsfile.read.filter.factory.ValueFilterApi;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -82,16 +82,16 @@ public class StatisticsFilterTest {
     statistic3.update(10L, 10L);
 
     StringStatistics statistic4 = new StringStatistics();
-    statistic4.update(100L, new Binary("a", STRING_CHARSET));
-    statistic4.update(200L, new Binary("a", STRING_CHARSET));
+    statistic4.update(100L, new PooledBinary("a", STRING_CHARSET));
+    statistic4.update(200L, new PooledBinary("a", STRING_CHARSET));
 
     StringStatistics statistic5 = new StringStatistics();
-    statistic5.update(100L, new Binary("b", STRING_CHARSET));
-    statistic5.update(200L, new Binary("b", STRING_CHARSET));
+    statistic5.update(100L, new PooledBinary("b", STRING_CHARSET));
+    statistic5.update(200L, new PooledBinary("b", STRING_CHARSET));
 
     StringStatistics statistic6 = new StringStatistics();
-    statistic6.update(100L, new Binary("a", STRING_CHARSET));
-    statistic6.update(200L, new Binary("b", STRING_CHARSET));
+    statistic6.update(100L, new PooledBinary("a", STRING_CHARSET));
+    statistic6.update(200L, new PooledBinary("b", STRING_CHARSET));
 
     metadata1 = newMetadata(statistic1);
     metadata2 = newMetadata(statistic2);
@@ -126,7 +126,7 @@ public class StatisticsFilterTest {
 
     Filter stringEq =
         ValueFilterApi.eq(
-            DEFAULT_MEASUREMENT_INDEX, new Binary("a", STRING_CHARSET), TSDataType.STRING);
+            DEFAULT_MEASUREMENT_INDEX, new PooledBinary("a", STRING_CHARSET), TSDataType.STRING);
     Assert.assertFalse(stringEq.canSkip(metadata4));
     Assert.assertTrue(stringEq.canSkip(metadata5));
     Assert.assertFalse(stringEq.canSkip(metadata6));
@@ -154,7 +154,7 @@ public class StatisticsFilterTest {
 
     Filter stringNotEq =
         ValueFilterApi.notEq(
-            DEFAULT_MEASUREMENT_INDEX, new Binary("a", STRING_CHARSET), TSDataType.STRING);
+            DEFAULT_MEASUREMENT_INDEX, new PooledBinary("a", STRING_CHARSET), TSDataType.STRING);
     Assert.assertTrue(stringNotEq.canSkip(metadata4));
     Assert.assertFalse(stringNotEq.canSkip(metadata5));
     Assert.assertFalse(stringNotEq.canSkip(metadata6));
@@ -180,7 +180,7 @@ public class StatisticsFilterTest {
 
     Filter stringGt =
         ValueFilterApi.gt(
-            DEFAULT_MEASUREMENT_INDEX, new Binary("a", STRING_CHARSET), TSDataType.STRING);
+            DEFAULT_MEASUREMENT_INDEX, new PooledBinary("a", STRING_CHARSET), TSDataType.STRING);
     Assert.assertTrue(stringGt.canSkip(metadata4));
     Assert.assertFalse(stringGt.canSkip(metadata5));
     Assert.assertFalse(stringGt.canSkip(metadata6));
@@ -206,7 +206,7 @@ public class StatisticsFilterTest {
 
     Filter stringGtEq =
         ValueFilterApi.gtEq(
-            DEFAULT_MEASUREMENT_INDEX, new Binary("a", STRING_CHARSET), TSDataType.STRING);
+            DEFAULT_MEASUREMENT_INDEX, new PooledBinary("a", STRING_CHARSET), TSDataType.STRING);
     Assert.assertFalse(stringGtEq.canSkip(metadata4));
     Assert.assertFalse(stringGtEq.canSkip(metadata5));
     Assert.assertFalse(stringGtEq.canSkip(metadata6));
@@ -232,7 +232,7 @@ public class StatisticsFilterTest {
 
     Filter stringLt =
         ValueFilterApi.lt(
-            DEFAULT_MEASUREMENT_INDEX, new Binary("b", STRING_CHARSET), TSDataType.STRING);
+            DEFAULT_MEASUREMENT_INDEX, new PooledBinary("b", STRING_CHARSET), TSDataType.STRING);
     Assert.assertFalse(stringLt.canSkip(metadata4));
     Assert.assertTrue(stringLt.canSkip(metadata5));
     Assert.assertFalse(stringLt.canSkip(metadata6));
@@ -256,7 +256,7 @@ public class StatisticsFilterTest {
 
     Filter stringLtEq =
         ValueFilterApi.ltEq(
-            DEFAULT_MEASUREMENT_INDEX, new Binary("a", STRING_CHARSET), TSDataType.STRING);
+            DEFAULT_MEASUREMENT_INDEX, new PooledBinary("a", STRING_CHARSET), TSDataType.STRING);
     Assert.assertFalse(stringLtEq.canSkip(metadata4));
     Assert.assertTrue(stringLtEq.canSkip(metadata5));
     Assert.assertFalse(stringLtEq.canSkip(metadata6));
@@ -334,8 +334,8 @@ public class StatisticsFilterTest {
     Filter stringBetweenAnd =
         ValueFilterApi.between(
             DEFAULT_MEASUREMENT_INDEX,
-            new Binary("a", STRING_CHARSET),
-            new Binary("b", STRING_CHARSET),
+            new PooledBinary("a", STRING_CHARSET),
+            new PooledBinary("b", STRING_CHARSET),
             TSDataType.STRING);
     Assert.assertFalse(stringBetweenAnd.canSkip(metadata4));
     Assert.assertFalse(stringBetweenAnd.canSkip(metadata5));
@@ -368,8 +368,8 @@ public class StatisticsFilterTest {
     Filter stringNotBetweenAnd =
         ValueFilterApi.notBetween(
             DEFAULT_MEASUREMENT_INDEX,
-            new Binary("b", STRING_CHARSET),
-            new Binary("c", STRING_CHARSET),
+            new PooledBinary("b", STRING_CHARSET),
+            new PooledBinary("c", STRING_CHARSET),
             TSDataType.STRING);
     Assert.assertFalse(stringNotBetweenAnd.canSkip(metadata4));
     Assert.assertTrue(stringNotBetweenAnd.canSkip(metadata5));
@@ -459,7 +459,8 @@ public class StatisticsFilterTest {
         ValueFilterApi.in(
             DEFAULT_MEASUREMENT_INDEX,
             new HashSet<>(
-                Arrays.asList(new Binary("a", STRING_CHARSET), new Binary("b", STRING_CHARSET))),
+                Arrays.asList(
+                    new PooledBinary("a", STRING_CHARSET), new PooledBinary("b", STRING_CHARSET))),
             TSDataType.STRING);
     Assert.assertFalse(stringIn.canSkip(metadata4));
     Assert.assertFalse(stringIn.canSkip(metadata5));

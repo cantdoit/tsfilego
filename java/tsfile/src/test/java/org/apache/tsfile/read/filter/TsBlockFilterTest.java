@@ -26,7 +26,7 @@ import org.apache.tsfile.read.common.block.column.LongColumn;
 import org.apache.tsfile.read.common.block.column.TimeColumn;
 import org.apache.tsfile.read.filter.basic.Filter;
 import org.apache.tsfile.read.filter.factory.ValueFilterApi;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -79,11 +79,11 @@ public class TsBlockFilterTest {
     long[] longs = new long[] {0L, 100L, -100L};
     float[] floats = new float[] {0.0f, -100.1f, 100.1f};
     double[] doubles = new double[] {0.0d, -100.2d, 100.2d};
-    Binary[] binaries =
-        new Binary[] {
-          new Binary("a", STRING_CHARSET),
-          new Binary(null, STRING_CHARSET),
-          new Binary("c", STRING_CHARSET),
+    PooledBinary[] binaries =
+        new PooledBinary[] {
+          new PooledBinary("a", STRING_CHARSET),
+          new PooledBinary(null, STRING_CHARSET),
+          new PooledBinary("c", STRING_CHARSET),
         };
 
     BooleanColumn booleanColumn =
@@ -99,7 +99,7 @@ public class TsBlockFilterTest {
         new BinaryColumn(
             3,
             Optional.of(new boolean[] {true, false, true}),
-            new Binary[] {null, new Binary("a", STRING_CHARSET), null});
+            new PooledBinary[] {null, new PooledBinary("a", STRING_CHARSET), null});
 
     timeColumn = new TimeColumn(timestamps.length, timestamps);
     valueColumn[getMeasurementId(TSDataType.BOOLEAN)] = booleanColumn;
@@ -155,7 +155,9 @@ public class TsBlockFilterTest {
   public void testBinary() {
     Filter binaryFilter =
         ValueFilterApi.eq(
-            getMeasurementId(TSDataType.TEXT), new Binary("a", STRING_CHARSET), TSDataType.TEXT);
+            getMeasurementId(TSDataType.TEXT),
+            new PooledBinary("a", STRING_CHARSET),
+            TSDataType.TEXT);
     boolean[] expected = new boolean[] {true, false, false};
     Assert.assertArrayEquals(expected, binaryFilter.satisfyTsBlock(selection, tsBlock));
   }
@@ -164,7 +166,9 @@ public class TsBlockFilterTest {
   public void testString() {
     Filter stringFilter =
         ValueFilterApi.eq(
-            getMeasurementId(TSDataType.TEXT), new Binary("a", STRING_CHARSET), TSDataType.STRING);
+            getMeasurementId(TSDataType.TEXT),
+            new PooledBinary("a", STRING_CHARSET),
+            TSDataType.STRING);
     boolean[] expected = new boolean[] {true, false, false};
     Assert.assertArrayEquals(expected, stringFilter.satisfyTsBlock(selection, tsBlock));
   }

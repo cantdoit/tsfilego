@@ -21,7 +21,7 @@ package org.apache.tsfile.file.metadata.statistics;
 
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.filter.StatisticsClassException;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.RamUsageEstimator;
 
 import java.io.IOException;
@@ -29,7 +29,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
-public class BlobStatistics extends Statistics<Binary> {
+public class BlobStatistics extends Statistics<PooledBinary> {
 
   public static final long INSTANCE_SIZE =
       RamUsageEstimator.shallowSizeOfInstance(BlobStatistics.class);
@@ -57,7 +57,7 @@ public class BlobStatistics extends Statistics<Binary> {
     return 0;
   }
 
-  public void updateStats(Binary value) {
+  public void updateStats(PooledBinary value) {
     if (isEmpty) {
       isEmpty = false;
     }
@@ -74,25 +74,25 @@ public class BlobStatistics extends Statistics<Binary> {
   }
 
   @Override
-  public Binary getMinValue() {
+  public PooledBinary getMinValue() {
     throw new StatisticsClassException(
         String.format(STATS_UNSUPPORTED_MSG, TSDataType.BLOB, "min"));
   }
 
   @Override
-  public Binary getMaxValue() {
+  public PooledBinary getMaxValue() {
     throw new StatisticsClassException(
         String.format(STATS_UNSUPPORTED_MSG, TSDataType.BLOB, "max"));
   }
 
   @Override
-  public Binary getFirstValue() {
+  public PooledBinary getFirstValue() {
     throw new StatisticsClassException(
         String.format(STATS_UNSUPPORTED_MSG, TSDataType.BLOB, "first"));
   }
 
   @Override
-  public Binary getLastValue() {
+  public PooledBinary getLastValue() {
     throw new StatisticsClassException(
         String.format(STATS_UNSUPPORTED_MSG, TSDataType.BLOB, "last"));
   }
@@ -111,7 +111,7 @@ public class BlobStatistics extends Statistics<Binary> {
   }
 
   @Override
-  protected void mergeStatisticsValue(Statistics<Binary> stats) {
+  protected void mergeStatisticsValue(Statistics<PooledBinary> stats) {
     // do nothing
     if (isEmpty) {
       isEmpty = false;

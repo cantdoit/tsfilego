@@ -28,7 +28,7 @@ import org.apache.tsfile.read.common.block.TsBlockBuilder;
 import org.apache.tsfile.read.common.block.column.BinaryColumn;
 import org.apache.tsfile.read.common.block.column.TimeColumn;
 import org.apache.tsfile.read.common.block.column.TsBlockSerde;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
 import org.junit.Test;
@@ -71,7 +71,7 @@ public class TsBlockSerdeTest {
       longColumnBuilder.writeLong(i);
       doubleColumnBuilder.writeDouble(i + i / 10D);
       booleanColumnBuilder.writeBoolean(true);
-      binaryColumnBuilder.writeBinary(new Binary("foo", TSFileConfig.STRING_CHARSET));
+      binaryColumnBuilder.writeBinary(new PooledBinary("foo", TSFileConfig.STRING_CHARSET));
       tsBlockBuilder.declarePosition();
     }
 
@@ -137,7 +137,9 @@ public class TsBlockSerdeTest {
         new TsBlock(
             new TimeColumn(1, new long[] {0}),
             new BinaryColumn(
-                1, Optional.empty(), new Binary[] {new Binary(outputStream.toByteArray())}));
+                1,
+                Optional.empty(),
+                new PooledBinary[] {new PooledBinary(outputStream.toByteArray())}));
 
     TsBlockSerde tsBlockSerde = new TsBlockSerde();
     try {
@@ -172,7 +174,7 @@ public class TsBlockSerdeTest {
             new BinaryColumn(
                 1,
                 Optional.of(new boolean[] {false}),
-                new Binary[] {new Binary(outputStream.toByteArray())}));
+                new PooledBinary[] {new PooledBinary(outputStream.toByteArray())}));
 
     TsBlockSerde tsBlockSerde = new TsBlockSerde();
     try {

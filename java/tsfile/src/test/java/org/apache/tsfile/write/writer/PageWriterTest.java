@@ -24,7 +24,7 @@ import org.apache.tsfile.encoding.decoder.PlainDecoder;
 import org.apache.tsfile.encoding.encoder.PlainEncoder;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.write.page.PageWriter;
 import org.apache.tsfile.write.schema.MeasurementSchema;
@@ -167,7 +167,7 @@ public class PageWriterTest {
     String value = "I have a dream";
     int timeCount = 0;
     try {
-      writer.write(timeCount++, new Binary(value, TSFileConfig.STRING_CHARSET));
+      writer.write(timeCount++, new PooledBinary(value, TSFileConfig.STRING_CHARSET));
       assertEquals(23, writer.estimateMaxMemSize());
       ByteBuffer buffer1 = writer.getUncompressedBytes();
       ByteBuffer buffer = ByteBuffer.wrap(buffer1.array());

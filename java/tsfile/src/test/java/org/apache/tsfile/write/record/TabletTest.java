@@ -22,8 +22,8 @@ package org.apache.tsfile.write.record;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
-import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.BitMap;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.write.schema.IMeasurementSchema;
 import org.apache.tsfile.write.schema.MeasurementSchema;
 
@@ -155,7 +155,7 @@ public class TabletTest {
       tablet.addValue(
           measurementSchemas.get(7).getMeasurementName(),
           i,
-          new Binary(String.valueOf(i), TSFileConfig.STRING_CHARSET));
+          new PooledBinary(String.valueOf(i), TSFileConfig.STRING_CHARSET));
       tablet.addValue(measurementSchemas.get(8).getMeasurementName(), i, (long) i);
       tablet.addValue(
           measurementSchemas.get(9).getMeasurementName(),

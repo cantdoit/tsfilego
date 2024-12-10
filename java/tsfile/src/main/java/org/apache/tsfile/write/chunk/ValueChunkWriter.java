@@ -31,7 +31,7 @@ import org.apache.tsfile.file.header.PageHeader;
 import org.apache.tsfile.file.metadata.enums.CompressionType;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.file.metadata.statistics.Statistics;
-import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.PooledBinary;
 import org.apache.tsfile.utils.PublicBAOS;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 import org.apache.tsfile.write.page.ValuePageWriter;
@@ -158,7 +158,7 @@ public class ValueChunkWriter {
     pageWriter.write(time, value, isNull);
   }
 
-  public void write(long time, Binary value, boolean isNull) {
+  public void write(long time, PooledBinary value, boolean isNull) {
     pageWriter.write(time, value, isNull);
   }
 
@@ -182,7 +182,8 @@ public class ValueChunkWriter {
     pageWriter.write(timestamps, values, isNull, batchSize, pos);
   }
 
-  public void write(long[] timestamps, Binary[] values, boolean[] isNull, int batchSize, int pos) {
+  public void write(
+      long[] timestamps, PooledBinary[] values, boolean[] isNull, int batchSize, int pos) {
     pageWriter.write(timestamps, values, isNull, batchSize, pos);
   }
 
