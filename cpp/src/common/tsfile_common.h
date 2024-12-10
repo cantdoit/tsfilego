@@ -32,7 +32,6 @@
 #include "common/config/config.h"
 #include "common/container/list.h"
 #include "reader/bloom_filter.h"
-#include "schema.h"
 #include "statistic.h"
 #include "utils/db_utils.h"
 #include "utils/storage_utils.h"
@@ -833,6 +832,8 @@ struct MetaIndexNode {
         children_.~vector();
     }
 };
+
+class TableSchema;
 
 struct TsFileMeta {
     MetaIndexNode *index_node_;

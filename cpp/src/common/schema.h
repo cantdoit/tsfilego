@@ -24,7 +24,6 @@
 #include <string>
 
 #include "common/db_common.h"
-#include "common/tablet.h"
 #include "writer/time_chunk_writer.h"
 #include "writer/value_chunk_writer.h"
 
@@ -76,38 +75,44 @@ struct MeasurementSchemaGroup {
     TimeChunkWriter *time_chunk_writer_ = nullptr;
 };
 
+enum class ColumnCategory {
+    ID,
+    MEASUREMENT
+};
+
 class TableSchema {
-public:
+   public:
     TableSchema() = default;
     TableSchema(const std::string& table_name,
-                    const std::vector<MeasurementSchema*>& measurement_schemas,
-                    const std::vector<ColumnCategory>& column_categories)
-                : table_name_(table_name),
-                  measurementSchemas_(measurement_schemas),
-                  columnCategories_(column_categories) {}
+                const std::vector<MeasurementSchema*>& measurement_schemas,
+                const std::vector<ColumnCategory>& column_categories)
+        : table_name_(table_name),
+          measurementSchemas_(measurement_schemas),
+          columnCategories_(column_categories) {}
 
-        TableSchema(TableSchema&& other) noexcept
-                : table_name_(std::move(other.table_name_)),
-                  measurementSchemas_(std::move(other.measurementSchemas_)),
-                  columnCategories_(std::move(other.columnCategories_)) {
+    TableSchema(TableSchema&& other)
+        noexcept                 : table_name_(std::move(other.table_name_)),
+                   measurementSchemas_(std::move(other.measurementSchemas_)),
+                   columnCategories_(std::move(other.columnCategories_)) {
+    }
+
+    TableSchema(const TableSchema& other) = default;
+
+    ~TableSchema() {
+        for (auto ptr : measurementSchemas_) {
+            delete ptr;
         }
+    }
 
-        TableSchema(const TableSchema& other)
-                : table_name_(other.table_name_),
-                  measurementSchemas_(other.measurementSchemas_),
-                  columnCategories_(other.columnCategories_) {}
+    std::string get_table_name() {
+        return table_name_;
+    }
 
-        ~TableSchema() {
-            for (auto ptr : measurementSchemas_) {
-                delete ptr;
-            }
-        }
-
-private:
-        std::string table_name_;
-        std::vector<MeasurementSchema*> measurementSchemas_;
-        std::vector<ColumnCategory> columnCategories_;
-    };
+   private:
+    std::string table_name_;
+    std::vector<MeasurementSchema*> measurementSchemas_;
+    std::vector<ColumnCategory> columnCategories_;
+};
 
 }  // end namespace storage
 #endif  // COMMON_SCHEMA_H

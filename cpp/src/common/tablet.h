@@ -96,10 +96,5 @@ class Tablet {
     common::BitMap *bitmaps_;
 };
 
-enum class ColumnCategory {
-    ID,
-    MEASUREMENT
-};
-
 }  // end namespace storage
 #endif  // COMMON_TABLET_H

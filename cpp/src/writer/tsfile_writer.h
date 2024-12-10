@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "common/container/simple_vector.h"
+#include "common/device_id.h"
 #include "common/record.h"
 #include "common/schema.h"
 #include "common/tablet.h"
@@ -67,11 +68,14 @@ class TsFileWriter {
     int register_aligned_timeseries(
         const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    void register_table(TableSchema table_schema);
+    void register_table(TableSchema *table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
     int write_tablet_aligned(const Tablet &tablet);
+    bool write_table(
+        const Tablet &tablet,
+        std::vector<std::pair<IDeviceID, int>> device_id_end_index_pairs);
     std::map<std::string, MeasurementSchemaGroup *> *get_schema_group_map() {
         return &schemas_;
     }
@@ -145,7 +149,7 @@ class TsFileWriter {
     storage::TsFileIOWriter *io_writer_;
     // device_name -> MeasurementSchemaGroup
     std::map<std::string, MeasurementSchemaGroup *> schemas_;
-    std::unordered_map<std::string, TableSchema*> tableDeviceIdSchemas_;
+    std::unordered_map<std::string, TableSchema *> table_schema_map_;
     bool start_file_done_;
     // record count since last flush
     int64_t record_count_since_last_flush_;

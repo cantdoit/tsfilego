@@ -115,9 +115,8 @@ void TsFileWriter::set_generate_table_schema(bool generate_table_schema) {
     io_writer_->set_generate_table_schema(generate_table_schema);
 }
 
-void TsFileWriter::register_table(TableSchema table_schema) {
-
-    tableDeviceIdSchemas_.emplace(table_schema.table_name_, &table_schema);
+void TsFileWriter::register_table(TableSchema *table_schema) {
+    table_schema_map_.emplace(table_schema->get_table_name(), table_schema);
 }
 
 bool check_file_exist(const std::string &file_path) {
@@ -555,6 +554,24 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     record_count_since_last_flush_ += tablet.max_rows_;
     ret = check_memory_size_and_may_flush_chunks();
     return ret;
+}
+
+bool TsFileWriter::write_table(
+    const Tablet &tablet,
+    std::vector<std::pair<IDeviceID, int>> device_id_end_index_pairs) {
+    int ret = E_OK;
+    if (table_schema_map_.find(tablet.device_name_) == table_schema_map_.end()) {
+        ret = E_DEVICE_NOT_EXIST;
+        return ret;
+    }
+
+    SimpleVector<ChunkWriter *> chunk_writers;
+    MeasurementNamesFromTablet mnames_getter(tablet);
+    if (RET_FAIL(do_check_schema(tablet.device_name_, mnames_getter,
+                                 chunk_writers))) {
+        return ret;
+    }
+    return false;
 }
 
 int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,
