@@ -24,6 +24,7 @@
 
 #include "common/container/bit_map.h"
 #include "schema.h"
+#include "device_id.h"
 
 namespace storage {
 
@@ -39,6 +40,7 @@ class Tablet {
            const std::vector<MeasurementSchema> *schema_vec,
            int max_rows = DEFAULT_MAX_ROWS)
         : max_rows_(max_rows),
+          cur_row_size_(0),
           device_name_(device_name),
           schema_vec_(schema_vec),
           timestamps_(NULL),
@@ -57,6 +59,7 @@ class Tablet {
     int init();
     void destroy();
     size_t get_column_count() const { return schema_vec_->size(); }
+    int get_cur_row_size() const {return cur_row_size_;}
 
     int set_timestamp(int row_index, int64_t timestamp);
 
@@ -78,6 +81,8 @@ class Tablet {
                   double val);
     // int set_value(int row_index, const std::string &measurement_name, double
     // val);
+    void set_column_categories(const std::vector<ColumnCategory>& column_categories);
+    std::unique_ptr<IDeviceID> get_device_id(int i) const;
 
     friend class TabletColIterator;
     friend class TsFileWriter;
@@ -88,12 +93,15 @@ class Tablet {
 
    private:
     int max_rows_;
+    int cur_row_size_;
     std::string device_name_;
     const std::vector<MeasurementSchema> *schema_vec_;
     std::map<std::string, int> schema_map_;
     int64_t *timestamps_;
     void **value_matrix_;
     common::BitMap *bitmaps_;
+    std::vector<ColumnCategory> column_categories_;
+    std::vector<int> id_column_indexes_;
 };
 
 }  // end namespace storage

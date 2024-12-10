@@ -574,10 +574,18 @@ int TsFileWriter::write_table(
     return false;
 }
 
-std::vector<std::pair<IDeviceID, int>> TsFileWriter::split_tablet_by_device(const Tablet& tablet) {
-    std::vector<std::pair<IDeviceID, int>> ret;
-
-    return ret;
+std::vector<std::pair<std::unique_ptr<IDeviceID>, int>> TsFileWriter::split_tablet_by_device(const Tablet& tablet) {
+    std::vector<std::pair<std::unique_ptr<IDeviceID>, int>> result;
+    std::unique_ptr<IDeviceID> last_device_id(new IDeviceID);
+    for (int i = 0; i < tablet.get_cur_row_size(); i++) {
+        std::unique_ptr<IDeviceID> cur_device_id(tablet.get_device_id(i));
+        if (0 == cur_device_id->CompareTo(*last_device_id)) {
+            result.emplace_back(std::move(last_device_id), i);
+            last_device_id = std::move(cur_device_id);
+        }
+    }
+    result.emplace_back(std::move(last_device_id), tablet.get_cur_row_size());
+    return result;
 }
 
 int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,

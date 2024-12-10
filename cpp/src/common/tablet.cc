@@ -82,6 +82,7 @@ int Tablet::set_timestamp(int row_index, int64_t timestamp) {
         return E_OUT_OF_RANGE;
     }
     timestamps_[row_index] = timestamp;
+    cur_row_size_++;
     return E_OK;
 }
 
@@ -159,6 +160,27 @@ int Tablet::set_value(int row_index, uint32_t schema_index, float val) {
 int Tablet::set_value(int row_index, uint32_t schema_index, double val) {
     DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, double, val);
     return E_OK;
+}
+
+void Tablet::set_column_categories(const std::vector<ColumnCategory>& column_categories) {
+    column_categories_ = column_categories;
+    id_column_indexes_.clear();
+    for (size_t i = 0; i < column_categories_.size(); i++) {
+        ColumnCategory columnCategory = column_categories_[i];
+        if (columnCategory == ColumnCategory::ID) {
+            id_column_indexes_.push_back(i);
+        }
+    }
+}
+
+std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) const {
+    std::vector<std::string> id_array;
+    id_array.push_back(device_name_);
+    for (auto id : id_column_indexes_) {
+        id_array.push_back(to_string(id));
+    }
+    IDeviceID* device_id = new StringArrayDeviceID(id_array);
+    return std::unique_ptr<IDeviceID>(device_id);
 }
 
 }  // end namespace storage

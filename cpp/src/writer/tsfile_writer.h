@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "common/container/simple_vector.h"
 #include "common/device_id.h"
@@ -143,7 +144,7 @@ class TsFileWriter {
     int register_timeseries(
         const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    std::vector<std::pair<IDeviceID, int>> split_tablet_by_device(const Tablet& tablet);
+    std::vector<std::pair<std::unique_ptr<IDeviceID>, int>> split_tablet_by_device(const Tablet& tablet);
 
    private:
     storage::WriteFile *write_file_;

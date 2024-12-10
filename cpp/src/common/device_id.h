@@ -32,34 +32,36 @@
 #include <string>
 #include <vector>
 
+#include "utils/errno_define.h"
+
 class IDeviceID {
    public:
     virtual ~IDeviceID() = default;
-    virtual int Serialize(std::ostream& output_stream) const = 0;
-    virtual int Serialize(std::vector<uint8_t>& byte_buffer) const = 0;
-    virtual std::vector<uint8_t> GetBytes() const = 0;
-    virtual bool IsEmpty() const = 0;
-    virtual bool IsTableModel() const = 0;
-    virtual std::string GetTableName() const = 0;
-    virtual int SegmentNum() const = 0;
-    virtual std::string Segment(int i) const = 0;
-    virtual int SerializedSize() const = 0;
+    virtual int Serialize(std::ostream& output_stream) {return 0;}
+    virtual int Serialize(std::vector<uint8_t>& byte_buffer) {return 0;}
+    virtual std::vector<uint8_t> GetBytes() {return std::vector<uint8_t>();}
+    virtual bool IsEmpty() {return false;}
+    virtual bool IsTableModel() {return false;}
+    virtual std::string GetTableName() {return "";}
+    virtual int SegmentNum() {return 0;}
+    virtual std::string Segment(int i) {return "";}
+    virtual int SerializedSize() {return 0;}
     virtual bool StartWith(const std::string& prefix,
-                           bool match_entire_segment = false) const = 0;
-    virtual std::vector<std::string> GetSegments() const = 0;
-    virtual bool MatchDatabaseName(const std::string& database_name) const = 0;
-    virtual int CompareTo(const IDeviceID& other) const = 0;
+                           bool match_entire_segment = false) {return false;}
+    virtual std::vector<std::string> GetSegments() {return std::vector<std::string>();}
+    virtual bool MatchDatabaseName(const std::string& database_name) {return false;}
+    virtual int CompareTo(IDeviceID& other) {return 0;}
 };
 
 class StringArrayDeviceID : public IDeviceID {
    public:
-    explicit StringArrayDeviceID(const std::vector<std::string>& segments)
+    explicit StringArrayDeviceID(std::vector<std::string> &segments)
         : segments_(Formalize(segments)) {}
 
     explicit StringArrayDeviceID(const std::string& device_id_string)
         : segments_(SplitDeviceIdString(device_id_string)) {}
 
-    int Serialize(std::ostream& output_stream) const override {
+    int Serialize(std::ostream& output_stream) override {
         int cnt = 0;
         uint32_t length = static_cast<uint32_t>(segments_.size());
         output_stream.write(reinterpret_cast<const char*>(&length),
@@ -75,7 +77,7 @@ class StringArrayDeviceID : public IDeviceID {
         return cnt;
     }
 
-    int Serialize(std::vector<uint8_t>& byte_buffer) const override {
+    int Serialize(std::vector<uint8_t>& byte_buffer) override {
         std::ostringstream stream;
         int size = Serialize(stream);
         std::string str = stream.str();
@@ -83,35 +85,35 @@ class StringArrayDeviceID : public IDeviceID {
         return size;
     }
 
-    std::vector<uint8_t> GetBytes() const override {
+    std::vector<uint8_t> GetBytes() override {
         std::vector<uint8_t> buffer;
         Serialize(buffer);
         return buffer;
     }
 
-    bool IsEmpty() const override { return segments_.empty(); }
+    bool IsEmpty() override { return segments_.empty(); }
 
-    bool IsTableModel() const override {
+    bool IsTableModel() override {
         return !segments_.empty() &&
                segments_[0].find(".") == std::string::npos;
     }
 
-    std::string GetTableName() const override {
+    std::string GetTableName() override {
         return segments_.empty() ? "" : segments_[0];
     }
 
-    int SegmentNum() const override {
+    int SegmentNum() override {
         return static_cast<int>(segments_.size());
     }
 
-    std::string Segment(int i) const override {
+    std::string Segment(int i) override {
         if (i < 0 || i >= static_cast<int>(segments_.size())) {
             throw std::out_of_range("Segment index out of range");
         }
         return segments_[i];
     }
 
-    int SerializedSize() const override {
+    int SerializedSize() override {
         int size = sizeof(uint32_t);
         for (const auto& segment : segments_) {
             size += sizeof(uint32_t) + static_cast<int>(segment.size());
@@ -120,7 +122,7 @@ class StringArrayDeviceID : public IDeviceID {
     }
 
     bool StartWith(const std::string& prefix,
-                   bool match_entire_segment = false) const override {
+                   bool match_entire_segment = false) override {
         size_t matched_pos = 0;
         for (const auto& segment : segments_) {
             if (segment.compare(0, prefix.size() - matched_pos, prefix,
@@ -135,15 +137,15 @@ class StringArrayDeviceID : public IDeviceID {
         return false;
     }
 
-    std::vector<std::string> GetSegments() const override { return segments_; }
+    std::vector<std::string> GetSegments() override { return segments_; }
 
-    bool MatchDatabaseName(const std::string& database_name) const override {
+    bool MatchDatabaseName(const std::string& database_name) override {
         std::string table_name = GetTableName();
         return table_name.find(database_name) == 0;
     }
 
-    int CompareTo(const IDeviceID& other) const override {
-        const auto& other_segments = other.GetSegments();
+    int CompareTo(IDeviceID& other) override {
+        auto other_segments = other.GetSegments();
         return std::lexicographical_compare(segments_.begin(), segments_.end(),
                                             other_segments.begin(),
                                             other_segments.end())
@@ -155,7 +157,7 @@ class StringArrayDeviceID : public IDeviceID {
     std::vector<std::string> segments_;
 
     std::vector<std::string> Formalize(
-        const std::vector<std::string>& segments) {
+        std::vector<std::string>& segments) {
         auto it =
             std::find_if(segments.rbegin(), segments.rend(),
                          [](const std::string& seg) { return !seg.empty(); });
@@ -163,7 +165,7 @@ class StringArrayDeviceID : public IDeviceID {
     }
 
     std::vector<std::string> SplitDeviceIdString(
-        const std::string& device_id_string) {
+            std::basic_string<char> device_id_string) {
         std::vector<std::string> splits;
         std::istringstream stream(device_id_string);
         std::string segment;
@@ -179,15 +181,15 @@ class PlainDeviceID : public IDeviceID {
     explicit PlainDeviceID(const std::string& deviceID)
         : deviceID_(deviceID), tableName_(), segments_() {}
 
-    bool operator==(const PlainDeviceID& other) const {
+    bool operator==(const PlainDeviceID& other) {
         return deviceID_ == other.deviceID_;
     }
 
-    bool operator!=(const PlainDeviceID& other) const {
+    bool operator!=(const PlainDeviceID& other) {
         return !(*this == other);
     }
 
-    int Serialize(std::ostream& output_stream) const override {
+    int Serialize(std::ostream& output_stream) override {
         uint32_t length = static_cast<uint32_t>(deviceID_.size());
         output_stream.write(reinterpret_cast<const char*>(&length),
                             sizeof(length));
@@ -195,7 +197,7 @@ class PlainDeviceID : public IDeviceID {
         return sizeof(length) + deviceID_.size();
     }
 
-    int Serialize(std::vector<uint8_t>& byte_buffer) const override {
+    int Serialize(std::vector<uint8_t>& byte_buffer) override {
         std::ostringstream stream;
         int size = Serialize(stream);
         std::string str = stream.str();
@@ -203,17 +205,17 @@ class PlainDeviceID : public IDeviceID {
         return size;
     }
 
-    std::vector<uint8_t> GetBytes() const override {
+    std::vector<uint8_t> GetBytes() override {
         std::vector<uint8_t> buffer;
         Serialize(buffer);
         return buffer;
     }
 
-    bool IsEmpty() const override { return deviceID_.empty(); }
+    bool IsEmpty() override { return deviceID_.empty(); }
 
-    bool IsTableModel() const override { return false; }
+    bool IsTableModel() override { return false; }
 
-    std::string GetTableName() const override {
+    std::string GetTableName() override {
         if (!tableName_.empty()) {
             return tableName_;
         }
@@ -227,7 +229,7 @@ class PlainDeviceID : public IDeviceID {
         return tableName_;
     }
 
-    int SegmentNum() const override {
+    int SegmentNum() override {
         if (!segments_.empty()) {
             return static_cast<int>(segments_.size());
         }
@@ -235,15 +237,15 @@ class PlainDeviceID : public IDeviceID {
         return static_cast<int>(segments_.size());
     }
 
-    std::string Segment(int i) const override {
+    std::string Segment(int i) override {
         if (i < 0 || i >= SegmentNum()) {
             throw std::out_of_range("Segment index out of range");
         }
         return segments_[i];
     }
 
-    int CompareTo(const IDeviceID& other) const override {
-        const PlainDeviceID* otherPlain =
+    int CompareTo(IDeviceID& other) override {
+        const auto *otherPlain =
             dynamic_cast<const PlainDeviceID*>(&other);
         if (!otherPlain) {
             throw std::invalid_argument("Incompatible IDeviceID type");
@@ -256,7 +258,7 @@ class PlainDeviceID : public IDeviceID {
     mutable std::string tableName_;
     mutable std::vector<std::string> segments_;
 
-    void SplitSegments() const {
+    void SplitSegments() {
         std::istringstream stream(deviceID_);
         std::string segment;
         while (std::getline(stream, segment, '.')) {
