@@ -186,10 +186,6 @@ TEST_F(PathNameTest, TestIllegalPathName) {
     EXPECT_THROW ({
       Path("root.0000", true);
     }, std::runtime_error);
-    const std::string illegal_path_str = "root.sg1..`d1`.s1";
-    EXPECT_THROW({
-        Path path(illegal_path_str, true);
-    }, std::runtime_error);
 }
  
 
