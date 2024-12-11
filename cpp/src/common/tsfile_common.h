@@ -288,7 +288,6 @@ struct ChunkMeta {
 };
 
 struct ChunkGroupMeta {
-    // std::string device_name_;
     common::String device_name_;
     common::SimpleList<ChunkMeta *> chunk_meta_list_;
 

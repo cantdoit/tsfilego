@@ -41,7 +41,7 @@ class Tablet {
            int max_rows = DEFAULT_MAX_ROWS)
         : max_rows_(max_rows),
           cur_row_size_(0),
-          device_name_(device_name),
+          insert_target_name_(device_name),
           schema_vec_(schema_vec),
           timestamps_(NULL),
           value_matrix_(NULL),
@@ -60,6 +60,9 @@ class Tablet {
     void destroy();
     size_t get_column_count() const { return schema_vec_->size(); }
     int get_cur_row_size() const {return cur_row_size_;}
+    void set_row_size(int row_size) {
+        cur_row_size_ = row_size;
+    } 
 
     int set_timestamp(int row_index, int64_t timestamp);
 
@@ -69,6 +72,7 @@ class Tablet {
     int set_value(int row_index, uint32_t schema_index, float val);
     int set_value(int row_index, uint32_t schema_index, double val);
     // int set_value(int row_index, int schema_index, double val);
+    void* get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type);
 
     int set_value(int row_index, const std::string &measurement_name, bool val);
     int set_value(int row_index, const std::string &measurement_name,
@@ -82,7 +86,7 @@ class Tablet {
     // int set_value(int row_index, const std::string &measurement_name, double
     // val);
     void set_column_categories(const std::vector<ColumnCategory>& column_categories);
-    std::unique_ptr<IDeviceID> get_device_id(int i) const;
+    std::unique_ptr<IDeviceID> get_device_id(int i);
 
     friend class TabletColIterator;
     friend class TsFileWriter;
@@ -94,7 +98,7 @@ class Tablet {
    private:
     int max_rows_;
     int cur_row_size_;
-    std::string device_name_;
+    std::string insert_target_name_;
     const std::vector<MeasurementSchema> *schema_vec_;
     std::map<std::string, int> schema_map_;
     int64_t *timestamps_;

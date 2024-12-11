@@ -142,6 +142,48 @@ int Tablet::set_value(int row_index, uint32_t schema_index, bool val) {
     return E_OK;
 }
 
+void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type) {
+    if (LIKELY(schema_index >= schema_vec_->size())) {
+        return nullptr;
+    }
+    const MeasurementSchema& schema = schema_vec_->at(schema_index);
+
+    void* column_values = value_matrix_[schema_index];
+    data_type = schema.data_type_;
+    if (!bitmaps_[schema_index].test(row_index)) {
+        return nullptr;
+    }
+    switch (schema.data_type_) {
+        case BOOLEAN: {
+            bool* bool_values = static_cast<bool*>(column_values);
+            return &bool_values[row_index];
+        }
+        case INT32: {
+            int32_t* int32_values = static_cast<int32_t*>(column_values);
+            return &int32_values[row_index];
+        }
+        case INT64: {
+            int64_t* int64_values = static_cast<int64_t*>(column_values);
+            return &int64_values[row_index];
+        }
+        case FLOAT: {
+            float* float_values = static_cast<float*>(column_values);
+            return &float_values[row_index];
+        }
+        case DOUBLE: {
+            double* double_values = static_cast<double*>(column_values);
+            return &double_values[row_index];
+        }
+        case TEXT: {
+            std::string* string_values = static_cast<std::string*>(column_values);
+            return &string_values[row_index];
+        }
+        default:
+            return nullptr;
+    }
+}
+
+
 int Tablet::set_value(int row_index, uint32_t schema_index, int32_t val) {
     DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, int32_t, val);
     return E_OK;
@@ -173,11 +215,14 @@ void Tablet::set_column_categories(const std::vector<ColumnCategory>& column_cat
     }
 }
 
-std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) const {
+std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) {
     std::vector<std::string> id_array;
-    id_array.push_back(device_name_);
-    for (auto id : id_column_indexes_) {
-        id_array.push_back(to_string(id));
+    id_array.push_back(insert_target_name_);
+    for (auto id_column_idx : id_column_indexes_) {
+        // TODO: support TEXT
+        common::TSDataType data_type;
+        auto value = *(std::string*)get_value(i, id_column_idx, data_type);
+        id_array.push_back(value);
     }
     IDeviceID* device_id = new StringArrayDeviceID(id_array);
     return std::unique_ptr<IDeviceID>(device_id);

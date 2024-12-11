@@ -517,7 +517,7 @@ int TsFileWriter::write_tablet_aligned(const Tablet &tablet) {
     SimpleVector<ValueChunkWriter *> value_chunk_writers;
     TimeChunkWriter *time_chunk_writer = nullptr;
     MeasurementNamesFromTablet mnames_getter(tablet);
-    if (RET_FAIL(do_check_schema_aligned(tablet.device_name_, mnames_getter,
+    if (RET_FAIL(do_check_schema_aligned(tablet.insert_target_name_, mnames_getter,
                                          time_chunk_writer,
                                          value_chunk_writers))) {
         return ret;
@@ -537,7 +537,7 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     int ret = E_OK;
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
-    if (RET_FAIL(do_check_schema(tablet.device_name_, mnames_getter,
+    if (RET_FAIL(do_check_schema(tablet.insert_target_name_, mnames_getter,
                                  chunk_writers))) {
         return ret;
     }
@@ -558,7 +558,7 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
 
 int TsFileWriter::write_table(const Tablet &tablet) {
     int ret = E_OK;
-    if (table_schema_map_.find(tablet.device_name_) == table_schema_map_.end()) {
+    if (table_schema_map_.find(tablet.insert_target_name_) == table_schema_map_.end()) {
         ret = E_DEVICE_NOT_EXIST;
         return ret;
     }
@@ -566,20 +566,12 @@ int TsFileWriter::write_table(const Tablet &tablet) {
 
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
-    if (RET_FAIL(do_check_schema(tablet.device_name_, mnames_getter,
+    if (RET_FAIL(do_check_schema(tablet.insert_target_name_, mnames_getter,
                                  chunk_writers))) {
         return ret;
     }
 
 
-    int startIndex = 0;
-    for (Pair<IDeviceID, Integer> pair : deviceIdEndIndexPairs) {
-        // get corresponding ChunkGroupWriter and write this Tablet
-        recordCount +=
-            tryToInitialGroupWriter(pair.left, isTableWriteAligned, true)
-                .write(tablet, startIndex, pair.right);
-        startIndex = pair.right;
-    }
 
 
     return false;
