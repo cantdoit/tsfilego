@@ -556,14 +556,13 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     return ret;
 }
 
-int TsFileWriter::write_table(
-    const Tablet &tablet,
-    std::vector<std::pair<IDeviceID, int>> device_id_end_index_pairs) {
+int TsFileWriter::write_table(const Tablet &tablet) {
     int ret = E_OK;
     if (table_schema_map_.find(tablet.device_name_) == table_schema_map_.end()) {
         ret = E_DEVICE_NOT_EXIST;
         return ret;
     }
+    auto device_id_end_index_pairs = split_tablet_by_device(tablet);
 
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
@@ -571,6 +570,18 @@ int TsFileWriter::write_table(
                                  chunk_writers))) {
         return ret;
     }
+
+
+    int startIndex = 0;
+    for (Pair<IDeviceID, Integer> pair : deviceIdEndIndexPairs) {
+        // get corresponding ChunkGroupWriter and write this Tablet
+        recordCount +=
+            tryToInitialGroupWriter(pair.left, isTableWriteAligned, true)
+                .write(tablet, startIndex, pair.right);
+        startIndex = pair.right;
+    }
+
+
     return false;
 }
 

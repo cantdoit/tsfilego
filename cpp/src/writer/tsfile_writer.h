@@ -74,9 +74,7 @@ class TsFileWriter {
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
     int write_tablet_aligned(const Tablet &tablet);
-    int write_table(
-        const Tablet &tablet,
-        std::vector<std::pair<IDeviceID, int>> device_id_end_index_pairs);
+    int write_table(const Tablet &tablet);
     std::map<std::string, MeasurementSchemaGroup *> *get_schema_group_map() {
         return &schemas_;
     }
