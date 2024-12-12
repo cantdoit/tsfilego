@@ -20,8 +20,8 @@
 #ifndef PATH_VISITOR_H
 #define PATH_VISITOR_H
 
-#include "generator/PathParserBaseVisitor.h"
-#include "generator/PathParser.h"
+#include "generated/PathParserBaseVisitor.h"
+#include "generated/PathParser.h"
 #include "common/constant/tsfile_constant.h"
 
 namespace storage

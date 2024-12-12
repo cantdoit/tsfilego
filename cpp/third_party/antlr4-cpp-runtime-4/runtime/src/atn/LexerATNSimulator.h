@@ -19,7 +19,7 @@ namespace atn {
   protected:
     class SimState {
     public:
-      virtual ~SimState();
+      virtual ~SimState() {(void)0;}
 
     protected:
       size_t index;
@@ -95,7 +95,7 @@ namespace atn {
 
     LexerATNSimulator(const ATN &atn, std::vector<dfa::DFA> &decisionToDFA, PredictionContextCache &sharedContextCache);
     LexerATNSimulator(Lexer *recog, const ATN &atn, std::vector<dfa::DFA> &decisionToDFA, PredictionContextCache &sharedContextCache);
-    virtual ~LexerATNSimulator () {}
+    virtual ~LexerATNSimulator () {(void)0;}
 
     virtual void copyState(LexerATNSimulator *simulator);
     virtual size_t match(CharStream *input, size_t mode);

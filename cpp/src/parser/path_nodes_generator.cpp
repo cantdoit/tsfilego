@@ -21,8 +21,8 @@
 
 #include "path_nodes_generator.h"
 #include "utils/errno_define.h"
-#include "generator/PathLexer.h"
-#include "generator/PathParser.h"
+#include "generated/PathLexer.h"
+#include "generated/PathParser.h"
 #include "path_parser_error.h"
 #include "path_visitor.h"
 
