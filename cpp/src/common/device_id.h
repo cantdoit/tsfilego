@@ -53,6 +53,12 @@ class IDeviceID {
     virtual int compare(IDeviceID& other) {return 0;}
 };
 
+struct IDeviceIDComparator {
+    bool operator()(const std::shared_ptr<IDeviceID>& lhs, const std::shared_ptr<IDeviceID>& rhs) const {
+        return lhs->compare(*rhs);
+    }
+};
+
 class StringArrayDeviceID : public IDeviceID {
    public:
     explicit StringArrayDeviceID(std::vector<std::string> &segments)

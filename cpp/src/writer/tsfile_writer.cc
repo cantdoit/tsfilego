@@ -31,9 +31,6 @@ using namespace common;
 
 namespace storage {
 
-typedef std::map<std::string, MeasurementSchemaGroup *>::iterator
-    DeviceSchemaIter;
-
 int libtsfile_init() {
     static bool g_s_is_inited = false;
     if (g_s_is_inited) {
@@ -77,9 +74,10 @@ void TsFileWriter::destroy() {
         delete io_writer_;
         io_writer_ = NULL;
     }
-    std::map<std::string, MeasurementSchemaGroup *>::iterator dev_iter;
+    //DeviceSchemaIter dev_iter;
     // cppcheck-suppress postfixOperator
-    for (dev_iter = schemas_.begin(); dev_iter != schemas_.end(); dev_iter++) {
+    //for (dev_iter = schemas_.begin(); dev_iter != schemas_.end(); dev_iter++) {
+    for (auto& dev_iter : schemas_) {
         MeasurementSchemaMap &ms_map =
             dev_iter->second->measurement_schema_map_;
         MeasurementSchemaMapIter ms_iter;
@@ -139,7 +137,7 @@ int TsFileWriter::open(const std::string &file_path, int flags, mode_t mode) {
 }
 
 int TsFileWriter::register_aligned_timeseries(
-    const std::string &device_path, const std::string &measurement_name,
+        const IDeviceID &device_path, const std::string &measurement_name,
     common::TSDataType data_type, common::TSEncoding encoding,
     common::CompressionType compression_type) {
     MeasurementSchema *ms = new MeasurementSchema(measurement_name, data_type,
@@ -148,7 +146,7 @@ int TsFileWriter::register_aligned_timeseries(
 }
 
 int TsFileWriter::register_aligned_timeseries(
-    const std::string &device_path,
+        const IDeviceID &device_path,
     const std::vector<MeasurementSchema *> &measurement_schema_vec) {
     int ret = E_OK;
     std::vector<MeasurementSchema *>::const_iterator it =
@@ -163,7 +161,7 @@ int TsFileWriter::register_aligned_timeseries(
 }
 
 int TsFileWriter::register_timeseries(
-    const std::string &device_path, const std::string &measurement_name,
+        const IDeviceID &device_path, const std::string &measurement_name,
     common::TSDataType data_type, common::TSEncoding encoding,
     common::CompressionType compression_type) {
     MeasurementSchema *ms = new MeasurementSchema(measurement_name, data_type,
@@ -171,7 +169,7 @@ int TsFileWriter::register_timeseries(
     return register_timeseries(device_path, ms);
 }
 
-int TsFileWriter::register_timeseries(const std::string &device_path,
+int TsFileWriter::register_timeseries(const IDeviceID &device_path,
                                       MeasurementSchema *measurement_schema,
                                       bool is_aligned) {
     DeviceSchemaIter device_iter = schemas_.find(device_path);

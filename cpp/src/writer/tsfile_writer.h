@@ -56,18 +56,18 @@ class TsFileWriter {
 
     void set_generate_table_schema(bool generate_table_schema);
 
-    int register_timeseries(const std::string &device_path,
+    int register_timeseries(const IDeviceID &device_path,
                             const std::string &measurement_name,
                             common::TSDataType data_type,
                             common::TSEncoding encoding,
                             common::CompressionType compression_type);
-    int register_aligned_timeseries(const std::string &device_path,
+    int register_aligned_timeseries(const IDeviceID &device_path,
                                     const std::string &measurement_name,
                                     common::TSDataType data_type,
                                     common::TSEncoding encoding,
                                     common::CompressionType compression_type);
     int register_aligned_timeseries(
-        const std::string &device_path,
+            const IDeviceID &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
     void register_table(TableSchema *table_schema);
     int write_record(const TsRecord &record);
@@ -75,7 +75,10 @@ class TsFileWriter {
     int write_record_aligned(const TsRecord &record);
     int write_tablet_aligned(const Tablet &tablet);
     int write_table(const Tablet &tablet);
-    std::map<std::string, MeasurementSchemaGroup *> *get_schema_group_map() {
+
+    typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *, IDeviceIDComparator> DeviceSchemasMap;
+    typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *, IDeviceIDComparator> DeviceSchemaIter;
+    DeviceSchemasMap *get_schema_group_map() {
         return &schemas_;
     }
     int64_t calculate_mem_size_for_all_group();
@@ -148,7 +151,7 @@ class TsFileWriter {
     storage::WriteFile *write_file_;
     storage::TsFileIOWriter *io_writer_;
     // device_name -> MeasurementSchemaGroup
-    std::map<std::string, MeasurementSchemaGroup *> schemas_;
+    DeviceSchemasMap schemas_;
     std::unordered_map<std::string, TableSchema *> table_schema_map_;
     bool start_file_done_;
     // record count since last flush
