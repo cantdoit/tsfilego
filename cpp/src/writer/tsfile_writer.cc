@@ -564,8 +564,24 @@ int TsFileWriter::write_table(const Tablet &tablet) {
     }
     auto device_id_end_index_pairs = split_tablet_by_device(tablet);
 
+    for (auto& device_id_end_index_pair : device_id_end_index_pairs) {
+
+    }
+
+    int startIndex = 0;
+    for (Pair<IDeviceID, Integer> pair : deviceIdEndIndexPairs) {
+        // get corresponding ChunkGroupWriter and write this Tablet
+        recordCount +=
+                tryToInitialGroupWriter(pair.left, isTableWriteAligned, true)
+                        .write(tablet, startIndex, pair.right);
+        startIndex = pair.right;
+    }
+    return checkMemorySizeAndMayFlushChunks();
+
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
+
+
     if (RET_FAIL(do_check_schema(tablet.insert_target_name_, mnames_getter,
                                  chunk_writers))) {
         return ret;
@@ -582,7 +598,7 @@ std::vector<std::pair<std::unique_ptr<IDeviceID>, int>> TsFileWriter::split_tabl
     std::unique_ptr<IDeviceID> last_device_id(new IDeviceID);
     for (int i = 0; i < tablet.get_cur_row_size(); i++) {
         std::unique_ptr<IDeviceID> cur_device_id(tablet.get_device_id(i));
-        if (0 == cur_device_id->CompareTo(*last_device_id)) {
+        if (0 == cur_device_id->compare(*last_device_id)) {
             result.emplace_back(std::move(last_device_id), i);
             last_device_id = std::move(cur_device_id);
         }

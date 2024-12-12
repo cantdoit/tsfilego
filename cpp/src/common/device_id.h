@@ -42,21 +42,21 @@ class IDeviceID {
     virtual std::vector<uint8_t> GetBytes() {return std::vector<uint8_t>();}
     virtual bool IsEmpty() {return false;}
     virtual bool IsTableModel() {return false;}
-    virtual std::string GetTableName() {return "";}
-    virtual int SegmentNum() {return 0;}
+    virtual std::string get_table_name() {return "";}
+    virtual int segment_num() {return 0;}
     virtual std::string Segment(int i) {return "";}
     virtual int SerializedSize() {return 0;}
-    virtual bool StartWith(const std::string& prefix,
-                           bool match_entire_segment = false) {return false;}
+    virtual bool start_with(const std::string& prefix,
+                            bool match_entire_segment = false) {return false;}
     virtual std::vector<std::string> GetSegments() {return std::vector<std::string>();}
     virtual bool MatchDatabaseName(const std::string& database_name) {return false;}
-    virtual int CompareTo(IDeviceID& other) {return 0;}
+    virtual int compare(IDeviceID& other) {return 0;}
 };
 
 class StringArrayDeviceID : public IDeviceID {
    public:
     explicit StringArrayDeviceID(std::vector<std::string> &segments)
-        : segments_(Formalize(segments)) {}
+        : segments_(formalize(segments)) {}
 
     explicit StringArrayDeviceID(const std::string& device_id_string)
         : segments_(SplitDeviceIdString(device_id_string)) {}
@@ -98,11 +98,11 @@ class StringArrayDeviceID : public IDeviceID {
                segments_[0].find(".") == std::string::npos;
     }
 
-    std::string GetTableName() override {
+    std::string get_table_name() override {
         return segments_.empty() ? "" : segments_[0];
     }
 
-    int SegmentNum() override {
+    int segment_num() override {
         return static_cast<int>(segments_.size());
     }
 
@@ -121,8 +121,8 @@ class StringArrayDeviceID : public IDeviceID {
         return size;
     }
 
-    bool StartWith(const std::string& prefix,
-                   bool match_entire_segment = false) override {
+    bool start_with(const std::string& prefix,
+                    bool match_entire_segment = false) override {
         size_t matched_pos = 0;
         for (const auto& segment : segments_) {
             if (segment.compare(0, prefix.size() - matched_pos, prefix,
@@ -140,11 +140,11 @@ class StringArrayDeviceID : public IDeviceID {
     std::vector<std::string> GetSegments() override { return segments_; }
 
     bool MatchDatabaseName(const std::string& database_name) override {
-        std::string table_name = GetTableName();
+        std::string table_name = get_table_name();
         return table_name.find(database_name) == 0;
     }
 
-    int CompareTo(IDeviceID& other) override {
+    int compare(IDeviceID& other) override {
         auto other_segments = other.GetSegments();
         return std::lexicographical_compare(segments_.begin(), segments_.end(),
                                             other_segments.begin(),
@@ -156,11 +156,11 @@ class StringArrayDeviceID : public IDeviceID {
    private:
     std::vector<std::string> segments_;
 
-    std::vector<std::string> Formalize(
+    std::vector<std::string> formalize(
         std::vector<std::string>& segments) {
         auto it =
             std::find_if(segments.rbegin(), segments.rend(),
-                         [](const std::string& seg) { return !seg.empty(); });
+                         [](const std::string& seg) { return seg.empty(); });
         return std::vector<std::string>(segments.begin(), it.base());
     }
 
@@ -215,7 +215,7 @@ class PlainDeviceID : public IDeviceID {
 
     bool IsTableModel() override { return false; }
 
-    std::string GetTableName() override {
+    std::string get_table_name() override {
         if (!tableName_.empty()) {
             return tableName_;
         }
@@ -229,7 +229,7 @@ class PlainDeviceID : public IDeviceID {
         return tableName_;
     }
 
-    int SegmentNum() override {
+    int segment_num() override {
         if (!segments_.empty()) {
             return static_cast<int>(segments_.size());
         }
@@ -238,13 +238,13 @@ class PlainDeviceID : public IDeviceID {
     }
 
     std::string Segment(int i) override {
-        if (i < 0 || i >= SegmentNum()) {
+        if (i < 0 || i >= segment_num()) {
             throw std::out_of_range("Segment index out of range");
         }
         return segments_[i];
     }
 
-    int CompareTo(IDeviceID& other) override {
+    int compare(IDeviceID& other) override {
         const auto *otherPlain =
             dynamic_cast<const PlainDeviceID*>(&other);
         if (!otherPlain) {

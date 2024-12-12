@@ -72,7 +72,7 @@ class Tablet {
     int set_value(int row_index, uint32_t schema_index, float val);
     int set_value(int row_index, uint32_t schema_index, double val);
     // int set_value(int row_index, int schema_index, double val);
-    void* get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type);
+    void* get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type) const;
 
     int set_value(int row_index, const std::string &measurement_name, bool val);
     int set_value(int row_index, const std::string &measurement_name,
@@ -86,7 +86,7 @@ class Tablet {
     // int set_value(int row_index, const std::string &measurement_name, double
     // val);
     void set_column_categories(const std::vector<ColumnCategory>& column_categories);
-    std::unique_ptr<IDeviceID> get_device_id(int i);
+    std::unique_ptr<IDeviceID> get_device_id(int i) const;
 
     friend class TabletColIterator;
     friend class TsFileWriter;

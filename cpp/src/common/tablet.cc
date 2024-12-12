@@ -142,7 +142,7 @@ int Tablet::set_value(int row_index, uint32_t schema_index, bool val) {
     return E_OK;
 }
 
-void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type) {
+void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type) const {
     if (LIKELY(schema_index >= schema_vec_->size())) {
         return nullptr;
     }
@@ -215,7 +215,7 @@ void Tablet::set_column_categories(const std::vector<ColumnCategory>& column_cat
     }
 }
 
-std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) {
+std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) const {
     std::vector<std::string> id_array;
     id_array.push_back(insert_target_name_);
     for (auto id_column_idx : id_column_indexes_) {
