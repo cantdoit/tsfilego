@@ -18,8 +18,8 @@
  */
 #include <gtest/gtest.h>
 
-#include "parser/generator/PathParser.h"
-#include "parser/generator/PathLexer.h"
+#include "parser/generated/PathParser.h"
+#include "parser/generated/PathLexer.h"
 #include "common/path.h"
 
 namespace storage {
