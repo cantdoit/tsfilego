@@ -22,9 +22,9 @@
 #include <fcntl.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "common/container/simple_vector.h"
 #include "common/device_id.h"
@@ -56,29 +56,41 @@ class TsFileWriter {
 
     void set_generate_table_schema(bool generate_table_schema);
 
-    int register_timeseries(const IDeviceID &device_path,
+    int register_timeseries(const std::string &device_path,
                             const std::string &measurement_name,
                             common::TSDataType data_type,
                             common::TSEncoding encoding,
                             common::CompressionType compression_type);
-    int register_aligned_timeseries(const IDeviceID &device_path,
+    int register_aligned_timeseries(const std::string &device_path,
                                     const std::string &measurement_name,
                                     common::TSDataType data_type,
                                     common::TSEncoding encoding,
                                     common::CompressionType compression_type);
     int register_aligned_timeseries(
-            const IDeviceID &device_path,
+        const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    void register_table(TableSchema *table_schema);
+    void register_table(std::shared_ptr<TableSchema> table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
     int write_tablet_aligned(const Tablet &tablet);
     int write_table(const Tablet &tablet);
 
-    typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *, IDeviceIDComparator> DeviceSchemasMap;
-    typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *, IDeviceIDComparator> DeviceSchemaIter;
-    DeviceSchemasMap *get_schema_group_map() {
+    typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *,
+                     IDeviceIDComparator>
+        DeviceSchemasMap;
+    typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *,
+                     IDeviceIDComparator>::iterator DeviceSchemasMapIter;
+    typedef std::map<std::string, MeasurementSchemaGroup *>::iterator
+        DeviceSchemaIter;
+
+    typedef std::unordered_map<std::string, std::shared_ptr<TableSchema>>
+        TableSchemasMap;
+    typedef std::unordered_map<std::string,
+                               std::shared_ptr<TableSchema>>::iterator
+        TableSchemasMapIter;
+
+    std::map<std::string, MeasurementSchemaGroup *> *get_schema_group_map() {
         return &schemas_;
     }
     int64_t calculate_mem_size_for_all_group();
@@ -106,24 +118,24 @@ class TsFileWriter {
 
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, bool *col_values,
-                           common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           common::BitMap &col_notnull_bitmap, int start_idx,
+                           int end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, int32_t *col_values,
-                           common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           common::BitMap &col_notnull_bitmap, int start_idx,
+                           int end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, int64_t *col_values,
-                           common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           common::BitMap &col_notnull_bitmap, int start_idx,
+                           int end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, float *col_values,
-                           common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           common::BitMap &col_notnull_bitmap, int start_idx,
+                           int end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, double *col_values,
-                           common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           common::BitMap &col_notnull_bitmap, int start_idx,
+                           int end_idx);
 
     template <typename MeasurementNamesGetter>
     int do_check_schema(
@@ -136,23 +148,32 @@ class TsFileWriter {
         MeasurementNamesGetter &measurement_names,
         storage::TimeChunkWriter *&time_chunk_writer,
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
+
+    template <typename MeasurementNamesGetter>
+    int do_check_schema(const IDeviceID &device_id,
+                        MeasurementNamesGetter &measurement_names,
+                        common::SimpleVector<ChunkWriter *> &chunk_writers);
+
     // std::vector<storage::ChunkWriter*> &chunk_writers);
     int write_column(storage::ChunkWriter *chunk_writer, const Tablet &tablet,
-                     int col_idx);
+                     int col_idx, int start_idx = 0, int end_idx = INT_MAX);
     int register_timeseries(const std::string &device_path,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);
     int register_timeseries(
         const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    std::vector<std::pair<std::unique_ptr<IDeviceID>, int>> split_tablet_by_device(const Tablet& tablet);
+    std::vector<std::pair<std::unique_ptr<IDeviceID>, int>>
+    split_tablet_by_device(const Tablet &tablet);
 
    private:
     storage::WriteFile *write_file_;
     storage::TsFileIOWriter *io_writer_;
     // device_name -> MeasurementSchemaGroup
-    DeviceSchemasMap schemas_;
-    std::unordered_map<std::string, TableSchema *> table_schema_map_;
+    std::map<std::string, MeasurementSchemaGroup *> schemas_;
+    // device_id -> MeasurementSchemaGroup
+    DeviceSchemasMap device_schemas_;
+    TableSchemasMap table_schema_map_;
     bool start_file_done_;
     // record count since last flush
     int64_t record_count_since_last_flush_;

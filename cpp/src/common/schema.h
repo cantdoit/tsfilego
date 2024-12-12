@@ -21,6 +21,7 @@
 #define COMMON_SCHEMA_H
 
 #include <map>  // use unordered_map instead
+#include <memory>
 #include <string>
 
 #include "common/db_common.h"
@@ -75,42 +76,33 @@ struct MeasurementSchemaGroup {
     TimeChunkWriter *time_chunk_writer_ = nullptr;
 };
 
-enum class ColumnCategory {
-    ID,
-    MEASUREMENT
-};
+enum class ColumnCategory { ID, MEASUREMENT };
 
 class TableSchema {
    public:
     TableSchema() = default;
-    TableSchema(const std::string& table_name,
-                const std::vector<MeasurementSchema*>& measurement_schemas,
-                const std::vector<ColumnCategory>& column_categories)
+    TableSchema(const std::string &table_name,
+                const std::vector<std::shared_ptr<MeasurementSchema>>
+                    &measurement_schemas,
+                const std::vector<ColumnCategory> &column_categories)
         : table_name_(table_name),
           measurementSchemas_(measurement_schemas),
           columnCategories_(column_categories) {}
 
-    TableSchema(TableSchema&& other)
-        noexcept                 : table_name_(std::move(other.table_name_)),
-                   measurementSchemas_(std::move(other.measurementSchemas_)),
-                   columnCategories_(std::move(other.columnCategories_)) {
-    }
+    TableSchema(TableSchema &&other) noexcept
+        : table_name_(std::move(other.table_name_)),
+          measurementSchemas_(std::move(other.measurementSchemas_)),
+          columnCategories_(std::move(other.columnCategories_)) {}
 
-    TableSchema(const TableSchema& other) = default;
+    TableSchema(const TableSchema &other) = default;
 
-    ~TableSchema() {
-        for (auto ptr : measurementSchemas_) {
-            delete ptr;
-        }
-    }
+    ~TableSchema() = default;
 
-    std::string get_table_name() {
-        return table_name_;
-    }
+    std::string get_table_name() { return table_name_; }
 
    private:
     std::string table_name_;
-    std::vector<MeasurementSchema*> measurementSchemas_;
+    std::vector<std::shared_ptr<MeasurementSchema>> measurementSchemas_;
     std::vector<ColumnCategory> columnCategories_;
 };
 
