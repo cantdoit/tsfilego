@@ -46,6 +46,30 @@ void init_config_value() {
     g_config_value_.time_compress_type_ = LZ4;
 }
 
+extern TSEncoding get_value_encoder(TSDataType data_type) {
+    switch (data_type) {
+        case BOOLEAN:
+            return TSEncoding::RLE;
+        case INT32:
+            return TSEncoding::TS_2DIFF;
+        case INT64:
+            return TSEncoding::TS_2DIFF;
+        case FLOAT:
+            return TSEncoding::GORILLA;
+        case DOUBLE:
+            return TSEncoding::GORILLA;
+        case TEXT:
+            return TSEncoding::PLAIN;
+        case VECTOR:
+            break;
+        case NULL_TYPE:
+            break;
+        case INVALID_DATATYPE:
+            break;
+    }
+    return TSEncoding::PLAIN;
+}
+
 void config_set_page_max_point_count(uint32_t page_max_ponint_count) {
     g_config_value_.page_writer_max_point_num_ = page_max_ponint_count;
 }

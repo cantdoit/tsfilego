@@ -86,13 +86,13 @@ class TableSchema {
                     &measurement_schemas,
                 const std::vector<ColumnCategory> &column_categories)
         : table_name_(table_name),
-          measurementSchemas_(measurement_schemas),
-          columnCategories_(column_categories) {}
+          measurement_schemas_(measurement_schemas),
+          column_categories_(column_categories) {}
 
     TableSchema(TableSchema &&other) noexcept
         : table_name_(std::move(other.table_name_)),
-          measurementSchemas_(std::move(other.measurementSchemas_)),
-          columnCategories_(std::move(other.columnCategories_)) {}
+          measurement_schemas_(std::move(other.measurement_schemas_)),
+          column_categories_(std::move(other.column_categories_)) {}
 
     TableSchema(const TableSchema &other) = default;
 
@@ -100,10 +100,30 @@ class TableSchema {
 
     std::string get_table_name() { return table_name_; }
 
+    auto get_measurement_names() const {
+        std::vector<std::string> ret;
+        for (const auto& measurement_schema : measurement_schemas_) {
+            ret.emplace_back(measurement_schema->measurement_name_);
+        }
+        return ret;
+    }
+
+    auto get_data_types() const {
+        std::vector<common::TSDataType> ret;
+        for (const auto& measurement_schema : measurement_schemas_) {
+            ret.emplace_back(measurement_schema->data_type_);
+        }
+        return ret;
+    }
+
+    auto get_column_categories() const {
+        return column_categories_;
+    }
+
    private:
     std::string table_name_;
-    std::vector<std::shared_ptr<MeasurementSchema>> measurementSchemas_;
-    std::vector<ColumnCategory> columnCategories_;
+    std::vector<std::shared_ptr<MeasurementSchema>> measurement_schemas_;
+    std::vector<ColumnCategory> column_categories_;
 };
 
 }  // end namespace storage
