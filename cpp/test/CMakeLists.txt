@@ -92,6 +92,7 @@ target_link_libraries(
   GTest::gtest_main
   GTest::gmock
   tsfile
+  antlr4_shared
 )
 set_target_properties(TsFile_Test PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${LIBTSFILE_SDK_DIR})
 
