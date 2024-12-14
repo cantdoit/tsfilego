@@ -21,7 +21,8 @@ project(TsFile_CPP)
 
 cmake_policy(SET CMP0079 NEW)
 set(TsFile_CPP_VERSION 1.2.0.dev)
-
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -Wall -Werror")
 message("cmake using: USE_CPP11=${USE_CPP11}")
 
