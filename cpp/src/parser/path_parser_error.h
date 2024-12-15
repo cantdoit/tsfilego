@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#include <antlr4-runtime.h>
+#include "antlr4-runtime.h"
 #include <stdexcept>
 #include <string>
 #include <set>
