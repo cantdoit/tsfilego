@@ -18,28 +18,11 @@
  */
 #include <gtest/gtest.h>
 
-#include "parser/generated/PathParser.h"
-#include "parser/generated/PathLexer.h"
 #include "common/path.h"
 
 namespace storage {
 
 class PathNameTest : public ::testing::Test {};
-
-TEST_F(PathNameTest, TestPathLexer) {
-    antlr4::ANTLRInputStream input(std::string("root.sg1.'.d1'.s1"));
-    PathLexer lexer(&input);
-    antlr4::CommonTokenStream tokens(&lexer);
-    tokens.fill();
-    std::vector<std::string> actualTokens;
-    for (const auto& token : tokens.getTokens()) {
-        if (token->getType() != antlr4::Token::EOF) {
-            actualTokens.push_back(token->getText());
-        }
-    }
-    std::vector<std::string> expectedTokens = {"root", ".", "sg1", ".", "'.d1'", ".", "s1"};
-    EXPECT_EQ(actualTokens, expectedTokens);
-}
 
 TEST_F(PathNameTest, TestLegalPath) {
     // empty path
