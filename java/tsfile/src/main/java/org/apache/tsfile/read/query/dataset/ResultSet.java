@@ -20,6 +20,7 @@
 package org.apache.tsfile.read.query.dataset;
 
 import org.apache.tsfile.common.TsFileApi;
+import org.apache.tsfile.utils.Binary;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -75,10 +76,10 @@ public interface ResultSet extends AutoCloseable {
   LocalDate getDate(int columnIndex);
 
   @TsFileApi
-  byte[] getBinary(String columnName);
+  Binary getBinary(String columnName);
 
   @TsFileApi
-  byte[] getBinary(int columnIndex);
+  Binary getBinary(int columnIndex);
 
   @TsFileApi
   boolean isNull(String columnName);

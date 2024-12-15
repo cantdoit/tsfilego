@@ -287,7 +287,7 @@ public class ReadWriteIOUtils {
    */
   public static int write(Binary n, ByteBuffer buffer) {
     buffer.putInt(n.getLength());
-    buffer.put(n.getValues());
+    BinaryUtils.serializeBytes(buffer, n);
     return INT_LEN + n.getLength();
   }
 
@@ -304,10 +304,10 @@ public class ReadWriteIOUtils {
 
   /** write the size (int) of the binary and then the bytes in binary */
   public static int write(Binary binary, OutputStream outputStream) throws IOException {
-    byte[] size = BytesUtils.intToBytes(binary.getValues().length);
+    byte[] size = BytesUtils.intToBytes(binary.getLength());
     outputStream.write(size);
-    outputStream.write(binary.getValues());
-    return size.length + binary.getValues().length;
+    BinaryUtils.serializeBytes(outputStream, binary);
+    return size.length + binary.getLength();
   }
 
   /**
@@ -1162,9 +1162,9 @@ public class ReadWriteIOUtils {
         outputStream.writeFloat((Float) value);
       } else if (value instanceof Binary) {
         outputStream.write(BINARY.ordinal());
-        byte[] bytes = ((Binary) value).getValues();
-        outputStream.writeInt(bytes.length);
-        outputStream.write(bytes);
+        Binary binary = ((Binary) value);
+        outputStream.writeInt(binary.getLength());
+        BinaryUtils.serializeBytes(outputStream, binary);
       } else if (value instanceof Boolean) {
         outputStream.write(BOOLEAN.ordinal());
         outputStream.write(Boolean.TRUE.equals(value) ? 1 : 0);
@@ -1196,9 +1196,9 @@ public class ReadWriteIOUtils {
       byteBuffer.putFloat((Float) value);
     } else if (value instanceof Binary) {
       byteBuffer.putInt(BINARY.ordinal());
-      byte[] bytes = ((Binary) value).getValues();
-      byteBuffer.putInt(bytes.length);
-      byteBuffer.put(bytes);
+      Binary binary = ((Binary) value);
+      byteBuffer.putInt(binary.getLength());
+      BinaryUtils.serializeBytes(byteBuffer, binary);
     } else if (value instanceof Boolean) {
       byteBuffer.putInt(BOOLEAN.ordinal());
       byteBuffer.put(Boolean.TRUE.equals(value) ? (byte) 1 : (byte) 0);

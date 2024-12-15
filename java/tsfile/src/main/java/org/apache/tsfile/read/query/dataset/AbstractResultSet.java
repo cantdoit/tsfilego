@@ -24,6 +24,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.NullFieldException;
 import org.apache.tsfile.read.common.Field;
 import org.apache.tsfile.read.common.RowRecord;
+import org.apache.tsfile.utils.Binary;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -134,14 +135,14 @@ public abstract class AbstractResultSet implements ResultSet {
   }
 
   @TsFileApi
-  public byte[] getBinary(String columnName) {
+  public Binary getBinary(String columnName) {
     Integer columnIndex = columnNameToColumnIndexMap.get(columnName);
     return getBinary(columnIndex);
   }
 
   @TsFileApi
-  public byte[] getBinary(int columnIndex) {
-    return getNonNullField(columnIndex).getBinaryV().getValues();
+  public Binary getBinary(int columnIndex) {
+    return getNonNullField(columnIndex).getBinaryV();
   }
 
   @TsFileApi

@@ -36,7 +36,7 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
   private static final long serialVersionUID = 6394197743397020735L;
   public static final Binary EMPTY_VALUE = new Binary(new byte[0]);
 
-  private byte[] values;
+  byte[] values;
 
   /** if the bytes v is modified, the modification is visible to this binary. */
   public Binary(byte[] v) {
@@ -70,7 +70,7 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
   }
 
   // avoid overflow
-  private char getChar(byte[] val, int index) {
+  protected char getChar(byte[] val, int index) {
     return (char) (val[index] & 0xff);
   }
 
@@ -103,6 +103,13 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
     return this.values.length;
   }
 
+  public int getCapacity() {
+    if (this.values == null) {
+      return -1;
+    }
+    return this.values.length;
+  }
+
   public String getStringValue(Charset charset) {
     return new String(this.values, charset);
   }
@@ -117,6 +124,10 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
     return values;
   }
 
+  public Pair<byte[], Integer> getValuesAndLength() {
+    return new Pair<>(values, values.length);
+  }
+
   public void setValues(byte[] values) {
     this.values = values;
   }
@@ -124,5 +135,13 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
   @Override
   public long ramBytesUsed() {
     return INSTANCE_SIZE + sizeOf(values);
+  }
+
+  public long ramShallowBytesUsed() {
+    return INSTANCE_SIZE;
+  }
+
+  public boolean isNull() {
+    return values == null;
   }
 }

@@ -24,6 +24,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileEncodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.BinaryUtils;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
@@ -92,7 +93,7 @@ public class PlainEncoder extends Encoder {
       // write the length of the bytes
       encode(value.getLength(), out);
       // write value
-      out.write(value.getValues());
+      BinaryUtils.serializeBytes(out, value);
     } catch (IOException e) {
       logger.error(
           "tsfile-encoding PlainEncoder: error occurs when encode Binary value {}", value, e);

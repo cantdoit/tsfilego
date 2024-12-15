@@ -933,10 +933,14 @@ public class BytesUtils {
   }
 
   public static String parseBlobByteArrayToString(byte[] input) {
+    return parseBlobByteArrayToString(input, 0, input.length);
+  }
+
+  public static String parseBlobByteArrayToString(byte[] input, int offset, int length) {
     StringBuilder hexString = new StringBuilder("0x");
     if (input != null) {
-      for (byte b : input) {
-        hexString.append(String.format("%02x", b));
+      for (int i = offset; i < offset + length; i++) {
+        hexString.append(String.format("%02x", input[i]));
       }
     }
     return hexString.toString();

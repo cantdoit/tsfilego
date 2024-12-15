@@ -54,7 +54,7 @@ public class BinaryStatistics extends Statistics<Binary> {
   /** The output of this method should be identical to the method "serializeStats(outputStream)". */
   @Override
   public int getStatsSize() {
-    return 4 + firstValue.getValues().length + 4 + lastValue.getValues().length;
+    return 4 + firstValue.getLength() + 4 + lastValue.getLength();
   }
 
   @Override

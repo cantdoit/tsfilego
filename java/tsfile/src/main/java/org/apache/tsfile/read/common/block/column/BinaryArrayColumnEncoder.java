@@ -22,6 +22,7 @@ package org.apache.tsfile.read.common.block.column;
 import org.apache.tsfile.block.column.Column;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.BinaryUtils;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -83,7 +84,7 @@ public class BinaryArrayColumnEncoder implements ColumnEncoder {
         if (!column.isNull(i)) {
           Binary binary = column.getBinary(i);
           output.writeInt(binary.getLength());
-          output.write(binary.getValues());
+          BinaryUtils.serializeBytes(output, binary);
         }
       }
     } else {

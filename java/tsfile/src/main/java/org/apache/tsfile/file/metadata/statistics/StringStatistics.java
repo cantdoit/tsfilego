@@ -55,10 +55,10 @@ public class StringStatistics extends Statistics<Binary> {
   @Override
   public int getStatsSize() {
     return 4 * 4
-        + firstValue.getValues().length
-        + lastValue.getValues().length
-        + minValue.getValues().length
-        + maxValue.getValues().length;
+        + firstValue.getLength()
+        + lastValue.getLength()
+        + minValue.getLength()
+        + maxValue.getLength();
   }
 
   @Override

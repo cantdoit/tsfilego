@@ -796,7 +796,7 @@ public class Tablet {
       if (hasBitMap) {
         final int size = ReadWriteIOUtils.readInt(byteBuffer);
         final Binary valueBinary = ReadWriteIOUtils.readBinary(byteBuffer);
-        bitMaps[i] = new BitMap(size, valueBinary.getValues());
+        bitMaps[i] = new BitMap(size, valueBinary.getValuesAndLength().left);
       }
     }
     return bitMaps;

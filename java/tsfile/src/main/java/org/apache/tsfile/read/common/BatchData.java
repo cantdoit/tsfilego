@@ -24,6 +24,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.read.TimeValuePair;
 import org.apache.tsfile.read.reader.IPointReader;
 import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.BinaryUtils;
 import org.apache.tsfile.utils.TsPrimitiveType;
 import org.apache.tsfile.utils.TsPrimitiveType.TsBinary;
 import org.apache.tsfile.utils.TsPrimitiveType.TsBoolean;
@@ -703,7 +704,7 @@ public class BatchData {
           outputStream.writeLong(getTimeByIndex(i));
           Binary binary = getBinaryByIndex(i);
           outputStream.writeInt(binary.getLength());
-          outputStream.write(binary.getValues());
+          BinaryUtils.serializeBytes(outputStream, binary);
         }
         break;
       case INT64:
@@ -746,7 +747,7 @@ public class BatchData {
                 case STRING:
                   Binary binary = value.getBinary();
                   outputStream.writeInt(binary.getLength());
-                  outputStream.write(binary.getValues());
+                  BinaryUtils.serializeBytes(outputStream, binary);
                   break;
                 case INT64:
                 case TIMESTAMP:

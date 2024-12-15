@@ -21,6 +21,7 @@ package org.apache.tsfile.encoding.encoder;
 
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.BinaryUtils;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
@@ -99,7 +100,7 @@ public class DictionaryEncoder extends Encoder {
     ReadWriteForEncodingUtils.writeVarInt(indexEntry.size(), out);
     for (Binary value : indexEntry) {
       ReadWriteForEncodingUtils.writeVarInt(value.getLength(), out);
-      out.write(value.getValues());
+      BinaryUtils.serializeBytes(out, value);
     }
   }
 
