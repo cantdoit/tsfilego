@@ -86,3 +86,8 @@ jobs:
           name: tsfile-${{ runner.os }}-whl
           path: python/dist/tsfile-*.whl
           retention-days: 1
+
+      - name: Print name on failure
+        if: failure()
+        run: |
+          objdump -p D:/a/tsfile/tsfile/cpp/target/build/lib/TsFile_Test.exe
