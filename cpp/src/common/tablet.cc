@@ -28,7 +28,7 @@ using namespace common;
 namespace storage {
 
 int Tablet::init() {
-    ASSERT(timestamps_ == NULL);
+    ASSERT(timestamps_ == nullptr);
     timestamps_ = (int64_t *)malloc(sizeof(int64_t) * max_rows_);
 
     size_t schema_count = schema_vec_->size();
@@ -221,8 +221,14 @@ std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) const {
     for (auto id_column_idx : id_column_indexes_) {
         // TODO: support TEXT
         common::TSDataType data_type;
-        auto value = *(std::string*)get_value(i, id_column_idx, data_type);
-        id_array.push_back(value);
+        void* value_ptr = get_value(i, id_column_idx, data_type);
+        switch (data_type) {
+            case INT64:
+                id_array.push_back(to_string(*static_cast<int64_t*>(value_ptr)));
+                break;
+            default:
+                break ;
+        }
     }
     IDeviceID* device_id = new StringArrayDeviceID(id_array);
     return std::unique_ptr<IDeviceID>(device_id);

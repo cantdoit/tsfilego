@@ -319,18 +319,18 @@ int TsFileWriter::do_check_schema(const std::string &device_name,
 }
 
 template <typename MeasurementNamesGetter>
-int TsFileWriter::do_check_schema(const IDeviceID &device_id,
+int TsFileWriter::do_check_schema(std::shared_ptr<IDeviceID> device_id,
                                   MeasurementNamesGetter &measurement_names,
                                   SimpleVector<ChunkWriter *> &chunk_writers) {
     int ret = E_OK;
-    DeviceSchemasMapIter dev_it =
-        device_schemas_.find(std::make_shared<IDeviceID>(device_id));
-    MeasurementSchemaGroup *device_schema = NULL;
+    DeviceSchemasMapIter dev_it = device_schemas_.find(device_id);
+    MeasurementSchemaGroup *device_schema = nullptr;
     if (UNLIKELY(dev_it == device_schemas_.end()) ||
         IS_NULL(device_schema = dev_it->second)) {
         return E_DEVICE_NOT_EXIST;
     }
-    MeasurementSchemaMap &msm = device_schema->measurement_schema_map_;
+    MeasurementSchemaMap &msm =
+        device_schemas_[device_id]->measurement_schema_map_;
     uint32_t measurement_count = measurement_names.get_count();
     // chunk_writers.reserve(measurement_count);
     for (uint32_t i = 0; i < measurement_count; i++) {
@@ -434,7 +434,26 @@ int64_t TsFileWriter::calculate_mem_size_for_all_group() {
              ms_iter != map.end(); ms_iter++) {
             MeasurementSchema *m_schema = ms_iter->second;
             ChunkWriter *&chunk_writer = m_schema->chunk_writer_;
-            if (chunk_writer != NULL) {
+            if (chunk_writer != nullptr) {
+                mem_total_size += chunk_writer->estimate_max_series_mem_size();
+            }
+        }
+    }
+    return mem_total_size;
+}
+
+int64_t TsFileWriter::calculate_table_model_mem_size_for_all_group() {
+    int64_t mem_total_size = 0;
+    DeviceSchemasMapIter device_iter;
+    for (device_iter = device_schemas_.begin();
+         device_iter != device_schemas_.end(); device_iter++) {
+        MeasurementSchemaGroup *chunk_group = device_iter->second;
+        MeasurementSchemaMap &map = chunk_group->measurement_schema_map_;
+        for (MeasurementSchemaMapIter ms_iter = map.begin();
+             ms_iter != map.end(); ms_iter++) {
+            MeasurementSchema *m_schema = ms_iter->second;
+            ChunkWriter *&chunk_writer = m_schema->chunk_writer_;
+            if (chunk_writer != nullptr) {
                 mem_total_size += chunk_writer->estimate_max_series_mem_size();
             }
         }
@@ -446,10 +465,12 @@ int64_t TsFileWriter::calculate_mem_size_for_all_group() {
  * check occupied memory size, if it exceeds the chunkGroupSize threshold, flush
  * them to given OutputStream.
  */
-int TsFileWriter::check_memory_size_and_may_flush_chunks() {
+int TsFileWriter::check_memory_size_and_may_flush_chunks(bool is_table_model) {
     int ret = E_OK;
     if (record_count_since_last_flush_ >= record_count_for_next_mem_check_) {
-        int64_t mem_size = calculate_mem_size_for_all_group();
+        int64_t mem_size = is_table_model
+                               ? calculate_table_model_mem_size_for_all_group()
+                               : calculate_mem_size_for_all_group();
         record_count_for_next_mem_check_ =
             record_count_since_last_flush_ *
             common::g_config_value_.chunk_group_size_threshold_ / mem_size;
@@ -614,10 +635,25 @@ int TsFileWriter::write_table(const Tablet &tablet) {
 
     int start_idx = 0;
     for (auto &device_id_end_index_pair : device_id_end_index_pairs) {
+        auto device_id = device_id_end_index_pair.first;
+        if (device_id_end_index_pair.second == 0) continue;
+        if (device_schemas_.find(device_id) == device_schemas_.end()) {
+            MeasurementSchemaGroup *ms_group = new MeasurementSchemaGroup;
+            device_schemas_.insert(
+                std::make_pair(device_id_end_index_pair.first, ms_group));
+        }
+        for (auto &measurement_schema : *tablet.schema_vec_) {
+            MeasurementSchemaMap &msm =
+                device_schemas_[device_id]->measurement_schema_map_;
+            if (msm.find(measurement_schema.measurement_name_) == msm.end()) {
+                msm.insert(std::make_pair(measurement_schema.measurement_name_,
+                                          &measurement_schema));
+            }
+        }
         SimpleVector<ChunkWriter *> chunk_writers;
         MeasurementNamesFromTablet mnames_getter(tablet);
-        if (RET_FAIL(do_check_schema(*device_id_end_index_pair.first,
-                                     mnames_getter, chunk_writers))) {
+        if (RET_FAIL(
+                do_check_schema(device_id, mnames_getter, chunk_writers))) {
             return ret;
         }
         ASSERT(chunk_writers.size() == tablet.get_column_count());
@@ -626,22 +662,22 @@ int TsFileWriter::write_table(const Tablet &tablet) {
             if (IS_NULL(chunk_writer)) {
                 continue;
             }
-            // ignore writer failure
-            write_column(chunk_writer, tablet, c, start_idx, device_id_end_index_pair.second);
+            write_column(chunk_writer, tablet, c, start_idx,
+                         device_id_end_index_pair.second);
         }
         start_idx = device_id_end_index_pair.second;
     }
     record_count_since_last_flush_ += tablet.cur_row_size_;
-    ret = check_memory_size_and_may_flush_chunks();
+    ret = check_memory_size_and_may_flush_chunks(true);
     return ret;
 }
 
-std::vector<std::pair<std::unique_ptr<IDeviceID>, int>>
+std::vector<std::pair<std::shared_ptr<IDeviceID>, int>>
 TsFileWriter::split_tablet_by_device(const Tablet &tablet) {
-    std::vector<std::pair<std::unique_ptr<IDeviceID>, int>> result;
-    std::unique_ptr<IDeviceID> last_device_id(new IDeviceID);
+    std::vector<std::pair<std::shared_ptr<IDeviceID>, int>> result;
+    std::shared_ptr<IDeviceID> last_device_id(new IDeviceID);
     for (int i = 0; i < tablet.get_cur_row_size(); i++) {
-        std::unique_ptr<IDeviceID> cur_device_id(tablet.get_device_id(i));
+        std::shared_ptr<IDeviceID> cur_device_id(tablet.get_device_id(i));
         if (0 != cur_device_id->compare(*last_device_id)) {
             result.emplace_back(std::move(last_device_id), i);
             last_device_id = std::move(cur_device_id);
@@ -652,8 +688,7 @@ TsFileWriter::split_tablet_by_device(const Tablet &tablet) {
 }
 
 int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,
-                               int col_idx, int start_idx,
-                               int end_idx) {
+                               int col_idx, int start_idx, int end_idx) {
     int ret = E_OK;
 
     TSDataType data_type = tablet.schema_vec_->at(col_idx).data_type_;

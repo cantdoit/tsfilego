@@ -120,6 +120,10 @@ class TableSchema {
         return column_categories_;
     }
 
+    auto get_measurement_schemas() const {
+        return measurement_schemas_;
+    }
+
    private:
     std::string table_name_;
     std::vector<std::shared_ptr<MeasurementSchema>> measurement_schemas_;

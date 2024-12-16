@@ -36,8 +36,8 @@ using namespace common;
 class TsFileWriterTableTest : public ::testing::Test {
    protected:
     void SetUp() override {
-        tsfile_writer_ = new TsFileWriter();
         libtsfile_init();
+        tsfile_writer_ = new TsFileWriter();
         file_name_ = std::string("tsfile_writer_table_test_") +
                      generate_random_string(10) + std::string(".tsfile");
         remove(file_name_.c_str());
@@ -53,7 +53,7 @@ class TsFileWriterTableTest : public ::testing::Test {
         remove(file_name_.c_str());
     }
     std::string file_name_;
-    TsFileWriter *tsfile_writer_ = nullptr;
+    TsFileWriter* tsfile_writer_ = nullptr;
 
    public:
     static std::string generate_random_string(int length) {
@@ -75,46 +75,15 @@ class TsFileWriterTableTest : public ::testing::Test {
         return random_string;
     }
 
-    static std::string field_to_string(storage::Field *value) {
-        if (value->type_ == common::TEXT) {
-            return std::string(value->value_.sval_);
-        } else {
-            std::stringstream ss;
-            switch (value->type_) {
-                case common::BOOLEAN:
-                    ss << (value->value_.bval_ ? "true" : "false");
-                    break;
-                case common::INT32:
-                    ss << value->value_.ival_;
-                    break;
-                case common::INT64:
-                    ss << value->value_.lval_;
-                    break;
-                case common::FLOAT:
-                    ss << value->value_.fval_;
-                    break;
-                case common::DOUBLE:
-                    ss << value->value_.dval_;
-                    break;
-                case common::NULL_TYPE:
-                    ss << "NULL";
-                    break;
-                default:
-                    ASSERT(false);
-                    break;
-            }
-            return ss.str();
-        }
-    }
-
     static std::shared_ptr<TableSchema> gen_table_schema(int table_num) {
         std::vector<std::shared_ptr<MeasurementSchema>> measurement_schemas;
         std::vector<ColumnCategory> column_categories;
         int id_schema_num = 5;
         int measurement_schema_num = 5;
         for (int i = 0; i < id_schema_num; i++) {
+            // TODO: support TEXT
             measurement_schemas.emplace_back(new MeasurementSchema(
-                "id" + to_string(i), TSDataType::TEXT, TSEncoding::PLAIN,
+                "id" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
                 CompressionType::UNCOMPRESSED));
             column_categories.emplace_back(ColumnCategory::ID);
         }
@@ -129,47 +98,49 @@ class TsFileWriterTableTest : public ::testing::Test {
                                              column_categories);
     }
 
-    Tablet gen_tablet(std::shared_ptr<TableSchema> table_schema, int offset,
-                      int device_num) {
+    static Tablet gen_tablet(const std::shared_ptr<TableSchema>& table_schema,
+                      int offset, int device_num) {
         Tablet tablet(table_schema->get_table_name(),
                       table_schema->get_measurement_names(),
                       table_schema->get_data_types(),
                       table_schema->get_column_categories());
         tablet.init();
 
+        int num_timestamp_per_device = 10;
+        for (int i = 0; i < device_num; i++) {
+            for (int l = 0; l < num_timestamp_per_device; l++) {
+                int row_index = i * num_timestamp_per_device + l;
+                tablet.set_timestamp(row_index, offset + l);
+                auto column_schemas = table_schema->get_measurement_schemas();
+                for (const auto& column_schema : column_schemas) {
+                    switch (column_schema->data_type_) {
+                        case TSDataType::INT64:
+                            tablet.set_value(row_index,
+                                             column_schema->measurement_name_,
+                                             static_cast<int64_t>(i));
+                            break;
+                        case TSDataType::TEXT:
+                            // TODO: support TEXT
+                            tablet.set_value(row_index,
+                                             column_schema->measurement_name_,
+                                             static_cast<int64_t>(i));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
+        tablet.set_row_size(device_num * num_timestamp_per_device);
         return tablet;
     }
-
-    //   public static Tablet genTablet(TableSchema tableSchema, int offset, int
-    //   deviceNum) {
-    //        Tablet tablet =
-    //            new Tablet(
-    //                tableSchema.getTableName(),
-    //                IMeasurementSchema.getMeasurementNameList(tableSchema.getColumnSchemas()),
-    //                IMeasurementSchema.getDataTypeList(tableSchema.getColumnSchemas()),
-    //                tableSchema.getColumnTypes());
-    //
-    //        for (int i = 0; i < deviceNum; i++) {
-    //            for (int l = 0; l < numTimestampPerDevice; l++) {
-    //                int rowIndex = i * numTimestampPerDevice + l;
-    //                tablet.addTimestamp(rowIndex, offset + l);
-    //                List<IMeasurementSchema> columnSchemas =
-    //                tableSchema.getColumnSchemas(); for (int j = 0; j <
-    //                columnSchemas.size(); j++) {
-    //                    IMeasurementSchema columnSchema =
-    //                    columnSchemas.get(j); tablet.addValue(
-    //                        columnSchema.getMeasurementName(), rowIndex,
-    //                        getValue(columnSchema.getType(), i));
-    //                }
-    //            }
-    //        }
-    //        tablet.setRowSize(deviceNum * numTimestampPerDevice);
-    //        return tablet;
-    //    }
 };
 
 TEST_F(TsFileWriterTableTest, InitWithNullWriteFile) {
-    auto table_schema = std::make_shared<TableSchema>();
+    auto table_schema = gen_table_schema(0);
     tsfile_writer_->set_generate_table_schema(true);
-    tsfile_writer_->register_table(gen_table_schema(0));
+    tsfile_writer_->register_table(table_schema);
+    auto tablet = gen_tablet(table_schema, 0, 1);
+    ASSERT_EQ(common::E_OK, tsfile_writer_->write_table(tablet));
+    //ASSERT_EQ(tsfile_writer_->flush(), E_OK);
 }

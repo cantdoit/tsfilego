@@ -37,8 +37,8 @@ using namespace common;
 class TsFileWriterTest : public ::testing::Test {
    protected:
     void SetUp() override {
-        tsfile_writer_ = new TsFileWriter();
         libtsfile_init();
+        tsfile_writer_ = new TsFileWriter();
         file_name_ = std::string("tsfile_writer_test_") +
                      generate_random_string(10) + std::string(".tsfile");
         remove(file_name_.c_str());

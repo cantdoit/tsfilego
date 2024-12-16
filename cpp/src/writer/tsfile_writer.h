@@ -94,7 +94,8 @@ class TsFileWriter {
         return &schemas_;
     }
     int64_t calculate_mem_size_for_all_group();
-    int check_memory_size_and_may_flush_chunks();
+    int64_t calculate_table_model_mem_size_for_all_group();
+    int check_memory_size_and_may_flush_chunks(bool is_table_model = false);
     /*
      * Flush buffer to disk file, but do not writer file index part.
      * TsFileWriter allows user to flush many times.
@@ -150,7 +151,7 @@ class TsFileWriter {
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
 
     template <typename MeasurementNamesGetter>
-    int do_check_schema(const IDeviceID &device_id,
+    int do_check_schema(std::shared_ptr<IDeviceID> device_id,
                         MeasurementNamesGetter &measurement_names,
                         common::SimpleVector<ChunkWriter *> &chunk_writers);
 
@@ -163,7 +164,7 @@ class TsFileWriter {
     int register_timeseries(
         const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    std::vector<std::pair<std::unique_ptr<IDeviceID>, int>>
+    std::vector<std::pair<std::shared_ptr<IDeviceID>, int>>
     split_tablet_by_device(const Tablet &tablet);
 
    private:
