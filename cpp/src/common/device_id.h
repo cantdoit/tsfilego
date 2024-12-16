@@ -253,9 +253,6 @@ class PlainDeviceID : public IDeviceID {
     int compare(IDeviceID& other) override {
         const auto *otherPlain =
             dynamic_cast<const PlainDeviceID*>(&other);
-        if (!otherPlain) {
-            throw std::invalid_argument("Incompatible IDeviceID type");
-        }
         return deviceID_.compare(otherPlain->deviceID_);
     }
 
@@ -273,25 +270,25 @@ class PlainDeviceID : public IDeviceID {
     }
 };
 
-//class PlainDeviceIDFactory {
-//   public:
-//    static std::unique_ptr<IDeviceID> Create(
-//        const std::string& deviceIdString) {
-//        return std::make_unique<PlainDeviceID>(deviceIdString);
-//    }
-//
-//    static std::unique_ptr<IDeviceID> Create(
-//        const std::vector<std::string>& segments) {
-//        return std::make_unique<PlainDeviceID>(JoinSegments(segments));
-//    }
-//
-//   private:
-//    static std::string JoinSegments(const std::vector<std::string>& segments) {
-//        return std::accumulate(segments.begin(), segments.end(), std::string(),
-//                               [](const std::string& a, const std::string& b) {
-//                                   return a.empty() ? b : a + "." + b;
-//                               });
-//    }
-//};
+class PlainDeviceIDFactory {
+   public:
+    static std::shared_ptr<IDeviceID> create(
+        const std::string& device_id_string) {
+        return std::make_unique<PlainDeviceID>(device_id_string);
+    }
+
+    static std::shared_ptr<IDeviceID> create(
+        const std::vector<std::string>& segments) {
+        return std::make_unique<PlainDeviceID>(join_segments(segments));
+    }
+
+   private:
+    static std::string join_segments(const std::vector<std::string>& segments) {
+        return std::accumulate(segments.begin(), segments.end(), std::string(),
+                               [](const std::string& a, const std::string& b) {
+                                   return a.empty() ? b : a + "." + b;
+                               });
+    }
+};
 
 #endif
