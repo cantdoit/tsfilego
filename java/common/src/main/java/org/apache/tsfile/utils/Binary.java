@@ -92,9 +92,13 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
   }
 
   /**
-   * get length.
+   * Gets the actual payload length.
    *
-   * @return length
+   * <p>This method returns the effective length of the data (payload) stored in the byte array. If
+   * the byte array is null, it returns -1. Note that this length may be less than the total
+   * capacity of the byte array.
+   *
+   * @return the actual payload length, or -1 if the byte array is null
    */
   public int getLength() {
     if (this.values == null) {
@@ -103,6 +107,15 @@ public class Binary implements Comparable<Binary>, Serializable, Accountable {
     return this.values.length;
   }
 
+  /**
+   * Gets the total capacity of the byte array.
+   *
+   * <p>This method returns the total capacity of the underlying byte array. If the byte array is
+   * null, it returns -1. Note that the effective payload length (actual valid data) may be smaller
+   * than the total capacity of the array.
+   *
+   * @return the total capacity of the byte array, or -1 if the array is null
+   */
   public int getCapacity() {
     if (this.values == null) {
       return -1;

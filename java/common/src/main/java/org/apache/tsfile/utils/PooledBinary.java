@@ -89,7 +89,9 @@ public class PooledBinary extends Binary {
     if (values == null) return 0;
 
     int result = 1;
-    for (int i = 0; i < length; i++) result = 31 * result + values[i];
+    for (int i = 0; i < length; i++) {
+      result = 31 * result + values[i];
+    }
 
     return result;
   }
