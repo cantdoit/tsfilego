@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,25 +83,6 @@ public class FloatDecoderTest {
 
   @After
   public void tearDown() {}
-
-  public static void main(String[] args) throws IOException {
-    float value1 = 0.333F;
-    System.out.println(value1);
-    float value = 6.5536403E8F;
-    System.out.println(value);
-    Encoder encoder = new FloatEncoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT, 2);
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    encoder.encode(value1, baos);
-    encoder.encode(value, baos);
-    encoder.flush(baos);
-
-    ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
-    Decoder decoder = new FloatDecoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT);
-    float value_ = decoder.readFloat(buffer);
-    System.out.println(value_);
-    value_ = decoder.readFloat(buffer);
-    System.out.println(value_);
-  }
 
   @Test
   public void testRLEFloat() throws Exception {
@@ -221,6 +201,30 @@ public class FloatDecoderTest {
         assertEquals(value, value_, delta);
       }
     }
+  }
+
+  @Test
+  public void testBigFloat() throws Exception {
+    float a = 0.333F;
+    float b = 6.5536403E8F;
+    Encoder encoder = new FloatEncoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT, 2);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    encoder.encode(a, baos);
+    encoder.encode(b, baos);
+    encoder.flush(baos);
+
+    ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
+    Decoder decoder = new FloatDecoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT);
+    assertEquals(roundWithGivenPrecision(a, 2), decoder.readFloat(buffer), delta);
+    assertEquals(roundWithGivenPrecision(b, 2), decoder.readFloat(buffer), delta);
+  }
+
+  public static float roundWithGivenPrecision(float data, int size) {
+    if (size == 0) {
+      return Math.round(data);
+    }
+    return Math.round(data)
+        + Math.round(((data - Math.round(data)) * Math.pow(10, size))) / (float) Math.pow(10, size);
   }
 
   // private void testDecimalLenght(TSEncoding encoding, List<Double> valueList,

@@ -24,6 +24,7 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileDecodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.utils.Binary;
+import org.apache.tsfile.utils.BitMap;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
@@ -31,8 +32,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Decoder for float or double value using rle or two diff. For more info about encoding pattern,
@@ -49,7 +48,7 @@ public class FloatDecoder extends Decoder {
   /** flag that indicates whether we have read maxPointNumber and calculated maxPointValue. */
   private boolean isMaxPointNumberRead;
 
-  private List<Boolean> useMaxPointNumber;
+  private BitMap useMaxPointNumber;
   private int position = 0;
 
   public FloatDecoder(TSEncoding encodingType, TSDataType dataType) {
@@ -107,14 +106,14 @@ public class FloatDecoder extends Decoder {
   public double readDouble(ByteBuffer buffer) {
     readMaxPointValue(buffer);
     long value = decoder.readLong(buffer);
-    return value / maxPointValue;
+    return value / getMaxPointValue();
   }
 
   private double getMaxPointValue() {
     if (useMaxPointNumber == null) {
       return maxPointValue;
     } else {
-      return useMaxPointNumber.get(position) ? maxPointValue : 1;
+      return useMaxPointNumber.isMarked(position) ? maxPointValue : 1;
     }
   }
 
@@ -122,18 +121,12 @@ public class FloatDecoder extends Decoder {
     if (!isMaxPointNumberRead) {
       int maxPointNumber = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
       if (maxPointNumber == Integer.MAX_VALUE) {
-        useMaxPointNumber = new ArrayList<>();
-        while (true) {
-          maxPointNumber = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
-          if (maxPointNumber == 1) {
-            useMaxPointNumber.add(true);
-          } else if (maxPointNumber == 0) {
-            useMaxPointNumber.add(false);
-          } else {
-            maxPointValue = Math.pow(10, maxPointNumber);
-            break;
-          }
-        }
+        int size = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
+        byte[] tmp = new byte[size / 8 + 1];
+        buffer.get(tmp, 0, size / 8 + 1);
+        useMaxPointNumber = new BitMap(size, tmp);
+        maxPointNumber = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
+        maxPointValue = Math.pow(10, maxPointNumber);
       } else if (maxPointNumber <= 0) {
         maxPointValue = 1;
       } else {

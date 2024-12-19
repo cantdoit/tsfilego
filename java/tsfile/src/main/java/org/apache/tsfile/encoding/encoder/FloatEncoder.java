@@ -22,6 +22,7 @@ package org.apache.tsfile.encoding.encoder;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileEncodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
+import org.apache.tsfile.utils.BitMap;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -126,7 +127,13 @@ public class FloatEncoder extends Encoder {
   }
 
   private long convertDoubleToLong(double value) {
-    return Math.round(value * maxPointValue);
+    if (value * maxPointValue > Long.MAX_VALUE || value * maxPointValue < Long.MIN_VALUE) {
+      useMaxPointNumber.add(false);
+      return Math.round(value);
+    } else {
+      useMaxPointNumber.add(true);
+      return Math.round(value * maxPointValue);
+    }
   }
 
   @Override
@@ -136,9 +143,14 @@ public class FloatEncoder extends Encoder {
       byte[] ba = out.toByteArray();
       out.reset();
       ReadWriteForEncodingUtils.writeUnsignedVarInt(Integer.MAX_VALUE, out);
-      for (boolean b : useMaxPointNumber) {
-        ReadWriteForEncodingUtils.writeUnsignedVarInt(b ? 1 : 0, out);
+      BitMap bitMap = new BitMap(useMaxPointNumber.size());
+      for (int i = 0; i < useMaxPointNumber.size(); i++) {
+        if (useMaxPointNumber.get(i)) {
+          bitMap.mark(i);
+        }
       }
+      ReadWriteForEncodingUtils.writeUnsignedVarInt(useMaxPointNumber.size(), out);
+      out.write(bitMap.getByteArray());
       out.write(ba);
     }
     reset();
