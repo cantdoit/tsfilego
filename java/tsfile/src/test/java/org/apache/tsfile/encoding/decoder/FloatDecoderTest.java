@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -83,6 +84,25 @@ public class FloatDecoderTest {
 
   @After
   public void tearDown() {}
+
+  public static void main(String[] args) throws IOException {
+    float value1 = 0.333F;
+    System.out.println(value1);
+    float value = 6.5536403E8F;
+    System.out.println(value);
+    Encoder encoder = new FloatEncoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT, 2);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    encoder.encode(value1, baos);
+    encoder.encode(value, baos);
+    encoder.flush(baos);
+
+    ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
+    Decoder decoder = new FloatDecoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT);
+    float value_ = decoder.readFloat(buffer);
+    System.out.println(value_);
+    value_ = decoder.readFloat(buffer);
+    System.out.println(value_);
+  }
 
   @Test
   public void testRLEFloat() throws Exception {

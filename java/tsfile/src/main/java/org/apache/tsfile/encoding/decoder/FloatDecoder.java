@@ -31,6 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Decoder for float or double value using rle or two diff. For more info about encoding pattern,
@@ -46,6 +48,9 @@ public class FloatDecoder extends Decoder {
 
   /** flag that indicates whether we have read maxPointNumber and calculated maxPointValue. */
   private boolean isMaxPointNumberRead;
+
+  private List<Boolean> useMaxPointNumber;
+  private int position = 0;
 
   public FloatDecoder(TSEncoding encodingType, TSDataType dataType) {
     super(encodingType);
@@ -93,7 +98,8 @@ public class FloatDecoder extends Decoder {
   public float readFloat(ByteBuffer buffer) {
     readMaxPointValue(buffer);
     int value = decoder.readInt(buffer);
-    double result = value / maxPointValue;
+    double result = value / getMaxPointValue();
+    position++;
     return (float) result;
   }
 
@@ -104,10 +110,31 @@ public class FloatDecoder extends Decoder {
     return value / maxPointValue;
   }
 
+  private double getMaxPointValue() {
+    if (useMaxPointNumber == null) {
+      return maxPointValue;
+    } else {
+      return useMaxPointNumber.get(position) ? maxPointValue : 1;
+    }
+  }
+
   private void readMaxPointValue(ByteBuffer buffer) {
     if (!isMaxPointNumberRead) {
       int maxPointNumber = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
-      if (maxPointNumber <= 0) {
+      if (maxPointNumber == Integer.MAX_VALUE) {
+        useMaxPointNumber = new ArrayList<>();
+        while (true) {
+          maxPointNumber = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
+          if (maxPointNumber == 1) {
+            useMaxPointNumber.add(true);
+          } else if (maxPointNumber == 0) {
+            useMaxPointNumber.add(false);
+          } else {
+            maxPointValue = Math.pow(10, maxPointNumber);
+            break;
+          }
+        }
+      } else if (maxPointNumber <= 0) {
         maxPointValue = 1;
       } else {
         maxPointValue = Math.pow(10, maxPointNumber);
@@ -153,5 +180,6 @@ public class FloatDecoder extends Decoder {
   public void reset() {
     this.decoder.reset();
     this.isMaxPointNumberRead = false;
+    this.position = 0;
   }
 }
