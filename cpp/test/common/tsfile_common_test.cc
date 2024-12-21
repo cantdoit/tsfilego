@@ -108,7 +108,7 @@ TEST(ChunkGroupMetaTest, Constructor) {
 TEST(ChunkGroupMetaTest, Init) {
     common::PageArena pa;
     ChunkGroupMeta group_meta(&pa);
-    int ret = group_meta.init("device_1", pa);
+    int ret = group_meta.init(std::make_shared<PlainDeviceID>("device_1"), pa);
     EXPECT_EQ(ret, common::E_OK);
 }
 
@@ -169,7 +169,7 @@ class TSMIteratorTest : public ::testing::Test {
             new common::SimpleList<ChunkGroupMeta*>(&arena);
         void* buf = arena.alloc(sizeof(ChunkGroupMeta));
         auto chunk_group_meta = new (buf) ChunkGroupMeta(&arena);
-        chunk_group_meta->device_name_.dup_from("device_1", arena);
+        chunk_group_meta->device_name_str_.dup_from("device_1", arena);
 
         buf = arena.alloc(sizeof(ChunkMeta));
         auto chunk_meta = new (buf) ChunkMeta();

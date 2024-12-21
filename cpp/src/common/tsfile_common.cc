@@ -103,8 +103,8 @@ int TSMIterator::init() {
             chunk_meta_iter_++;
         }
         if (!tmp.empty()) {
-            tsm_chunk_meta_info_[chunk_group_meta_iter_.get()->device_name_] =
-                tmp;
+            tsm_chunk_meta_info_[chunk_group_meta_iter_.get()
+                                     ->device_name_str_] = tmp;
         }
 
         chunk_group_meta_iter_++;
@@ -220,7 +220,7 @@ int MetaIndexNode::binary_search_children(const String &name, bool exact_search,
                 break;
             } else if (cmp > 0) {  // children_[m] > name
                 h = m;
-            } else {  // children_[m] < name
+            } else {               // children_[m] < name
                 l = m;
             }
         }

@@ -49,7 +49,7 @@ class Tablet {
           value_matrix_(nullptr),
           bitmaps_(nullptr) {
         ASSERT(device_name.size() >= 1);
-        ASSERT(schema_vec != NULL);
+        ASSERT(schema_vec != nullptr);
         ASSERT(max_rows > 0 && max_rows < (1 << 30));
         if (max_rows < 0) {
             ASSERT(false);
@@ -71,9 +71,8 @@ class Tablet {
         schema_vec_ = new std::vector<MeasurementSchema>();
         for (size_t i = 0; i < column_names.size(); i++) {
             schema_vec_->emplace_back(
-                MeasurementSchema(column_names[i], data_types[i],
-                                  common::get_value_encoder(data_types[i]),
-                                  common::CompressionType::LZ4));
+                MeasurementSchema(column_names[i], data_types[i], common::PLAIN,
+                                  common::UNCOMPRESSED));
         }
         if (has_column_categories) {
             set_column_categories(column_categories);

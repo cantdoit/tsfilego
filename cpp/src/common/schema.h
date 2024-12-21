@@ -102,7 +102,7 @@ class TableSchema {
 
     auto get_measurement_names() const {
         std::vector<std::string> ret;
-        for (const auto& measurement_schema : measurement_schemas_) {
+        for (const auto &measurement_schema : measurement_schemas_) {
             ret.emplace_back(measurement_schema->measurement_name_);
         }
         return ret;
@@ -110,19 +110,15 @@ class TableSchema {
 
     auto get_data_types() const {
         std::vector<common::TSDataType> ret;
-        for (const auto& measurement_schema : measurement_schemas_) {
+        for (const auto &measurement_schema : measurement_schemas_) {
             ret.emplace_back(measurement_schema->data_type_);
         }
         return ret;
     }
 
-    auto get_column_categories() const {
-        return column_categories_;
-    }
+    auto get_column_categories() const { return column_categories_; }
 
-    auto get_measurement_schemas() const {
-        return measurement_schemas_;
-    }
+    auto get_measurement_schemas() const { return measurement_schemas_; }
 
    private:
     std::string table_name_;

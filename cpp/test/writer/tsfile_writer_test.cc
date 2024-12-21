@@ -392,10 +392,9 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
         std::string device_name = "test_device" + std::to_string(i);
         for (int j = 0; j < measurement_num; j++) {
             std::string measure_name = "measurement" + std::to_string(j);
-            schema_vec[i].push_back(
-                MeasurementSchema(measure_name, common::TSDataType::INT64,
+            schema_vec[i].emplace_back(measure_name, common::TSDataType::INT64,
                                   common::TSEncoding::PLAIN,
-                                  common::CompressionType::UNCOMPRESSED));
+                                  common::CompressionType::UNCOMPRESSED);
             tsfile_writer_->register_timeseries(
                 device_name, measure_name, common::TSDataType::INT64,
                 common::TSEncoding::PLAIN,

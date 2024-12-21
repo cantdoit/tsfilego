@@ -21,6 +21,9 @@
 
 #include <fcntl.h>
 
+#include <memory>
+
+#include "common/device_id.h"
 #include "common/global.h"
 #include "common/logger/elog.h"
 #include "writer/chunk_writer.h"
@@ -84,13 +87,13 @@ int TsFileIOWriter::start_file() {
     return ret;
 }
 
-int TsFileIOWriter::start_flush_chunk_group(const std::string &device_name,
+int TsFileIOWriter::start_flush_chunk_group(std::shared_ptr<IDeviceID> device_name,
                                             bool is_aligned) {
     int ret = write_byte(CHUNK_GROUP_HEADER_MARKER);
     if (ret != common::E_OK) {
         return ret;
     }
-    ret = write_string(device_name);
+    device_name->serialize(write_stream_);
     if (ret != common::E_OK) {
         return ret;
     }
@@ -99,9 +102,8 @@ int TsFileIOWriter::start_flush_chunk_group(const std::string &device_name,
     use_prev_alloc_cgm_ = false;
     for (auto iter = chunk_group_meta_list_.begin();
          iter != chunk_group_meta_list_.end(); iter++) {
-        common::String cur_device_name((char *)cur_device_name_.c_str(),
-                                       cur_device_name_.size());
-        if (iter.get()->device_name_.equal_to(cur_device_name)) {
+        auto cur_device_name = cur_device_name_;
+        if (*iter.get()->device_name_ == *cur_device_name) {
             use_prev_alloc_cgm_ = true;
             cur_chunk_group_meta_ = iter.get();
             break;

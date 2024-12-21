@@ -68,7 +68,8 @@ class TsFileIOWriter {
           cur_device_name_(),
           file_(nullptr),
           ts_time_index_vector_(),
-          write_file_created_(false) {}
+          write_file_created_(false),
+          generate_table_schema_(false) {}
     ~TsFileIOWriter() { destroy(); }
 
 #ifndef LIBTSFILE_SDK
@@ -80,7 +81,7 @@ class TsFileIOWriter {
 
     void set_generate_table_schema(bool generate_table_schema);
     int start_file();
-    int start_flush_chunk_group(const std::string &device_name,
+    int start_flush_chunk_group(std::shared_ptr<IDeviceID> device_id,
                                 bool is_aligned = false);
     int start_flush_chunk(common::ByteStream &chunk_data,
                           common::ColumnDesc &col_desc, int32_t num_of_pages);
@@ -100,8 +101,8 @@ class TsFileIOWriter {
     int end_flush_chunk_group(bool is_aligned = false);
     int end_file();
 
-    FORCE_INLINE std::vector<TimeseriesTimeIndexEntry>
-        &get_ts_time_index_vector() {
+    FORCE_INLINE std::vector<TimeseriesTimeIndexEntry> &
+    get_ts_time_index_vector() {
         return ts_time_index_vector_;
     }
     FORCE_INLINE std::string get_file_path() { return file_->get_file_path(); }
@@ -184,8 +185,8 @@ class TsFileIOWriter {
     ChunkGroupMeta *cur_chunk_group_meta_;
     int32_t chunk_meta_count_;  // for debug
     common::SimpleList<ChunkGroupMeta *> chunk_group_meta_list_;
-    bool use_prev_alloc_cgm_;  // chunk group meta
-    std::string cur_device_name_;
+    bool use_prev_alloc_cgm_;   // chunk group meta
+    std::shared_ptr<IDeviceID> cur_device_name_;
     WriteFile *file_;
     std::vector<TimeseriesTimeIndexEntry> ts_time_index_vector_;
     bool write_file_created_;

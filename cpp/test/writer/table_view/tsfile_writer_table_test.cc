@@ -136,11 +136,12 @@ class TsFileWriterTableTest : public ::testing::Test {
     }
 };
 
-TEST_F(TsFileWriterTableTest, InitWithNullWriteFile) {
+TEST_F(TsFileWriterTableTest, WriteTableTest) {
     auto table_schema = gen_table_schema(0);
     tsfile_writer_->set_generate_table_schema(true);
     tsfile_writer_->register_table(table_schema);
     auto tablet = gen_tablet(table_schema, 0, 1);
-    ASSERT_EQ(common::E_OK, tsfile_writer_->write_table(tablet));
-    //ASSERT_EQ(tsfile_writer_->flush(), E_OK);
+    ASSERT_EQ(tsfile_writer_->write_table(tablet), common::E_OK);
+    ASSERT_EQ(tsfile_writer_->flush(), common::E_OK);
+    ASSERT_EQ(tsfile_writer_->close(), common::E_OK);
 }

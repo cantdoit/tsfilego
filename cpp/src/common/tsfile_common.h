@@ -26,6 +26,7 @@
 #include <map>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 #include "common/allocator/my_string.h"
 #include "common/allocator/page_arena.h"
@@ -35,6 +36,7 @@
 #include "statistic.h"
 #include "utils/db_utils.h"
 #include "utils/storage_utils.h"
+#include "device_id.h"
 
 namespace storage {
 
@@ -288,14 +290,16 @@ struct ChunkMeta {
 };
 
 struct ChunkGroupMeta {
-    common::String device_name_;
+    std::shared_ptr<IDeviceID> device_name_;
+    common::String device_name_str_;
     common::SimpleList<ChunkMeta *> chunk_meta_list_;
 
     explicit ChunkGroupMeta(common::PageArena *pa_ptr)
         : device_name_(), chunk_meta_list_(pa_ptr) {}
 
-    FORCE_INLINE int init(const std::string &dev_name, common::PageArena &pa) {
-        return device_name_.dup_from(dev_name, pa);
+    FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id, common::PageArena &pa) {
+        device_name_ = std::move(device_id);
+        return device_name_str_.dup_from(device_name_->get_device_name(), pa);
     }
     FORCE_INLINE int push(ChunkMeta *cm) {
         return chunk_meta_list_.push_back(cm);

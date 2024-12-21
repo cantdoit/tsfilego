@@ -74,7 +74,7 @@ void TsFileWriter::destroy() {
         delete io_writer_;
         io_writer_ = NULL;
     }
-    DeviceSchemaIter dev_iter;
+    DeviceSchemasMapIter dev_iter;
     // cppcheck-suppress postfixOperator
     for (dev_iter = schemas_.begin(); dev_iter != schemas_.end(); dev_iter++) {
         MeasurementSchemaMap &ms_map =
@@ -85,18 +85,21 @@ void TsFileWriter::destroy() {
             if (ms != nullptr) {
                 if (ms->chunk_writer_ != nullptr) {
                     delete ms->chunk_writer_;
+                    ms->chunk_writer_ = nullptr;
                 }
                 delete ms;
+                ms_iter->second = nullptr;
             }
         }
         delete dev_iter->second;
+        dev_iter->second = nullptr;
     }
     schemas_.clear();
     record_count_since_last_flush_ = 0;
 }
 
 int TsFileWriter::init(WriteFile *write_file) {
-    if (write_file == NULL) {
+    if (write_file == nullptr) {
         return E_INVALID_ARG;
     } else if (!write_file->file_opened()) {
         return E_INVALID_ARG;
@@ -172,7 +175,9 @@ int TsFileWriter::register_timeseries(
 int TsFileWriter::register_timeseries(const std::string &device_path,
                                       MeasurementSchema *measurement_schema,
                                       bool is_aligned) {
-    DeviceSchemaIter device_iter = schemas_.find(device_path);
+    std::shared_ptr<IDeviceID> device_id =
+        std::make_shared<PlainDeviceID>(device_path);
+    DeviceSchemasMapIter device_iter = schemas_.find(device_id);
     if (device_iter != schemas_.end()) {
         MeasurementSchemaMap &msm =
             device_iter->second->measurement_schema_map_;
@@ -186,7 +191,7 @@ int TsFileWriter::register_timeseries(const std::string &device_path,
         ms_group->is_aligned_ = is_aligned;
         ms_group->measurement_schema_map_.insert(std::make_pair(
             measurement_schema->measurement_name_, measurement_schema));
-        schemas_.insert(std::make_pair(device_path, ms_group));
+        schemas_.insert(std::make_pair(device_id, ms_group));
     }
     return E_OK;
 }
@@ -271,12 +276,12 @@ struct MeasurementNamesFromTablet {
 };
 
 template <typename MeasurementNamesGetter>
-int TsFileWriter::do_check_schema(const std::string &device_name,
+int TsFileWriter::do_check_schema(std::shared_ptr<IDeviceID> device_id,
                                   MeasurementNamesGetter &measurement_names,
                                   SimpleVector<ChunkWriter *> &chunk_writers) {
     int ret = E_OK;
-    DeviceSchemaIter dev_it = schemas_.find(device_name);
-    MeasurementSchemaGroup *device_schema = NULL;
+    DeviceSchemasMapIter dev_it = schemas_.find(device_id);
+    MeasurementSchemaGroup *device_schema = nullptr;
     if (UNLIKELY(dev_it == schemas_.end()) ||
         IS_NULL(device_schema = dev_it->second)) {
         return E_DEVICE_NOT_EXIST;
@@ -285,56 +290,8 @@ int TsFileWriter::do_check_schema(const std::string &device_name,
     uint32_t measurement_count = measurement_names.get_count();
     // chunk_writers.reserve(measurement_count);
     for (uint32_t i = 0; i < measurement_count; i++) {
-        MeasurementSchemaMapIter ms_iter = msm.find(measurement_names.next());
-        if (UNLIKELY(ms_iter == msm.end())) {
-            chunk_writers.push_back(NULL);
-        } else {
-            // In Java we will check data_type. But in C++, no check here.
-            // Because checks are performed at the chunk layer and page layer
-            MeasurementSchema *ms = ms_iter->second;
-            if (IS_NULL(ms->chunk_writer_)) {
-                ms->chunk_writer_ = new ChunkWriter;
-                ret = ms->chunk_writer_->init(ms->measurement_name_,
-                                              ms->data_type_, ms->encoding_,
-                                              ms->compression_type_);
-                if (IS_SUCC(ret)) {
-                    chunk_writers.push_back(ms->chunk_writer_);
-                } else {
-                    for (size_t chunk_writer_idx = 0;
-                         chunk_writer_idx < chunk_writers.size();
-                         chunk_writer_idx++) {
-                        if (!chunk_writers[chunk_writer_idx]) {
-                            delete chunk_writers[chunk_writer_idx];
-                        }
-                    }
-                    ret = common::E_INVALID_ARG;
-                    return ret;
-                }
-            } else {
-                chunk_writers.push_back(ms->chunk_writer_);
-            }
-        }
-    }
-    return ret;
-}
-
-template <typename MeasurementNamesGetter>
-int TsFileWriter::do_check_schema(std::shared_ptr<IDeviceID> device_id,
-                                  MeasurementNamesGetter &measurement_names,
-                                  SimpleVector<ChunkWriter *> &chunk_writers) {
-    int ret = E_OK;
-    DeviceSchemasMapIter dev_it = device_schemas_.find(device_id);
-    MeasurementSchemaGroup *device_schema = nullptr;
-    if (UNLIKELY(dev_it == device_schemas_.end()) ||
-        IS_NULL(device_schema = dev_it->second)) {
-        return E_DEVICE_NOT_EXIST;
-    }
-    MeasurementSchemaMap &msm =
-        device_schemas_[device_id]->measurement_schema_map_;
-    uint32_t measurement_count = measurement_names.get_count();
-    // chunk_writers.reserve(measurement_count);
-    for (uint32_t i = 0; i < measurement_count; i++) {
-        MeasurementSchemaMapIter ms_iter = msm.find(measurement_names.next());
+        auto xx = measurement_names.next();
+        MeasurementSchemaMapIter ms_iter = msm.find(xx);
         if (UNLIKELY(ms_iter == msm.end())) {
             chunk_writers.push_back(NULL);
         } else {
@@ -369,11 +326,12 @@ int TsFileWriter::do_check_schema(std::shared_ptr<IDeviceID> device_id,
 
 template <typename MeasurementNamesGetter>
 int TsFileWriter::do_check_schema_aligned(
-    const std::string &device_name, MeasurementNamesGetter &measurement_names,
+    std::shared_ptr<IDeviceID> device_id,
+    MeasurementNamesGetter &measurement_names,
     storage::TimeChunkWriter *&time_chunk_writer,
     common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers) {
     int ret = E_OK;
-    auto dev_it = schemas_.find(device_name);
+    auto dev_it = schemas_.find(device_id);
     MeasurementSchemaGroup *device_schema = NULL;
     if (UNLIKELY(dev_it == schemas_.end()) ||
         IS_NULL(device_schema = dev_it->second)) {
@@ -425,28 +383,9 @@ int TsFileWriter::do_check_schema_aligned(
 
 int64_t TsFileWriter::calculate_mem_size_for_all_group() {
     int64_t mem_total_size = 0;
-    DeviceSchemaIter device_iter;
+    DeviceSchemasMapIter device_iter;
     for (device_iter = schemas_.begin(); device_iter != schemas_.end();
          device_iter++) {
-        MeasurementSchemaGroup *chunk_group = device_iter->second;
-        MeasurementSchemaMap &map = chunk_group->measurement_schema_map_;
-        for (MeasurementSchemaMapIter ms_iter = map.begin();
-             ms_iter != map.end(); ms_iter++) {
-            MeasurementSchema *m_schema = ms_iter->second;
-            ChunkWriter *&chunk_writer = m_schema->chunk_writer_;
-            if (chunk_writer != nullptr) {
-                mem_total_size += chunk_writer->estimate_max_series_mem_size();
-            }
-        }
-    }
-    return mem_total_size;
-}
-
-int64_t TsFileWriter::calculate_table_model_mem_size_for_all_group() {
-    int64_t mem_total_size = 0;
-    DeviceSchemasMapIter device_iter;
-    for (device_iter = device_schemas_.begin();
-         device_iter != device_schemas_.end(); device_iter++) {
         MeasurementSchemaGroup *chunk_group = device_iter->second;
         MeasurementSchemaMap &map = chunk_group->measurement_schema_map_;
         for (MeasurementSchemaMapIter ms_iter = map.begin();
@@ -465,12 +404,10 @@ int64_t TsFileWriter::calculate_table_model_mem_size_for_all_group() {
  * check occupied memory size, if it exceeds the chunkGroupSize threshold, flush
  * them to given OutputStream.
  */
-int TsFileWriter::check_memory_size_and_may_flush_chunks(bool is_table_model) {
+int TsFileWriter::check_memory_size_and_may_flush_chunks() {
     int ret = E_OK;
     if (record_count_since_last_flush_ >= record_count_for_next_mem_check_) {
-        int64_t mem_size = is_table_model
-                               ? calculate_table_model_mem_size_for_all_group()
-                               : calculate_mem_size_for_all_group();
+        int64_t mem_size = calculate_mem_size_for_all_group();
         record_count_for_next_mem_check_ =
             record_count_since_last_flush_ *
             common::g_config_value_.chunk_group_size_threshold_ / mem_size;
@@ -486,8 +423,9 @@ int TsFileWriter::write_record(const TsRecord &record) {
     // std::vector<ChunkWriter*> chunk_writers;
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromRecord mnames_getter(record);
-    if (RET_FAIL(do_check_schema(record.device_name_, mnames_getter,
-                                 chunk_writers))) {
+    if (RET_FAIL(do_check_schema(
+            std::make_shared<PlainDeviceID>(record.device_name_), mnames_getter,
+            chunk_writers))) {
         return ret;
     }
 
@@ -511,9 +449,9 @@ int TsFileWriter::write_record_aligned(const TsRecord &record) {
     SimpleVector<ValueChunkWriter *> value_chunk_writers;
     TimeChunkWriter *time_chunk_writer;
     MeasurementNamesFromRecord mnames_getter(record);
-    if (RET_FAIL(do_check_schema_aligned(record.device_name_, mnames_getter,
-                                         time_chunk_writer,
-                                         value_chunk_writers))) {
+    if (RET_FAIL(do_check_schema_aligned(
+            std::make_shared<PlainDeviceID>(record.device_name_), mnames_getter,
+            time_chunk_writer, value_chunk_writers))) {
         return ret;
     }
     if (value_chunk_writers.size() != record.points_.size()) {
@@ -585,9 +523,9 @@ int TsFileWriter::write_tablet_aligned(const Tablet &tablet) {
     SimpleVector<ValueChunkWriter *> value_chunk_writers;
     TimeChunkWriter *time_chunk_writer = nullptr;
     MeasurementNamesFromTablet mnames_getter(tablet);
-    if (RET_FAIL(do_check_schema_aligned(tablet.insert_target_name_,
-                                         mnames_getter, time_chunk_writer,
-                                         value_chunk_writers))) {
+    if (RET_FAIL(do_check_schema_aligned(
+            std::make_shared<PlainDeviceID>(tablet.insert_target_name_),
+            mnames_getter, time_chunk_writer, value_chunk_writers))) {
         return ret;
     }
     ASSERT(value_chunk_writers.size() == tablet.get_column_count());
@@ -605,8 +543,9 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     int ret = E_OK;
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
-    if (RET_FAIL(do_check_schema(tablet.insert_target_name_, mnames_getter,
-                                 chunk_writers))) {
+    if (RET_FAIL(do_check_schema(
+            std::make_shared<PlainDeviceID>(tablet.insert_target_name_),
+            mnames_getter, chunk_writers))) {
         return ret;
     }
     ASSERT(chunk_writers.size() == tablet.get_column_count());
@@ -637,17 +576,21 @@ int TsFileWriter::write_table(const Tablet &tablet) {
     for (auto &device_id_end_index_pair : device_id_end_index_pairs) {
         auto device_id = device_id_end_index_pair.first;
         if (device_id_end_index_pair.second == 0) continue;
-        if (device_schemas_.find(device_id) == device_schemas_.end()) {
+        if (schemas_.find(device_id) == schemas_.end()) {
             MeasurementSchemaGroup *ms_group = new MeasurementSchemaGroup;
-            device_schemas_.insert(
+            schemas_.insert(
                 std::make_pair(device_id_end_index_pair.first, ms_group));
         }
         for (auto &measurement_schema : *tablet.schema_vec_) {
             MeasurementSchemaMap &msm =
-                device_schemas_[device_id]->measurement_schema_map_;
+                schemas_[device_id]->measurement_schema_map_;
             if (msm.find(measurement_schema.measurement_name_) == msm.end()) {
-                msm.insert(std::make_pair(measurement_schema.measurement_name_,
-                                          &measurement_schema));
+                auto measurement = new MeasurementSchema(
+                    measurement_schema.measurement_name_,
+                    measurement_schema.data_type_, measurement_schema.encoding_,
+                    measurement_schema.compression_type_);
+                msm.insert(std::make_pair(measurement->measurement_name_,
+                                          measurement));
             }
         }
         SimpleVector<ChunkWriter *> chunk_writers;
@@ -668,17 +611,18 @@ int TsFileWriter::write_table(const Tablet &tablet) {
         start_idx = device_id_end_index_pair.second;
     }
     record_count_since_last_flush_ += tablet.cur_row_size_;
-    ret = check_memory_size_and_may_flush_chunks(true);
+    ret = check_memory_size_and_may_flush_chunks();
     return ret;
 }
 
 std::vector<std::pair<std::shared_ptr<IDeviceID>, int>>
 TsFileWriter::split_tablet_by_device(const Tablet &tablet) {
     std::vector<std::pair<std::shared_ptr<IDeviceID>, int>> result;
-    std::shared_ptr<IDeviceID> last_device_id(new IDeviceID);
+    std::shared_ptr<IDeviceID> last_device_id =
+        std::make_shared<StringArrayDeviceID>("");
     for (int i = 0; i < tablet.get_cur_row_size(); i++) {
         std::shared_ptr<IDeviceID> cur_device_id(tablet.get_device_id(i));
-        if (0 != cur_device_id->compare(*last_device_id)) {
+        if (*cur_device_id != *last_device_id) {
             result.emplace_back(std::move(last_device_id), i);
             last_device_id = std::move(cur_device_id);
         }
@@ -864,7 +808,7 @@ int TsFileWriter::flush() {
 
     /* since @schemas_ used std::map which is rbtree underlying,
              so map itself is ordered by device name. */
-    std::map<std::string, MeasurementSchemaGroup *>::iterator device_iter;
+    DeviceSchemasMapIter device_iter;
     for (device_iter = schemas_.begin(); device_iter != schemas_.end();
          device_iter++) {  // cppcheck-suppress postfixOperator
         if (device_iter->second->is_aligned_) {

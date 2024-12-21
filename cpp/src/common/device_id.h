@@ -32,69 +32,75 @@
 #include <string>
 #include <vector>
 
+#include "common/allocator/byte_stream.h"
 #include "utils/errno_define.h"
 
 class IDeviceID {
    public:
     virtual ~IDeviceID() = default;
-    virtual int serialize(std::ostream& output_stream) {return 0;}
-    virtual int serialize(std::vector<uint8_t>& byte_buffer) {return 0;}
-    virtual std::vector<uint8_t> get_bytes() {return {};}
-    virtual bool is_empty() {return false;}
-    virtual bool is_table_model() {return false;}
-    virtual std::string get_table_name() {return "";}
-    virtual int segment_num() {return 0;}
-    virtual std::string segment(int i) {return "";}
-    virtual int serialized_size() {return 0;}
+    virtual int serialize(common::ByteStream& write_stream) {
+        return 0;
+    }
+    virtual std::vector<uint8_t> get_bytes() { return {}; }
+    virtual bool is_empty() { return false; }
+    virtual bool is_table_model() { return false; }
+    virtual std::string get_table_name() { return ""; }
+    virtual int segment_num() { return 0; }
+    virtual std::string segment(int i) { return ""; }
+    virtual int serialized_size() { return 0; }
     virtual bool start_with(const std::string& prefix,
-                            bool match_entire_segment = false) {return false;}
-    virtual std::vector<std::string> get_segments() {return {};}
-    virtual bool match_database_name(const std::string& database_name) {return false;}
-    virtual int compare(IDeviceID& other) {return 0;}
+                            bool match_entire_segment = false) {
+        return false;
+    }
+    virtual std::vector<std::string> get_segments() const { return {}; }
+    virtual bool match_database_name(const std::string& database_name) {
+        return false;
+    }
+    virtual std::string get_device_name() const { return ""; };
+    virtual bool operator<(const IDeviceID& other) { return 0; }
+    virtual bool operator==(const IDeviceID& other) { return false; }
+    virtual bool operator!=(const IDeviceID& other) { return false; }
 };
 
 struct IDeviceIDComparator {
-    bool operator()(const std::shared_ptr<IDeviceID>& lhs, const std::shared_ptr<IDeviceID>& rhs) const {
-        return lhs->compare(*rhs);
+    bool operator()(const std::shared_ptr<IDeviceID>& lhs,
+                    const std::shared_ptr<IDeviceID>& rhs) const {
+        return *lhs < *rhs;
     }
 };
 
 class StringArrayDeviceID : public IDeviceID {
    public:
-    explicit StringArrayDeviceID(const std::vector<std::string> &segments)
+    explicit StringArrayDeviceID(const std::vector<std::string>& segments)
         : segments_(formalize(segments)) {}
 
     explicit StringArrayDeviceID(const std::string& device_id_string)
         : segments_(split_device_id_string(device_id_string)) {}
 
-    int serialize(std::ostream& output_stream) override {
-        int cnt = 0;
-        auto length = static_cast<uint32_t>(segments_.size());
-        output_stream.write(reinterpret_cast<const char*>(&length),
-                            sizeof(length));
-        cnt += sizeof(length);
-        for (const auto& segment : segments_) {
-            auto size = static_cast<uint32_t>(segment.size());
-            output_stream.write(reinterpret_cast<const char*>(&size),
-                                sizeof(size));
-            output_stream.write(segment.data(), size);
-            cnt += sizeof(size) + size;
+    std::string get_device_name() const override {
+        return std::accumulate(std::next(segments_.begin()), segments_.end(),
+                               segments_.front(),
+                               [](std::string a, const std::string& b) {
+                                   return std::move(a) + "." + b;
+                               });
+    };
+
+    int serialize(common::ByteStream& write_stream) override {
+        int ret = common::E_OK;
+        if (RET_FAIL(common::SerializationUtil::write_var_int(segment_num(),
+                                                              write_stream))) {
+            return ret;
         }
-        return cnt;
-    }
-
-    int serialize(std::vector<uint8_t>& byte_buffer) override {
-        std::ostringstream stream;
-        int size = serialize(stream);
-        std::string str = stream.str();
-        byte_buffer.assign(str.begin(), str.end());
-        return size;
-    }
-
-    std::vector<uint8_t> get_bytes() override {
-        std::vector<uint8_t> buffer;
-        serialize(buffer);
-        return buffer;
+        for (const auto& segment : segments_) {
+            if (RET_FAIL(common::SerializationUtil::write_var_int(
+                    segment.size(), write_stream))) {
+                return ret;
+            } else if (RET_FAIL(write_stream.write_buf(segment.c_str(),
+                                                       segment.size()))) {
+                return ret;
+            }
+        }
+        return ret;
     }
 
     bool is_empty() override { return segments_.empty(); }
@@ -108,9 +114,7 @@ class StringArrayDeviceID : public IDeviceID {
         return segments_.empty() ? "" : segments_[0];
     }
 
-    int segment_num() override {
-        return static_cast<int>(segments_.size());
-    }
+    int segment_num() override { return static_cast<int>(segments_.size()); }
 
     std::string segment(int i) override {
         if (i < 0 || i >= static_cast<int>(segments_.size())) {
@@ -143,20 +147,28 @@ class StringArrayDeviceID : public IDeviceID {
         return false;
     }
 
-    std::vector<std::string> get_segments() override { return segments_; }
+    std::vector<std::string> get_segments() const override { return segments_; }
 
     bool match_database_name(const std::string& database_name) override {
         std::string table_name = get_table_name();
         return table_name.find(database_name) == 0;
     }
 
-    int compare(IDeviceID& other) override {
+    virtual bool operator<(const IDeviceID& other) override {
         auto other_segments = other.get_segments();
         return std::lexicographical_compare(segments_.begin(), segments_.end(),
                                             other_segments.begin(),
-                                            other_segments.end())
-                   ? -1
-                   : (segments_ == other_segments ? 0 : 1);
+                                            other_segments.end());
+    }
+
+    virtual bool operator==(const IDeviceID& other) override {
+        auto other_segments = other.get_segments();
+        return (segments_.size() == other_segments.size()) &&
+               std::equal(segments_.begin(), segments_.end(), other_segments.begin());
+    }
+
+    virtual bool operator!=(const IDeviceID& other) override {
+        return !(*this == other);
     }
 
    private:
@@ -171,7 +183,7 @@ class StringArrayDeviceID : public IDeviceID {
     }
 
     static std::vector<std::string> split_device_id_string(
-            std::basic_string<char> device_id_string) {
+        std::basic_string<char> device_id_string) {
         std::vector<std::string> splits;
         std::istringstream stream(device_id_string);
         std::string segment;
@@ -185,39 +197,32 @@ class StringArrayDeviceID : public IDeviceID {
 class PlainDeviceID : public IDeviceID {
    public:
     explicit PlainDeviceID(const std::string& deviceID)
-        : deviceID_(deviceID), tableName_(), segments_() {}
+        : device_id_(deviceID), tableName_(), segments_() {}
 
-    bool operator==(const PlainDeviceID& other) {
-        return deviceID_ == other.deviceID_;
+    bool operator==(const IDeviceID& other) override {
+        return device_id_ == other.get_device_name();
     }
 
-    bool operator!=(const PlainDeviceID& other) {
-        return !(*this == other);
+    bool operator!=(const IDeviceID& other) override {
+        return device_id_ == other.get_device_name();
     }
 
-    int serialize(std::ostream& output_stream) override {
-        auto length = static_cast<uint32_t>(deviceID_.size());
-        output_stream.write(reinterpret_cast<const char*>(&length),
-                            sizeof(length));
-        output_stream.write(deviceID_.data(), deviceID_.size());
-        return sizeof(length) + deviceID_.size();
+
+    int serialize(common::ByteStream& write_stream) override {
+        int ret = common::E_OK;
+        if (RET_FAIL(common::SerializationUtil::write_var_int(device_id_.size(),
+                                                              write_stream))) {
+            return ret;
+        } else if (RET_FAIL(write_stream.write_buf(device_id_.c_str(),
+                                                   device_id_.size()))) {
+            return ret;
+        }
+        return ret;
     }
 
-    int serialize(std::vector<uint8_t>& byte_buffer) override {
-        std::ostringstream stream;
-        int size = serialize(stream);
-        std::string str = stream.str();
-        byte_buffer.assign(str.begin(), str.end());
-        return size;
-    }
+    std::string get_device_name() const override { return device_id_; };
 
-    std::vector<uint8_t> get_bytes() override {
-        std::vector<uint8_t> buffer;
-        serialize(buffer);
-        return buffer;
-    }
-
-    bool is_empty() override { return deviceID_.empty(); }
+    bool is_empty() override { return device_id_.empty(); }
 
     bool is_table_model() override { return false; }
 
@@ -226,11 +231,11 @@ class PlainDeviceID : public IDeviceID {
             return tableName_;
         }
 
-        size_t lastSeparatorPos = deviceID_.find_last_of('.');
+        size_t lastSeparatorPos = device_id_.find_last_of('.');
         if (lastSeparatorPos == std::string::npos) {
-            tableName_ = deviceID_;  // Use entire deviceID as tableName
+            tableName_ = device_id_;  // Use entire deviceID as tableName
         } else {
-            tableName_ = deviceID_.substr(0, lastSeparatorPos);
+            tableName_ = device_id_.substr(0, lastSeparatorPos);
         }
         return tableName_;
     }
@@ -250,19 +255,17 @@ class PlainDeviceID : public IDeviceID {
         return segments_[i];
     }
 
-    int compare(IDeviceID& other) override {
-        const auto *otherPlain =
-            dynamic_cast<const PlainDeviceID*>(&other);
-        return deviceID_.compare(otherPlain->deviceID_);
+    bool operator<(const IDeviceID& other) override {
+        return device_id_ < other.get_device_name();
     }
 
    private:
-    std::string deviceID_;
+    std::string device_id_;
     mutable std::string tableName_;
     mutable std::vector<std::string> segments_;
 
     void split_segments() {
-        std::istringstream stream(deviceID_);
+        std::istringstream stream(device_id_);
         std::string segment;
         while (std::getline(stream, segment, '.')) {
             segments_.push_back(segment);
@@ -273,8 +276,8 @@ class PlainDeviceID : public IDeviceID {
 class PlainDeviceIDFactory {
    public:
     static std::shared_ptr<IDeviceID> create(
-        const std::string& device_id_string) {
-        return std::make_unique<PlainDeviceID>(device_id_string);
+        const std::string& deviceIdString) {
+        return std::make_unique<PlainDeviceID>(deviceIdString);
     }
 
     static std::shared_ptr<IDeviceID> create(

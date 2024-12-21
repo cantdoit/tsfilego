@@ -81,8 +81,6 @@ class TsFileWriter {
         DeviceSchemasMap;
     typedef std::map<std::shared_ptr<IDeviceID>, MeasurementSchemaGroup *,
                      IDeviceIDComparator>::iterator DeviceSchemasMapIter;
-    typedef std::map<std::string, MeasurementSchemaGroup *>::iterator
-        DeviceSchemaIter;
 
     typedef std::unordered_map<std::string, std::shared_ptr<TableSchema>>
         TableSchemasMap;
@@ -90,12 +88,9 @@ class TsFileWriter {
                                std::shared_ptr<TableSchema>>::iterator
         TableSchemasMapIter;
 
-    std::map<std::string, MeasurementSchemaGroup *> *get_schema_group_map() {
-        return &schemas_;
-    }
+    DeviceSchemasMap *get_schema_group_map() { return &schemas_; }
     int64_t calculate_mem_size_for_all_group();
     int64_t calculate_table_model_mem_size_for_all_group();
-    int check_memory_size_and_may_flush_chunks(bool is_table_model = false);
     /*
      * Flush buffer to disk file, but do not writer file index part.
      * TsFileWriter allows user to flush many times.
@@ -139,13 +134,8 @@ class TsFileWriter {
                            int end_idx);
 
     template <typename MeasurementNamesGetter>
-    int do_check_schema(
-        const std::string &device_name,
-        MeasurementNamesGetter &measurement_names,
-        common::SimpleVector<storage::ChunkWriter *> &chunk_writers);
-    template <typename MeasurementNamesGetter>
     int do_check_schema_aligned(
-        const std::string &device_name,
+        std::shared_ptr<IDeviceID> device_id,
         MeasurementNamesGetter &measurement_names,
         storage::TimeChunkWriter *&time_chunk_writer,
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
@@ -170,10 +160,8 @@ class TsFileWriter {
    private:
     storage::WriteFile *write_file_;
     storage::TsFileIOWriter *io_writer_;
-    // device_name -> MeasurementSchemaGroup
-    std::map<std::string, MeasurementSchemaGroup *> schemas_;
     // device_id -> MeasurementSchemaGroup
-    DeviceSchemasMap device_schemas_;
+    DeviceSchemasMap schemas_;
     TableSchemasMap table_schema_map_;
     bool start_file_done_;
     // record count since last flush
@@ -209,6 +197,7 @@ class TsFileWriter {
 
     int value_write_column(ValueChunkWriter *value_chunk_writer,
                            const Tablet &tablet, int col_idx);
+    int check_memory_size_and_may_flush_chunks();
 };
 
 }  // end namespace storage
