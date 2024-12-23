@@ -38,9 +38,7 @@
 class IDeviceID {
    public:
     virtual ~IDeviceID() = default;
-    virtual int serialize(common::ByteStream& write_stream) {
-        return 0;
-    }
+    virtual int serialize(common::ByteStream& write_stream) { return 0; }
     virtual std::vector<uint8_t> get_bytes() { return {}; }
     virtual bool is_empty() { return false; }
     virtual bool is_table_model() { return false; }
@@ -76,6 +74,8 @@ class StringArrayDeviceID : public IDeviceID {
 
     explicit StringArrayDeviceID(const std::string& device_id_string)
         : segments_(split_device_id_string(device_id_string)) {}
+
+    ~StringArrayDeviceID() {}
 
     std::string get_device_name() const override {
         return std::accumulate(std::next(segments_.begin()), segments_.end(),
@@ -164,7 +164,8 @@ class StringArrayDeviceID : public IDeviceID {
     virtual bool operator==(const IDeviceID& other) override {
         auto other_segments = other.get_segments();
         return (segments_.size() == other_segments.size()) &&
-               std::equal(segments_.begin(), segments_.end(), other_segments.begin());
+               std::equal(segments_.begin(), segments_.end(),
+                          other_segments.begin());
     }
 
     virtual bool operator!=(const IDeviceID& other) override {
@@ -199,6 +200,8 @@ class PlainDeviceID : public IDeviceID {
     explicit PlainDeviceID(const std::string& deviceID)
         : device_id_(deviceID), tableName_(), segments_() {}
 
+    ~PlainDeviceID() {}
+
     bool operator==(const IDeviceID& other) override {
         return device_id_ == other.get_device_name();
     }
@@ -206,7 +209,6 @@ class PlainDeviceID : public IDeviceID {
     bool operator!=(const IDeviceID& other) override {
         return device_id_ == other.get_device_name();
     }
-
 
     int serialize(common::ByteStream& write_stream) override {
         int ret = common::E_OK;
@@ -261,8 +263,8 @@ class PlainDeviceID : public IDeviceID {
 
    private:
     std::string device_id_;
-    mutable std::string tableName_;
-    mutable std::vector<std::string> segments_;
+    std::string tableName_;
+    std::vector<std::string> segments_;
 
     void split_segments() {
         std::istringstream stream(device_id_);
