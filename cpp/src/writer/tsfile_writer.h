@@ -25,6 +25,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <climits>
 
 #include "common/container/simple_vector.h"
 #include "common/device_id.h"
