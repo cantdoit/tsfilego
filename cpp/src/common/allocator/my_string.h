@@ -40,6 +40,9 @@ struct String {
         len_ = 0;
         buf_ = nullptr;
     }
+    std::string to_string() {
+        return std::string(buf_, len_);
+    }
     FORCE_INLINE int dup_from(const std::string &str, common::PageArena &pa) {
         len_ = str.size();
         if (UNLIKELY(len_ == 0)) {

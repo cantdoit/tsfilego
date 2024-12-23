@@ -90,7 +90,7 @@ TEST(ChunkMetaTest, Init) {
     common::PageArena pa;
 
     int ret = meta.init(measurement_name, common::TSDataType::INT32, 100, &stat,
-                        ts_id, 1, pa);
+                        ts_id, 1, common::PLAIN, common::UNCOMPRESSED, pa);
     EXPECT_EQ(ret, common::E_OK);
     EXPECT_EQ(meta.data_type_, common::TSDataType::INT32);
     EXPECT_EQ(meta.offset_of_chunk_header_, 100);
@@ -178,7 +178,8 @@ class TSMIteratorTest : public ::testing::Test {
         stat_ = StatisticFactory::alloc_statistic(common::TSDataType::INT32);
         common::TsID ts_id;
         chunk_meta->init(measurement_name, common::TSDataType::INT32, 100,
-                         stat_, ts_id, 1, arena);
+                         stat_, ts_id, 1, common::PLAIN, common::UNCOMPRESSED,
+                         arena);
 
         chunk_group_meta->chunk_meta_list_.push_back(chunk_meta);
         chunk_group_meta_list_->push_back(chunk_group_meta);

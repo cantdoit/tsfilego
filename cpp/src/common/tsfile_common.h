@@ -20,8 +20,7 @@
 #ifndef COMMON_TSFILE_COMMON_H
 #define COMMON_TSFILE_COMMON_H
 
-#include <string.h>
-
+#include <cstring>
 #include <iostream>
 #include <map>
 #include <string>
@@ -32,11 +31,11 @@
 #include "common/allocator/page_arena.h"
 #include "common/config/config.h"
 #include "common/container/list.h"
+#include "device_id.h"
 #include "reader/bloom_filter.h"
 #include "statistic.h"
 #include "utils/db_utils.h"
 #include "utils/storage_utils.h"
-#include "device_id.h"
 
 namespace storage {
 
@@ -203,6 +202,8 @@ struct ChunkMeta {
     Statistic *statistic_;
     common::TsID ts_id_;
     char mask_;
+    common::TSEncoding encoding_;
+    common::CompressionType compression_type_;
 
     ChunkMeta()
         : measurement_name_(),
@@ -215,7 +216,8 @@ struct ChunkMeta {
     int init(const common::String &measurement_name,
              common::TSDataType data_type, int64_t offset_of_chunk_header,
              Statistic *stat, const common::TsID &ts_id, char mask,
-             common::PageArena &pa) {
+             common::TSEncoding encoding,
+             common::CompressionType compression_type, common::PageArena &pa) {
         // TODO check parameter valid
         measurement_name_.dup_from(measurement_name, pa);
         data_type_ = data_type;
@@ -223,6 +225,8 @@ struct ChunkMeta {
         statistic_ = stat;
         ts_id_ = ts_id;
         mask_ = mask;
+        encoding_ = encoding;
+        compression_type_ = compression_type;
         return common::E_OK;
     }
     FORCE_INLINE void clone_statistic_from(Statistic *stat) {
@@ -297,7 +301,8 @@ struct ChunkGroupMeta {
     explicit ChunkGroupMeta(common::PageArena *pa_ptr)
         : device_name_(), chunk_meta_list_(pa_ptr) {}
 
-    FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id, common::PageArena &pa) {
+    FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id,
+                          common::PageArena &pa) {
         device_name_ = std::move(device_id);
         return device_name_str_.dup_from(device_name_->get_device_name(), pa);
     }
@@ -840,9 +845,13 @@ class TableSchema;
 
 struct TsFileMeta {
     MetaIndexNode *index_node_;
-    std::unordered_map<std::string, MetaIndexNode*> table_index_roots_;
+    typedef std::map<common::String, MetaIndexNode *, common::StringLessThan>
+        DeviceNodeMap;
+    DeviceNodeMap table_metadata_index_node_map_;
     std::unordered_map<std::string, std::string> tsfile_properties_;
-    std::unordered_map<std::string, TableSchema*> table_schemas_;
+    typedef std::unordered_map<std::string, std::shared_ptr<TableSchema>>
+        TableSchemasMap;
+    TableSchemasMap table_schemas_;
     int64_t meta_offset_;
     BloomFilter *bloom_filter_;
     common::PageArena *page_arena_;
@@ -875,6 +884,8 @@ struct TsFileMeta {
         }
         return ret;
     }
+
+    int serialize_to_table_model(common::ByteStream &out);
 
     int deserialize_from(common::ByteStream &in) {
         int ret = common::E_OK;

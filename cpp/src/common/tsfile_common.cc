@@ -23,6 +23,7 @@
 #include <map>
 
 #include "common/logger/elog.h"
+#include "common/schema.h"
 
 using namespace common;
 namespace storage {
@@ -170,6 +171,58 @@ int TSMIterator::get_next(String &ret_device_name, String &ret_measurement_name,
         ASSERT(false);
     }
     tsm_measurement_iter_++;
+    return ret;
+}
+
+int TsFileMeta::serialize_to_table_model(common::ByteStream &out) {
+    int ret = common::E_OK;
+
+    if (RET_SUCC(common::SerializationUtil::write_var_uint(
+            table_metadata_index_node_map_.size(), out))) {
+        for (auto &idx_nodes_iter : table_metadata_index_node_map_) {
+            if (RET_FAIL(common::SerializationUtil::write_mystring(
+                    idx_nodes_iter.first, out))) {
+            } else if (RET_SUCC(idx_nodes_iter.second->serialize_to(out))) {
+            } else {
+                return ret;
+            }
+        }
+    }
+
+    if (RET_SUCC(common::SerializationUtil::write_var_uint(
+            table_schemas_.size(), out))) {
+        for (auto &table_schema_iter : table_schemas_) {
+            if (RET_FAIL(common::SerializationUtil::write_str(
+                    table_schema_iter.first, out))) {
+            } else if (RET_SUCC(common::SerializationUtil::write_str(
+                           table_schema_iter.first, out))) {
+            } else {
+                return ret;
+            }
+        }
+    }
+
+    if (RET_FAIL(common::SerializationUtil::write_i64(meta_offset_, out))) {
+        return ret;
+    }
+    if (bloom_filter_ != nullptr) {
+        if (RET_FAIL(bloom_filter_->serialize_to(out))) {
+            return ret;
+        }
+    }
+
+    if (RET_SUCC(common::SerializationUtil::write_var_int(
+            tsfile_properties_.size(), out))) {
+        for (auto tsfile_property : tsfile_properties_) {
+            if (RET_FAIL(common::SerializationUtil::write_str(
+                    tsfile_property.first, out))) {
+            } else if (RET_SUCC(common::SerializationUtil::write_str(
+                           tsfile_property.second, out))) {
+            } else {
+                return ret;
+            }
+        }
+    }
     return ret;
 }
 

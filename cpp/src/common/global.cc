@@ -66,6 +66,8 @@ extern TSEncoding get_value_encoder(TSDataType data_type) {
             break;
         case INVALID_DATATYPE:
             break;
+        default:
+            break;
     }
     return TSEncoding::PLAIN;
 }

@@ -87,8 +87,8 @@ int TsFileIOWriter::start_file() {
     return ret;
 }
 
-int TsFileIOWriter::start_flush_chunk_group(std::shared_ptr<IDeviceID> device_name,
-                                            bool is_aligned) {
+int TsFileIOWriter::start_flush_chunk_group(
+    std::shared_ptr<IDeviceID> device_name, bool is_aligned) {
     int ret = write_byte(CHUNK_GROUP_HEADER_MARKER);
     if (ret != common::E_OK) {
         return ret;
@@ -153,8 +153,8 @@ int TsFileIOWriter::start_flush_chunk(common::ByteStream &chunk_data,
         String mname((char *)measurement_name.c_str(),
                      strlen(measurement_name.c_str()));
         ret = cur_chunk_meta_->init(mname, data_type, cur_file_position(),
-                                    chunk_statistic_copy, ts_id, mask,
-                                    meta_allocator_);
+                                    chunk_statistic_copy, ts_id, mask, encoding,
+                                    compression, meta_allocator_);
     }
 
     // Step 2. serialize chunk header to write_stream_
@@ -217,6 +217,10 @@ int TsFileIOWriter::end_flush_chunk(Statistic *chunk_statistic) {
 }
 
 int TsFileIOWriter::end_flush_chunk_group(bool is_aligned) {
+    if (generate_table_schema_) {
+        schema_->update_table_schema(cur_chunk_group_meta_);
+    }
+
     if (use_prev_alloc_cgm_) {
         cur_chunk_group_meta_ = nullptr;
         return common::E_OK;
@@ -263,8 +267,8 @@ int TsFileIOWriter::write_log_index_range() {
 
 #if DEBUG_SE
 void debug_print_chunk_group_meta(ChunkGroupMeta *cgm) {
-    std::cout << "ChunkGroupMeta = {insert_target_name_=" << cgm->insert_target_name_
-              << ", chunk_meta_list_={";
+    std::cout << "ChunkGroupMeta = {insert_target_name_="
+              << cgm->insert_target_name_ << ", chunk_meta_list_={";
     SimpleList<ChunkMeta *>::Iterator cm_it = cgm->chunk_meta_list_.begin();
     for (; cm_it != cgm->chunk_meta_list_.end(); cm_it++) {
         ChunkMeta *cm = cm_it.get();
@@ -407,30 +411,67 @@ int TsFileIOWriter::write_file_index() {
     }
 
     if (IS_SUCC(ret)) {
-        MetaIndexNode *device_index_root_node = nullptr;
-        if (RET_FAIL(build_device_level(device_map, device_index_root_node,
-                                        writing_mm))) {
+        if (!generate_table_schema_) {
+            MetaIndexNode *device_index_root_node = nullptr;
+            if (RET_FAIL(build_device_level(device_map, device_index_root_node,
+                                            writing_mm))) {
+            } else {
+                TsFileMeta tsfile_meta;
+                tsfile_meta.index_node_ = device_index_root_node;
+                tsfile_meta.meta_offset_ = meta_offset;
+                tsfile_meta.bloom_filter_ = &filter;
+                int64_t tsfile_meta_offset = cur_file_position();
+                uint32_t size = 0;  // cppcheck-suppress unreadVariable
+                OFFSET_DEBUG("before tsfile_meta written");
+                if (RET_FAIL(tsfile_meta.serialize_to(write_stream_))) {
+                } else if (RET_FAIL(filter.serialize_to(write_stream_))) {
+                } else {
+                    int64_t tsfile_meta_end_offset = cur_file_position();
+                    size =
+                        (uint32_t)(tsfile_meta_end_offset - tsfile_meta_offset);
+                    ret = SerializationUtil::write_ui32(size, write_stream_);
+                }
+#if DEBUG_SE
+                std::cout << "writer tsfile_meta: " << tsfile_meta
+                          << ", tsfile_meta_offset=" << tsfile_meta_offset
+                          << ", size=" << size << std::endl;
+#endif
+                tsfile_meta.index_node_ =
+                    nullptr;  // memory management is delegated to writing_mm
+                tsfile_meta.bloom_filter_ = nullptr;
+            }
         } else {
             TsFileMeta tsfile_meta;
-            tsfile_meta.index_node_ = device_index_root_node;
             tsfile_meta.meta_offset_ = meta_offset;
-            int64_t tsfile_meta_offset = cur_file_position();
-            uint32_t size = 0;  // cppcheck-suppress unreadVariable
-            OFFSET_DEBUG("before tsfile_meta written");
-            if (RET_FAIL(tsfile_meta.serialize_to(write_stream_))) {
-            } else if (RET_FAIL(filter.serialize_to(write_stream_))) {
-            } else {
-                int64_t tsfile_meta_end_offset = cur_file_position();
-                size = (uint32_t)(tsfile_meta_end_offset - tsfile_meta_offset);
-                ret = SerializationUtil::write_ui32(size, write_stream_);
+            tsfile_meta.bloom_filter_ = &filter;
+            for (auto device_map_iter = device_map.begin();
+                 device_map_iter != device_map.end(); device_map_iter++) {
+                common::String insert_device_name;
+                insert_device_name.dup_from(device_map_iter->first,
+                                            meta_allocator_);
+                tsfile_meta.table_metadata_index_node_map_.insert(
+                    std::make_pair(insert_device_name,
+                                   device_map_iter->second));
             }
-#if DEBUG_SE
-            std::cout << "writer tsfile_meta: " << tsfile_meta
-                      << ", tsfile_meta_offset=" << tsfile_meta_offset
-                      << ", size=" << size << std::endl;
-#endif
-            tsfile_meta.index_node_ =
-                nullptr;  // memory management is delegated to writing_mm
+            tsfile_meta.table_schemas_ = schema_->table_schema_map_;
+            tsfile_meta.tsfile_properties_.insert(
+                std::make_pair("encryptLevel", encrypt_level_));
+            tsfile_meta.tsfile_properties_.insert(
+                std::make_pair("encryptType", encrypt_type_));
+            tsfile_meta.tsfile_properties_.insert(
+                std::make_pair("encryptKey", encrypt_key_));
+
+            auto start_size = write_stream_.total_size();
+            if (!RET_FAIL(
+                    tsfile_meta.serialize_to_table_model(write_stream_))) {
+                auto total_write_size = write_stream_.total_size() - start_size;
+                if (RET_FAIL(common::SerializationUtil::write_i32(
+                        total_write_size, write_stream_))) {
+                    return ret;
+                }
+            }
+            tsfile_meta.bloom_filter_ = nullptr;
+            tsfile_meta.index_node_ = nullptr;
         }
     }
     return ret;

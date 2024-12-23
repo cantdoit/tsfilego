@@ -99,7 +99,7 @@ class TsFileWriterTableTest : public ::testing::Test {
     }
 
     static Tablet gen_tablet(const std::shared_ptr<TableSchema>& table_schema,
-                      int offset, int device_num) {
+                             int offset, int device_num) {
         Tablet tablet(table_schema->get_table_name(),
                       table_schema->get_measurement_names(),
                       table_schema->get_data_types(),

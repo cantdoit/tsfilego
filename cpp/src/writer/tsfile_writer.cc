@@ -115,7 +115,7 @@ void TsFileWriter::set_generate_table_schema(bool generate_table_schema) {
     io_writer_->set_generate_table_schema(generate_table_schema);
 }
 
-void TsFileWriter::register_table(std::shared_ptr<TableSchema> table_schema) {
+void TsFileWriter::register_table(const std::shared_ptr<TableSchema>& table_schema) {
     if (!table_schema) return;
     table_schema_map_.emplace(table_schema->get_table_name(), table_schema);
 }
@@ -290,8 +290,7 @@ int TsFileWriter::do_check_schema(std::shared_ptr<IDeviceID> device_id,
     uint32_t measurement_count = measurement_names.get_count();
     // chunk_writers.reserve(measurement_count);
     for (uint32_t i = 0; i < measurement_count; i++) {
-        auto xx = measurement_names.next();
-        MeasurementSchemaMapIter ms_iter = msm.find(xx);
+        auto ms_iter = msm.find(measurement_names.next());
         if (UNLIKELY(ms_iter == msm.end())) {
             chunk_writers.push_back(NULL);
         } else {
@@ -577,7 +576,7 @@ int TsFileWriter::write_table(const Tablet &tablet) {
         auto device_id = device_id_end_index_pair.first;
         if (device_id_end_index_pair.second == 0) continue;
         if (schemas_.find(device_id) == schemas_.end()) {
-            MeasurementSchemaGroup *ms_group = new MeasurementSchemaGroup;
+            auto *ms_group = new MeasurementSchemaGroup;
             schemas_.insert(
                 std::make_pair(device_id_end_index_pair.first, ms_group));
         }

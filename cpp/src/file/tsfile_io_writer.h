@@ -25,9 +25,11 @@
 
 #include "common/allocator/page_arena.h"
 #include "common/container/list.h"
+#include "common/schema.h"
 #include "common/tsfile_common.h"
 #include "reader/bloom_filter.h"
 #include "write_file.h"
+#include "common/global.h"
 
 namespace storage {
 
@@ -69,7 +71,18 @@ class TsFileIOWriter {
           file_(nullptr),
           ts_time_index_vector_(),
           write_file_created_(false),
-          generate_table_schema_(false) {}
+          generate_table_schema_(false),
+          schema_(new Schema) {
+        if (common::g_config_value_.encrypt_flag_) {
+            // TODO: support encrypt
+            encrypt_level_ = "2";
+            encrypt_type_ = "";
+            encrypt_type_ = "";
+        } else {
+            encrypt_level_ = "0";
+            encrypt_type_ = "org.apache.tsfile.encrypt.UNENCRYPTED";
+        }
+    }
     ~TsFileIOWriter() { destroy(); }
 
 #ifndef LIBTSFILE_SDK
@@ -191,6 +204,10 @@ class TsFileIOWriter {
     std::vector<TimeseriesTimeIndexEntry> ts_time_index_vector_;
     bool write_file_created_;
     bool generate_table_schema_;
+    std::unique_ptr<Schema> schema_;
+    std::string encrypt_level_;
+    std::string encrypt_type_;
+    std::string encrypt_key_;
 };
 
 }  // end namespace storage

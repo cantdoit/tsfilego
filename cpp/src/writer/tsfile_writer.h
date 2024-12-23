@@ -69,7 +69,7 @@ class TsFileWriter {
     int register_aligned_timeseries(
         const std::string &device_path,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    void register_table(std::shared_ptr<TableSchema> table_schema);
+    void register_table(const std::shared_ptr<TableSchema>& table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
