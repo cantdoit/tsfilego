@@ -215,7 +215,7 @@ void Tablet::set_column_categories(const std::vector<ColumnCategory>& column_cat
     }
 }
 
-std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) const {
+std::shared_ptr<IDeviceID> Tablet::get_device_id(int i) const {
     std::vector<std::string> id_array;
     id_array.push_back(insert_target_name_);
     for (auto id_column_idx : id_column_indexes_) {
@@ -231,7 +231,7 @@ std::unique_ptr<IDeviceID> Tablet::get_device_id(int i) const {
         }
     }
     IDeviceID* device_id = new StringArrayDeviceID(id_array);
-    return std::unique_ptr<IDeviceID>(device_id);
+    return std::shared_ptr<IDeviceID>(device_id);
 }
 
 }  // end namespace storage

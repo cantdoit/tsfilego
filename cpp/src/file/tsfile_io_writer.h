@@ -204,7 +204,7 @@ class TsFileIOWriter {
     std::vector<TimeseriesTimeIndexEntry> ts_time_index_vector_;
     bool write_file_created_;
     bool generate_table_schema_;
-    std::unique_ptr<Schema> schema_;
+    std::shared_ptr<Schema> schema_;
     std::string encrypt_level_;
     std::string encrypt_type_;
     std::string encrypt_key_;

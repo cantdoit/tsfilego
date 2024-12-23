@@ -277,12 +277,12 @@ class PlainDeviceIDFactory {
    public:
     static std::shared_ptr<IDeviceID> create(
         const std::string& deviceIdString) {
-        return std::make_unique<PlainDeviceID>(deviceIdString);
+        return std::make_shared<PlainDeviceID>(deviceIdString);
     }
 
     static std::shared_ptr<IDeviceID> create(
         const std::vector<std::string>& segments) {
-        return std::make_unique<PlainDeviceID>(join_segments(segments));
+        return std::make_shared<PlainDeviceID>(join_segments(segments));
     }
 
    private:
