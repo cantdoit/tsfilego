@@ -73,7 +73,7 @@ void Tablet::destroy() {
     if (bitmaps_ != NULL) {
         delete[] bitmaps_;
     }
-    if (schema_vec_ != nullptr) {
+    if (schema_vec_ != nullptr && owned_schemas_) {
         delete schema_vec_;
         schema_vec_ = nullptr;
     }

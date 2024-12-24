@@ -47,7 +47,8 @@ class Tablet {
           schema_vec_(schema_vec),
           timestamps_(nullptr),
           value_matrix_(nullptr),
-          bitmaps_(nullptr) {
+          bitmaps_(nullptr),
+          owned_schemas_(false) {
         ASSERT(device_name.size() >= 1);
         ASSERT(schema_vec != nullptr);
         ASSERT(max_rows > 0 && max_rows < (1 << 30));
@@ -67,8 +68,10 @@ class Tablet {
           insert_target_name_(insert_target_name),
           timestamps_(nullptr),
           value_matrix_(nullptr),
-          bitmaps_(nullptr) {
+          bitmaps_(nullptr),
+          owned_schemas_(false) {
         schema_vec_ = new std::vector<MeasurementSchema>();
+        owned_schemas_ = true;
         for (size_t i = 0; i < column_names.size(); i++) {
             schema_vec_->emplace_back(
                 MeasurementSchema(column_names[i], data_types[i], common::PLAIN,
@@ -131,6 +134,7 @@ class Tablet {
     common::BitMap *bitmaps_;
     std::vector<ColumnCategory> column_categories_;
     std::vector<int> id_column_indexes_;
+    bool owned_schemas_;
 };
 
 }  // end namespace storage
