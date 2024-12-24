@@ -32,16 +32,18 @@ import org.apache.tsfile.write.record.Tablet.ColumnCategory;
 import org.apache.tsfile.write.schema.IMeasurementSchema;
 import org.apache.tsfile.write.schema.MeasurementSchema;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import static org.apache.tsfile.write.record.Tablet.ColumnCategory.ID;
-import static org.apache.tsfile.write.record.Tablet.ColumnCategory.MEASUREMENT;
+import static org.apache.tsfile.write.record.Tablet.ColumnCategory.FIELD;
+import static org.apache.tsfile.write.record.Tablet.ColumnCategory.TAG;
 import static org.junit.Assert.assertEquals;
 
 public class TableSchemaTest {
@@ -76,8 +78,8 @@ public class TableSchemaTest {
   public void testTableSchema() throws IOException {
     final List<IMeasurementSchema> measurementSchemas = prepareIdSchemas(idSchemaCnt);
     measurementSchemas.addAll(prepareMeasurementSchemas(measurementSchemaCnt));
-    final List<ColumnCategory> columnCategories = ColumnCategory.nCopy(ID, idSchemaCnt);
-    columnCategories.addAll(ColumnCategory.nCopy(MEASUREMENT, measurementSchemaCnt));
+    final List<ColumnCategory> columnCategories = ColumnCategory.nCopy(TAG, idSchemaCnt);
+    columnCategories.addAll(ColumnCategory.nCopy(FIELD, measurementSchemaCnt));
     TableSchema tableSchema = new TableSchema(tableName, measurementSchemas, columnCategories);
 
     try (ByteArrayOutputStream stream = new ByteArrayOutputStream()) {
@@ -120,5 +122,19 @@ public class TableSchemaTest {
 
       assertEquals(measurementSchemaCnt + 2, deserialized.getColumnSchemas().size());
     }
+  }
+
+  @Test
+  public void testConstructTableSchemaWithDuplicateColumnName() {
+    try {
+      new TableSchema(
+          "t1",
+          Arrays.asList("id1", "ID1", "id2", "s1"),
+          Arrays.asList(TSDataType.STRING, TSDataType.STRING, TSDataType.STRING, TSDataType.STRING),
+          Arrays.asList(TAG, TAG, FIELD, FIELD));
+    } catch (IllegalArgumentException e) {
+      return;
+    }
+    Assert.fail();
   }
 }

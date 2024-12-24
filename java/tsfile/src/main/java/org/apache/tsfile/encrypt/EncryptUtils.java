@@ -21,7 +21,6 @@ package org.apache.tsfile.encrypt;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.common.conf.TSFileDescriptor;
 import org.apache.tsfile.exception.encrypt.EncryptException;
-import org.apache.tsfile.exception.encrypt.EncryptKeyLengthNotMatchException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,11 +59,9 @@ public class EncryptUtils {
 
   public static String getEncryptKeyFromPath(String path) {
     if (path == null) {
-      logger.error("encrypt key path is null, use the default key");
       return defaultKey;
     }
     if (path.isEmpty()) {
-      logger.error("encrypt key path is empty, use the default key");
       return defaultKey;
     }
     try (BufferedReader br = new BufferedReader(new FileReader(path))) {
@@ -78,9 +75,6 @@ public class EncryptUtils {
         } else {
           sb.append("\n").append(line);
         }
-      }
-      if (sb.toString().length() != 16) {
-        throw new EncryptKeyLengthNotMatchException(16, sb.toString().length());
       }
       return sb.toString();
     } catch (IOException e) {

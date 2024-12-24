@@ -53,24 +53,18 @@ class TsFileWriter {
     void destroy();
 
     int open(const std::string &file_path, int flags, mode_t mode);
+    int open(const std::string &file_path);
     int init(storage::WriteFile *write_file);
 
     void set_generate_table_schema(bool generate_table_schema);
-
-    int register_timeseries(const std::string &device_path,
-                            const std::string &measurement_name,
-                            common::TSDataType data_type,
-                            common::TSEncoding encoding,
-                            common::CompressionType compression_type);
-    int register_aligned_timeseries(const std::string &device_path,
-                                    const std::string &measurement_name,
-                                    common::TSDataType data_type,
-                                    common::TSEncoding encoding,
-                                    common::CompressionType compression_type);
+    int register_timeseries(const std::string &device_id,
+                            const MeasurementSchema &measurement_schema);
     int register_aligned_timeseries(
-        const std::string &device_path,
-        const std::vector<MeasurementSchema *> &measurement_schema_vec);
-    void register_table(const std::shared_ptr<TableSchema>& table_schema);
+        const std::string &device_id,
+        const MeasurementSchema &measurement_schema);
+    int register_aligned_timeseries(
+        const std::string &device_id,
+        const std::vector<MeasurementSchema *> &measurement_schemas);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
@@ -91,7 +85,7 @@ class TsFileWriter {
 
     DeviceSchemasMap *get_schema_group_map() { return &schemas_; }
     int64_t calculate_mem_size_for_all_group();
-    int64_t calculate_table_model_mem_size_for_all_group();
+    int check_memory_size_and_may_flush_chunks();
     /*
      * Flush buffer to disk file, but do not writer file index part.
      * TsFileWriter allows user to flush many times.
@@ -135,20 +129,19 @@ class TsFileWriter {
                            int end_idx);
 
     template <typename MeasurementNamesGetter>
+    int do_check_schema(
+        std::shared_ptr<IDeviceID> device_id,
+        MeasurementNamesGetter &measurement_names,
+        common::SimpleVector<storage::ChunkWriter *> &chunk_writers);
+    template <typename MeasurementNamesGetter>
     int do_check_schema_aligned(
         std::shared_ptr<IDeviceID> device_id,
         MeasurementNamesGetter &measurement_names,
         storage::TimeChunkWriter *&time_chunk_writer,
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
-
-    template <typename MeasurementNamesGetter>
-    int do_check_schema(std::shared_ptr<IDeviceID> device_id,
-                        MeasurementNamesGetter &measurement_names,
-                        common::SimpleVector<ChunkWriter *> &chunk_writers);
-
     // std::vector<storage::ChunkWriter*> &chunk_writers);
     int write_column(storage::ChunkWriter *chunk_writer, const Tablet &tablet,
-                     int col_idx, int start_idx = 0, int end_idx = INT_MAX);
+                     int col_idx);
     int register_timeseries(const std::string &device_path,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);
@@ -198,7 +191,6 @@ class TsFileWriter {
 
     int value_write_column(ValueChunkWriter *value_chunk_writer,
                            const Tablet &tablet, int col_idx);
-    int check_memory_size_and_may_flush_chunks();
 };
 
 }  // end namespace storage
