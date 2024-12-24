@@ -294,12 +294,13 @@ struct ChunkMeta {
 };
 
 struct ChunkGroupMeta {
-    std::weak_ptr<IDeviceID> device_name_;
+    std::shared_ptr<IDeviceID> device_name_;
     common::String device_name_str_;
     common::SimpleList<ChunkMeta *> chunk_meta_list_;
 
     explicit ChunkGroupMeta(common::PageArena *pa_ptr)
-        : device_name_(), chunk_meta_list_(pa_ptr) {}
+        : device_name_(std::make_shared<IDeviceID>()),
+          chunk_meta_list_(pa_ptr) {}
 
     FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id,
                           common::PageArena &pa) {

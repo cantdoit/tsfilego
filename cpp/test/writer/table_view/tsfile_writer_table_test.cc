@@ -112,18 +112,18 @@ class TsFileWriterTableTest : public ::testing::Test {
         for (int i = 0; i < device_num; i++) {
             for (int l = 0; l < num_timestamp_per_device; l++) {
                 int row_index = i * num_timestamp_per_device + l;
-                tablet.set_timestamp(row_index, offset + l);
+                tablet.add_timestamp(row_index, offset + l);
                 auto column_schemas = table_schema->get_measurement_schemas();
                 for (const auto& column_schema : column_schemas) {
                     switch (column_schema->data_type_) {
                         case TSDataType::INT64:
-                            tablet.set_value(row_index,
+                            tablet.add_value(row_index,
                                              column_schema->measurement_name_,
                                              static_cast<int64_t>(i));
                             break;
                         case TSDataType::TEXT:
                             // TODO: support TEXT
-                            tablet.set_value(row_index,
+                            tablet.add_value(row_index,
                                              column_schema->measurement_name_,
                                              static_cast<int64_t>(i));
                             break;

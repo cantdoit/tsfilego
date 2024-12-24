@@ -76,17 +76,12 @@ void TsFileIOWriter::destroy() {
         delete file_;
         file_ = nullptr;
     }
+
     if (cur_chunk_group_meta_ &&
-        !cur_chunk_group_meta_->device_name_.expired()) {
+        !cur_chunk_group_meta_->device_name_) {
         cur_chunk_group_meta_->device_name_.reset();
     }
 
-    for (auto iter = chunk_group_meta_list_.begin();
-         iter != chunk_group_meta_list_.end(); iter++) {
-        if (iter.get() && !iter.get()->device_name_.expired()) {
-            iter.get()->device_name_.reset();
-        }
-    }
 }
 
 int TsFileIOWriter::start_file() {
@@ -114,7 +109,7 @@ int TsFileIOWriter::start_flush_chunk_group(
     for (auto iter = chunk_group_meta_list_.begin();
          iter != chunk_group_meta_list_.end(); iter++) {
         auto cur_device_name = cur_device_name_;
-        if (*iter.get()->device_name_.lock() == *cur_device_name) {
+        if (*iter.get()->device_name_ == *cur_device_name) {
             use_prev_alloc_cgm_ = true;
             cur_chunk_group_meta_ = iter.get();
             break;

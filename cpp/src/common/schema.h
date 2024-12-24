@@ -246,7 +246,7 @@ struct Schema {
     TableSchemasMap table_schema_map_;
 
     void update_table_schema(ChunkGroupMeta *chunk_group_meta) {
-        std::shared_ptr<IDeviceID> device_id = chunk_group_meta->device_name_.lock();
+        std::shared_ptr<IDeviceID> device_id = chunk_group_meta->device_name_;
         auto table_name = device_id->get_table_name();
         if (table_schema_map_.find(table_name) == table_schema_map_.end()) {
             table_schema_map_[table_name] = std::make_shared<TableSchema>();

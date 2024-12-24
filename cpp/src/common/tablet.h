@@ -122,28 +122,12 @@ class Tablet {
 
     int add_timestamp(uint32_t row_index, int64_t timestamp);
 
-    int set_value(int row_index, uint32_t schema_index, bool val);
-    int set_value(int row_index, uint32_t schema_index, int32_t val);
-    int set_value(int row_index, uint32_t schema_index, int64_t val);
-    int set_value(int row_index, uint32_t schema_index, float val);
-    int set_value(int row_index, uint32_t schema_index, double val);
     // int set_value(int row_index, int schema_index, double val);
     void *get_value(int row_index, uint32_t schema_index,
                     common::TSDataType &data_type) const;
     template <typename T>
     int add_value(uint32_t row_index, uint32_t schema_index, T val);
 
-    int set_value(int row_index, const std::string &measurement_name, bool val);
-    int set_value(int row_index, const std::string &measurement_name,
-                  int32_t val);
-    int set_value(int row_index, const std::string &measurement_name,
-                  int64_t val);
-    int set_value(int row_index, const std::string &measurement_name,
-                  float val);
-    int set_value(int row_index, const std::string &measurement_name,
-                  double val);
-    // int set_value(int row_index, const std::string &measurement_name, double
-    // val);
     void set_column_categories(
         const std::vector<ColumnCategory> &column_categories);
     std::shared_ptr<IDeviceID> get_device_id(int i) const;

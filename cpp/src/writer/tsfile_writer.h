@@ -65,6 +65,7 @@ class TsFileWriter {
     int register_aligned_timeseries(
         const std::string &device_id,
         const std::vector<MeasurementSchema *> &measurement_schemas);
+    void register_table(const std::shared_ptr<TableSchema>& table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
@@ -140,8 +141,8 @@ class TsFileWriter {
         storage::TimeChunkWriter *&time_chunk_writer,
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
     // std::vector<storage::ChunkWriter*> &chunk_writers);
-    int write_column(storage::ChunkWriter *chunk_writer, const Tablet &tablet,
-                     int col_idx);
+    int write_column(storage::ChunkWriter *chunk_writer, const Tablet &,
+                     int col_idx, int start_idx = 0, int end_idx = INT_MAX);
     int register_timeseries(const std::string &device_path,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);
