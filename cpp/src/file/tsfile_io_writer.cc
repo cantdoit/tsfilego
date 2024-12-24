@@ -76,6 +76,11 @@ void TsFileIOWriter::destroy() {
         delete file_;
         file_ = nullptr;
     }
+    cur_chunk_group_meta_->device_name_.reset();
+    for (auto iter = chunk_group_meta_list_.begin();
+         iter != chunk_group_meta_list_.end(); iter++) {
+        iter.get()->device_name_.reset();
+    }
 }
 
 int TsFileIOWriter::start_file() {
