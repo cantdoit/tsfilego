@@ -72,7 +72,7 @@ class TsFileIOWriter {
           ts_time_index_vector_(),
           write_file_created_(false),
           generate_table_schema_(false),
-          schema_(new Schema) {
+          schema_(std::make_shared<Schema>()) {
         if (common::g_config_value_.encrypt_flag_) {
             // TODO: support encrypt
             encrypt_level_ = "2";

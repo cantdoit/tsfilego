@@ -294,7 +294,7 @@ struct ChunkMeta {
 };
 
 struct ChunkGroupMeta {
-    std::shared_ptr<IDeviceID> device_name_;
+    std::weak_ptr<IDeviceID> device_name_;
     common::String device_name_str_;
     common::SimpleList<ChunkMeta *> chunk_meta_list_;
 
@@ -303,8 +303,8 @@ struct ChunkGroupMeta {
 
     FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id,
                           common::PageArena &pa) {
-        device_name_ = std::move(device_id);
-        return device_name_str_.dup_from(device_name_->get_device_name(), pa);
+        device_name_ = device_id;
+        return device_name_str_.dup_from(device_id->get_device_name(), pa);
     }
     FORCE_INLINE int push(ChunkMeta *cm) {
         return chunk_meta_list_.push_back(cm);

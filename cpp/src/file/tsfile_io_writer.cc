@@ -103,7 +103,7 @@ int TsFileIOWriter::start_flush_chunk_group(
     for (auto iter = chunk_group_meta_list_.begin();
          iter != chunk_group_meta_list_.end(); iter++) {
         auto cur_device_name = cur_device_name_;
-        if (*iter.get()->device_name_ == *cur_device_name) {
+        if (*iter.get()->device_name_.lock() == *cur_device_name) {
             use_prev_alloc_cgm_ = true;
             cur_chunk_group_meta_ = iter.get();
             break;

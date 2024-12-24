@@ -39,21 +39,9 @@ class IDeviceID {
    public:
     virtual ~IDeviceID() = default;
     virtual int serialize(common::ByteStream& write_stream) { return 0; }
-    virtual std::vector<uint8_t> get_bytes() { return {}; }
-    virtual bool is_empty() { return false; }
-    virtual bool is_table_model() { return false; }
     virtual std::string get_table_name() { return ""; }
     virtual int segment_num() { return 0; }
-    virtual std::string segment(int i) { return ""; }
-    virtual int serialized_size() { return 0; }
-    virtual bool start_with(const std::string& prefix,
-                            bool match_entire_segment = false) {
-        return false;
-    }
     virtual std::vector<std::string> get_segments() const { return {}; }
-    virtual bool match_database_name(const std::string& database_name) {
-        return false;
-    }
     virtual std::string get_device_name() const { return ""; };
     virtual bool operator<(const IDeviceID& other) { return 0; }
     virtual bool operator==(const IDeviceID& other) { return false; }
@@ -103,56 +91,13 @@ class StringArrayDeviceID : public IDeviceID {
         return ret;
     }
 
-    bool is_empty() override { return segments_.empty(); }
-
-    bool is_table_model() override {
-        return !segments_.empty() &&
-               segments_[0].find('.') == std::string::npos;
-    }
-
     std::string get_table_name() override {
         return segments_.empty() ? "" : segments_[0];
     }
 
     int segment_num() override { return static_cast<int>(segments_.size()); }
 
-    std::string segment(int i) override {
-        if (i < 0 || i >= static_cast<int>(segments_.size())) {
-            throw std::out_of_range("segment index out of range");
-        }
-        return segments_[i];
-    }
-
-    int serialized_size() override {
-        int size = sizeof(uint32_t);
-        for (const auto& segment : segments_) {
-            size += sizeof(uint32_t) + static_cast<int>(segment.size());
-        }
-        return size;
-    }
-
-    bool start_with(const std::string& prefix,
-                    bool match_entire_segment = false) override {
-        size_t matched_pos = 0;
-        for (const auto& segment : segments_) {
-            if (segment.compare(0, prefix.size() - matched_pos, prefix,
-                                matched_pos) == 0) {
-                return true;
-            }
-            matched_pos += segment.size() + 1;
-            if (matched_pos >= prefix.size()) {
-                return false;
-            }
-        }
-        return false;
-    }
-
     std::vector<std::string> get_segments() const override { return segments_; }
-
-    bool match_database_name(const std::string& database_name) override {
-        std::string table_name = get_table_name();
-        return table_name.find(database_name) == 0;
-    }
 
     virtual bool operator<(const IDeviceID& other) override {
         auto other_segments = other.get_segments();
@@ -161,14 +106,14 @@ class StringArrayDeviceID : public IDeviceID {
                                             other_segments.end());
     }
 
-    virtual bool operator==(const IDeviceID& other) override {
+    bool operator==(const IDeviceID& other) override {
         auto other_segments = other.get_segments();
         return (segments_.size() == other_segments.size()) &&
                std::equal(segments_.begin(), segments_.end(),
                           other_segments.begin());
     }
 
-    virtual bool operator!=(const IDeviceID& other) override {
+    bool operator!=(const IDeviceID& other) override {
         return !(*this == other);
     }
 
@@ -207,7 +152,7 @@ class PlainDeviceID : public IDeviceID {
     }
 
     bool operator!=(const IDeviceID& other) override {
-        return device_id_ == other.get_device_name();
+        return device_id_ != other.get_device_name();
     }
 
     int serialize(common::ByteStream& write_stream) override {
@@ -223,10 +168,6 @@ class PlainDeviceID : public IDeviceID {
     }
 
     std::string get_device_name() const override { return device_id_; };
-
-    bool is_empty() override { return device_id_.empty(); }
-
-    bool is_table_model() override { return false; }
 
     std::string get_table_name() override {
         if (!tableName_.empty()) {
@@ -250,13 +191,6 @@ class PlainDeviceID : public IDeviceID {
         return static_cast<int>(segments_.size());
     }
 
-    std::string segment(int i) override {
-        if (i < 0 || i >= segment_num()) {
-            throw std::out_of_range("segment index out of range");
-        }
-        return segments_[i];
-    }
-
     bool operator<(const IDeviceID& other) override {
         return device_id_ < other.get_device_name();
     }
@@ -272,27 +206,6 @@ class PlainDeviceID : public IDeviceID {
         while (std::getline(stream, segment, '.')) {
             segments_.push_back(segment);
         }
-    }
-};
-
-class PlainDeviceIDFactory {
-   public:
-    static std::shared_ptr<IDeviceID> create(
-        const std::string& deviceIdString) {
-        return std::make_shared<PlainDeviceID>(deviceIdString);
-    }
-
-    static std::shared_ptr<IDeviceID> create(
-        const std::vector<std::string>& segments) {
-        return std::make_shared<PlainDeviceID>(join_segments(segments));
-    }
-
-   private:
-    static std::string join_segments(const std::vector<std::string>& segments) {
-        return std::accumulate(segments.begin(), segments.end(), std::string(),
-                               [](const std::string& a, const std::string& b) {
-                                   return a.empty() ? b : a + "." + b;
-                               });
     }
 };
 
