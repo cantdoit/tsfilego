@@ -72,7 +72,7 @@ void TsFileWriter::destroy() {
     }
     if (io_writer_) {
         delete io_writer_;
-        io_writer_ = NULL;
+        io_writer_ = nullptr;
     }
     DeviceSchemasMapIter dev_iter;
     // cppcheck-suppress postfixOperator

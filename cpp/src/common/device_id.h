@@ -75,7 +75,7 @@ class StringArrayDeviceID : public IDeviceID {
     explicit StringArrayDeviceID(const std::string& device_id_string)
         : segments_(split_device_id_string(device_id_string)) {}
 
-    ~StringArrayDeviceID() {}
+    ~StringArrayDeviceID() override = default;
 
     std::string get_device_name() const override {
         return std::accumulate(std::next(segments_.begin()), segments_.end(),
@@ -200,7 +200,7 @@ class PlainDeviceID : public IDeviceID {
     explicit PlainDeviceID(const std::string& deviceID)
         : device_id_(deviceID), tableName_(), segments_() {}
 
-    ~PlainDeviceID() {}
+    ~PlainDeviceID() override = default;
 
     bool operator==(const IDeviceID& other) override {
         return device_id_ == other.get_device_name();

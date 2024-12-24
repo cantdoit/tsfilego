@@ -82,15 +82,17 @@ class TsFileWriterTableTest : public ::testing::Test {
         int measurement_schema_num = 5;
         for (int i = 0; i < id_schema_num; i++) {
             // TODO: support TEXT
-            measurement_schemas.emplace_back(new MeasurementSchema(
-                "id" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
-                CompressionType::UNCOMPRESSED));
+            measurement_schemas.emplace_back(
+                std::make_shared<MeasurementSchema>(
+                    "id" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
+                    CompressionType::UNCOMPRESSED));
             column_categories.emplace_back(ColumnCategory::ID);
         }
         for (int i = 0; i < measurement_schema_num; i++) {
-            measurement_schemas.emplace_back(new MeasurementSchema(
-                "s" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
-                CompressionType::UNCOMPRESSED));
+            measurement_schemas.emplace_back(
+                std::make_shared<MeasurementSchema>(
+                    "s" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
+                    CompressionType::UNCOMPRESSED));
             column_categories.emplace_back(ColumnCategory::MEASUREMENT);
         }
         return std::make_shared<TableSchema>("testTable" + to_string(table_num),

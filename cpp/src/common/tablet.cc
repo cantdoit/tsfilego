@@ -73,6 +73,10 @@ void Tablet::destroy() {
     if (bitmaps_ != NULL) {
         delete[] bitmaps_;
     }
+    if (schema_vec_ != nullptr) {
+        delete schema_vec_;
+        schema_vec_ = nullptr;
+    }
 }
 
 int Tablet::set_timestamp(int row_index, int64_t timestamp) {
@@ -230,8 +234,7 @@ std::shared_ptr<IDeviceID> Tablet::get_device_id(int i) const {
                 break ;
         }
     }
-    IDeviceID* device_id = new StringArrayDeviceID(id_array);
-    return std::shared_ptr<IDeviceID>(device_id);
+    return std::make_shared<StringArrayDeviceID>(id_array);
 }
 
 }  // end namespace storage
