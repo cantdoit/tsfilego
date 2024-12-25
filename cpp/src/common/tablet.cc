@@ -199,7 +199,7 @@ std::shared_ptr<IDeviceID> Tablet::get_device_id(int i) const {
     id_array.push_back(insert_target_name_);
     for (auto id_column_idx : id_column_indexes_) {
         // TODO: support TEXT
-        common::TSDataType data_type;
+        common::TSDataType data_type = INVALID_DATATYPE;
         void* value_ptr = get_value(i, id_column_idx, data_type);
         switch (data_type) {
             case INT64:
