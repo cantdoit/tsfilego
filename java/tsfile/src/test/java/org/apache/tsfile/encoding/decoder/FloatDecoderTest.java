@@ -34,6 +34,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.tsfile.utils.EncodingUtils.roundWithGivenPrecision;
 import static org.junit.Assert.assertEquals;
 
 public class FloatDecoderTest {
@@ -219,12 +220,20 @@ public class FloatDecoderTest {
     assertEquals(roundWithGivenPrecision(b, 2), decoder.readFloat(buffer), delta);
   }
 
-  public static float roundWithGivenPrecision(float data, int size) {
-    if (size == 0) {
-      return Math.round(data);
-    }
-    return Math.round(data)
-        + Math.round(((data - Math.round(data)) * Math.pow(10, size))) / (float) Math.pow(10, size);
+  @Test
+  public void testBigDouble() throws Exception {
+    double a = 0.333;
+    double b = 9.223372036854E18;
+    Encoder encoder = new FloatEncoder(TSEncoding.RLE, TSDataType.DOUBLE, 2);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    encoder.encode(a, baos);
+    encoder.encode(b, baos);
+    encoder.flush(baos);
+
+    ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
+    Decoder decoder = new FloatDecoder(TSEncoding.RLE, TSDataType.DOUBLE);
+    assertEquals(roundWithGivenPrecision(a, 2), decoder.readDouble(buffer), delta);
+    assertEquals(roundWithGivenPrecision(b, 2), decoder.readDouble(buffer), delta);
   }
 
   // private void testDecimalLenght(TSEncoding encoding, List<Double> valueList,

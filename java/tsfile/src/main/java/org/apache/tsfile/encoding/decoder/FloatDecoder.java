@@ -106,7 +106,9 @@ public class FloatDecoder extends Decoder {
   public double readDouble(ByteBuffer buffer) {
     readMaxPointValue(buffer);
     long value = decoder.readLong(buffer);
-    return value / getMaxPointValue();
+    double result = value / getMaxPointValue();
+    position++;
+    return result;
   }
 
   private double getMaxPointValue() {
