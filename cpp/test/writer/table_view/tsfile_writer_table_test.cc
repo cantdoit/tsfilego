@@ -130,7 +130,6 @@ class TsFileWriterTableTest : public ::testing::Test {
                 }
             }
         }
-        tablet.set_row_size(device_num * num_timestamp_per_device);
         return tablet;
     }
 };
