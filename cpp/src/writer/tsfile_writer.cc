@@ -176,7 +176,7 @@ int TsFileWriter::register_timeseries(const std::string &device_path,
                                       MeasurementSchema *measurement_schema,
                                       bool is_aligned) {
     std::shared_ptr<IDeviceID> device_id =
-        std::make_shared<PlainDeviceID>(device_path);
+        std::make_shared<StringArrayDeviceID>(device_path);
     DeviceSchemasMapIter device_iter = schemas_.find(device_id);
     if (device_iter != schemas_.end()) {
         MeasurementSchemaMap &msm =
@@ -423,7 +423,7 @@ int TsFileWriter::write_record(const TsRecord &record) {
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromRecord mnames_getter(record);
     if (RET_FAIL(do_check_schema(
-            std::make_shared<PlainDeviceID>(record.device_id_), mnames_getter,
+            std::make_shared<StringArrayDeviceID>(record.device_id_), mnames_getter,
             chunk_writers))) {
         return ret;
     }
@@ -449,7 +449,7 @@ int TsFileWriter::write_record_aligned(const TsRecord &record) {
     TimeChunkWriter *time_chunk_writer;
     MeasurementNamesFromRecord mnames_getter(record);
     if (RET_FAIL(do_check_schema_aligned(
-            std::make_shared<PlainDeviceID>(record.device_id_), mnames_getter,
+            std::make_shared<StringArrayDeviceID>(record.device_id_), mnames_getter,
             time_chunk_writer, value_chunk_writers))) {
         return ret;
     }
@@ -523,7 +523,7 @@ int TsFileWriter::write_tablet_aligned(const Tablet &tablet) {
     TimeChunkWriter *time_chunk_writer = nullptr;
     MeasurementNamesFromTablet mnames_getter(tablet);
     if (RET_FAIL(do_check_schema_aligned(
-            std::make_shared<PlainDeviceID>(tablet.insert_target_name_),
+            std::make_shared<StringArrayDeviceID>(tablet.insert_target_name_),
             mnames_getter, time_chunk_writer, value_chunk_writers))) {
         return ret;
     }
@@ -543,7 +543,7 @@ int TsFileWriter::write_tablet(const Tablet &tablet) {
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromTablet mnames_getter(tablet);
     if (RET_FAIL(do_check_schema(
-            std::make_shared<PlainDeviceID>(tablet.insert_target_name_),
+            std::make_shared<StringArrayDeviceID>(tablet.insert_target_name_),
             mnames_getter, chunk_writers))) {
         return ret;
     }

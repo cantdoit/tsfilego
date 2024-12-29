@@ -82,19 +82,19 @@ int Tablet::add_timestamp(uint32_t row_index, int64_t timestamp) {
         return E_OUT_OF_RANGE;
     }
     timestamps_[row_index] = timestamp;
-    cur_row_size_++;
+    cur_row_size_ = std::max(row_index, cur_row_size_);
     return E_OK;
 }
 
 template <typename T>
 int Tablet::add_value(uint32_t row_index, uint32_t schema_index, T val) {
     int ret = common::E_OK;
-    if (LIKELY(schema_index >= schema_vec_->size())) {
+    if (UNLIKELY(schema_index >= schema_vec_->size())) {
         ASSERT(false);
         ret = common::E_OUT_OF_RANGE;
     } else {
         const MeasurementSchema &schema = schema_vec_->at(schema_index);
-        if (LIKELY(GetDataTypeFromTemplateType<T>() != schema.data_type_)) {
+        if (UNLIKELY(GetDataTypeFromTemplateType<T>() != schema.data_type_)) {
             ret = common::E_TYPE_NOT_MATCH;
         } else {
             T *column_values = (T *)value_matrix_[schema_index];
@@ -106,7 +106,7 @@ int Tablet::add_value(uint32_t row_index, uint32_t schema_index, T val) {
 }
 
 void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type) const {
-    if (LIKELY(schema_index >= schema_vec_->size())) {
+    if (UNLIKELY(schema_index >= schema_vec_->size())) {
         return nullptr;
     }
     const MeasurementSchema& schema = schema_vec_->at(schema_index);
@@ -188,7 +188,7 @@ void Tablet::set_column_categories(const std::vector<ColumnCategory>& column_cat
     id_column_indexes_.clear();
     for (size_t i = 0; i < column_categories_.size(); i++) {
         ColumnCategory columnCategory = column_categories_[i];
-        if (columnCategory == ColumnCategory::ID) {
+        if (columnCategory == ColumnCategory::TAG) {
             id_column_indexes_.push_back(i);
         }
     }

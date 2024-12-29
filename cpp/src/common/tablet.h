@@ -144,7 +144,7 @@ class Tablet {
 
    private:
     int max_row_num_;
-    int cur_row_size_;
+    uint32_t cur_row_size_;
     std::string insert_target_name_;
     std::shared_ptr<std::vector<MeasurementSchema>> schema_vec_;
     std::map<std::string, int> schema_map_;

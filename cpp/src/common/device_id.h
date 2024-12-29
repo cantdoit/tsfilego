@@ -33,6 +33,7 @@
 #include <vector>
 
 #include "common/allocator/byte_stream.h"
+#include "parser/path_nodes_generator.h"
 #include "utils/errno_define.h"
 
 class IDeviceID {
@@ -75,16 +76,13 @@ class StringArrayDeviceID : public IDeviceID {
 
     int serialize(common::ByteStream& write_stream) override {
         int ret = common::E_OK;
-        if (RET_FAIL(common::SerializationUtil::write_var_int(segment_num(),
-                                                              write_stream))) {
+        if (RET_FAIL(common::SerializationUtil::write_var_uint(segment_num(),
+                                                               write_stream))) {
             return ret;
         }
         for (const auto& segment : segments_) {
-            if (RET_FAIL(common::SerializationUtil::write_var_int(
-                    segment.size(), write_stream))) {
-                return ret;
-            } else if (RET_FAIL(write_stream.write_buf(segment.c_str(),
-                                                       segment.size()))) {
+            if (RET_FAIL(common::SerializationUtil::write_str(segment,
+                                                              write_stream))) {
                 return ret;
             }
         }
@@ -120,7 +118,7 @@ class StringArrayDeviceID : public IDeviceID {
    private:
     std::vector<std::string> segments_;
 
-    static std::vector<std::string> formalize(
+    std::vector<std::string> formalize(
         const std::vector<std::string>& segments) {
         auto it =
             std::find_if(segments.rbegin(), segments.rend(),
@@ -128,84 +126,58 @@ class StringArrayDeviceID : public IDeviceID {
         return std::vector<std::string>(segments.begin(), it.base());
     }
 
-    static std::vector<std::string> split_device_id_string(
-        std::basic_string<char> device_id_string) {
-        std::vector<std::string> splits;
-        std::istringstream stream(device_id_string);
-        std::string segment;
-        while (std::getline(stream, segment, '.')) {
-            splits.push_back(segment);
-        }
-        return splits;
-    }
-};
-
-class PlainDeviceID : public IDeviceID {
-   public:
-    explicit PlainDeviceID(const std::string& deviceID)
-        : device_id_(deviceID), tableName_(), segments_() {}
-
-    ~PlainDeviceID() override = default;
-
-    bool operator==(const IDeviceID& other) override {
-        return device_id_ == other.get_device_name();
+    std::vector<std::string> split_device_id_string(
+        const std::string& device_id_string) {
+        auto splits =
+            storage::PathNodesGenerator::invokeParser(device_id_string);
+        return split_device_id_string(splits);
     }
 
-    bool operator!=(const IDeviceID& other) override {
-        return device_id_ != other.get_device_name();
-    }
+    const char PATH_SEPARATOR = '.';
+    const int DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME = 3;
 
-    int serialize(common::ByteStream& write_stream) override {
-        int ret = common::E_OK;
-        if (RET_FAIL(common::SerializationUtil::write_var_int(device_id_.size(),
-                                                              write_stream))) {
-            return ret;
-        } else if (RET_FAIL(write_stream.write_buf(device_id_.c_str(),
-                                                   device_id_.size()))) {
-            return ret;
-        }
-        return ret;
-    }
+    std::vector<std::string> split_device_id_string(
+        const std::vector<std::string>& splits) {
+        size_t segment_cnt = splits.size();
+        std::vector<std::string> final_segments;
 
-    std::string get_device_name() const override { return device_id_; };
-
-    std::string get_table_name() override {
-        if (!tableName_.empty()) {
-            return tableName_;
+        if (segment_cnt == 0) {
+            return final_segments;
         }
 
-        size_t lastSeparatorPos = device_id_.find_last_of('.');
-        if (lastSeparatorPos == std::string::npos) {
-            tableName_ = device_id_;  // Use entire deviceID as tableName
+        if (segment_cnt == 1) {
+            // "root" -> {"root"}
+            final_segments.push_back(splits[0]);
+        } else if (segment_cnt < static_cast<size_t>(
+                                     DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME + 1)) {
+            // "root.a" -> {"root", "a"}
+            // "root.a.b" -> {"root.a", "b"}
+            std::string table_name = std::accumulate(
+                splits.begin(), splits.end() - 1, std::string(),
+                [this](const std::string& a, const std::string& b) {
+                    return a.empty() ? b : a + PATH_SEPARATOR + b;
+                });
+            final_segments.push_back(table_name);
+            final_segments.push_back(splits.back());
         } else {
-            tableName_ = device_id_.substr(0, lastSeparatorPos);
+            // "root.a.b.c" -> {"root.a.b", "c"}
+            // "root.a.b.c.d" -> {"root.a.b", "c", "d"}
+            std::string table_name = std::accumulate(
+                splits.begin(),
+                splits.begin() + DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
+                std::string(),
+                [this](const std::string& a, const std::string& b) {
+                    return a.empty() ? b : a + PATH_SEPARATOR + b;
+                });
+
+            final_segments.push_back(table_name);
+            final_segments.insert(
+                final_segments.end(),
+                splits.begin() + DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
+                splits.end());
         }
-        return tableName_;
-    }
 
-    int segment_num() override {
-        if (!segments_.empty()) {
-            return static_cast<int>(segments_.size());
-        }
-        split_segments();
-        return static_cast<int>(segments_.size());
-    }
-
-    bool operator<(const IDeviceID& other) override {
-        return device_id_ < other.get_device_name();
-    }
-
-   private:
-    std::string device_id_;
-    std::string tableName_;
-    std::vector<std::string> segments_;
-
-    void split_segments() {
-        std::istringstream stream(device_id_);
-        std::string segment;
-        while (std::getline(stream, segment, '.')) {
-            segments_.push_back(segment);
-        }
+        return final_segments;
     }
 };
 

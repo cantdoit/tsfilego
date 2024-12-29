@@ -26,7 +26,7 @@
 
 namespace common {
 
-enum TSDataType {
+enum TSDataType : uint8_t {
     BOOLEAN = 0,
     INT32 = 1,
     INT64 = 2,
@@ -39,7 +39,7 @@ enum TSDataType {
     INVALID_DATATYPE = 255
 };
 
-enum TSEncoding {
+enum TSEncoding : uint8_t {
     PLAIN = 0,
     DICTIONARY = 1,
     RLE = 2,
@@ -54,7 +54,7 @@ enum TSEncoding {
     INVALID_ENCODING = 255
 };
 
-enum CompressionType {
+enum CompressionType : uint8_t {
     UNCOMPRESSED = 0,
     SNAPPY = 1,
     GZIP = 2,

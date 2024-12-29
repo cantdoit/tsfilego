@@ -20,16 +20,13 @@
 
 #include <random>
 
-#include "common/path.h"
 #include "common/record.h"
 #include "common/schema.h"
 #include "common/tablet.h"
 #include "file/tsfile_io_writer.h"
 #include "file/write_file.h"
-#include "reader/qds_without_timegenerator.h"
-#include "reader/tsfile_reader.h"
 #include "writer/chunk_writer.h"
-#include "writer/tsfile_writer.h"
+#include "writer/tsfile_table_writer.h"
 using namespace storage;
 using namespace common;
 
@@ -37,7 +34,6 @@ class TsFileWriterTableTest : public ::testing::Test {
    protected:
     void SetUp() override {
         libtsfile_init();
-        tsfile_writer_ = new TsFileWriter();
         file_name_ = std::string("tsfile_writer_table_test_") +
                      generate_random_string(10) + std::string(".tsfile");
         remove(file_name_.c_str());
@@ -46,14 +42,15 @@ class TsFileWriterTableTest : public ::testing::Test {
         flags |= O_BINARY;
 #endif
         mode_t mode = 0666;
-        EXPECT_EQ(tsfile_writer_->open(file_name_, flags, mode), common::E_OK);
+        write_file_.create(file_name_, flags, mode);
     }
     void TearDown() override {
-        delete tsfile_writer_;
+        write_file_.sync();
+        write_file_.close();
         remove(file_name_.c_str());
     }
     std::string file_name_;
-    TsFileWriter* tsfile_writer_ = nullptr;
+    WriteFile write_file_;
 
    public:
     static std::string generate_random_string(int length) {
@@ -86,14 +83,14 @@ class TsFileWriterTableTest : public ::testing::Test {
                 std::make_shared<MeasurementSchema>(
                     "id" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
                     CompressionType::UNCOMPRESSED));
-            column_categories.emplace_back(ColumnCategory::ID);
+            column_categories.emplace_back(ColumnCategory::TAG);
         }
         for (int i = 0; i < measurement_schema_num; i++) {
             measurement_schemas.emplace_back(
                 std::make_shared<MeasurementSchema>(
                     "s" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
                     CompressionType::UNCOMPRESSED));
-            column_categories.emplace_back(ColumnCategory::MEASUREMENT);
+            column_categories.emplace_back(ColumnCategory::FIELD);
         }
         return std::make_shared<TableSchema>("testTable" + to_string(table_num),
                                              measurement_schemas,
@@ -140,10 +137,10 @@ class TsFileWriterTableTest : public ::testing::Test {
 
 TEST_F(TsFileWriterTableTest, WriteTableTest) {
     auto table_schema = gen_table_schema(0);
-    tsfile_writer_->set_generate_table_schema(true);
-    tsfile_writer_->register_table(table_schema);
+    auto tsfile_table_writer_ =
+        std::make_shared<TsFileTableWriter>(&write_file_, table_schema);
     auto tablet = gen_tablet(table_schema, 0, 1);
-    ASSERT_EQ(tsfile_writer_->write_table(tablet), common::E_OK);
-    ASSERT_EQ(tsfile_writer_->flush(), common::E_OK);
-    ASSERT_EQ(tsfile_writer_->close(), common::E_OK);
+    ASSERT_EQ(tsfile_table_writer_->write_table(tablet), common::E_OK);
+    ASSERT_EQ(tsfile_table_writer_->flush(), common::E_OK);
+    ASSERT_EQ(tsfile_table_writer_->close(), common::E_OK);
 }

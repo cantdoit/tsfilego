@@ -108,7 +108,7 @@ TEST(ChunkGroupMetaTest, Constructor) {
 TEST(ChunkGroupMetaTest, Init) {
     common::PageArena pa;
     ChunkGroupMeta group_meta(&pa);
-    int ret = group_meta.init(std::make_shared<PlainDeviceID>("device_1"), pa);
+    int ret = group_meta.init(std::make_shared<StringArrayDeviceID>("device_1"), pa);
     EXPECT_EQ(ret, common::E_OK);
 }
 
