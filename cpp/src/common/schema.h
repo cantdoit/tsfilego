@@ -156,7 +156,7 @@ class TableSchema {
                 auto column_schema = column_schemas_[i];
                 auto column_category = column_categories_[i];
                 if (RET_FAIL(column_schema->serialize_to(out))) {
-                } else if (RET_FAIL(common::SerializationUtil::write_i32(
+                } else if (RET_FAIL(common::SerializationUtil::write_i8(
                                static_cast<int32_t>(column_category), out))) {
                 }
             }

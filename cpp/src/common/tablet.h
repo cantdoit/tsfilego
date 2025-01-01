@@ -93,7 +93,7 @@ class Tablet {
            const std::vector<std::string> &column_names,
            const std::vector<common::TSDataType> &data_types,
            const std::vector<ColumnCategory> &column_categories,
-           int max_rows = DEFAULT_MAX_ROWS, bool has_column_categories = true)
+           int max_rows = DEFAULT_MAX_ROWS)
         : max_row_num_(max_rows),
           cur_row_size_(0),
           insert_target_name_(insert_target_name),
@@ -107,9 +107,7 @@ class Tablet {
                 MeasurementSchema(column_names[i], data_types[i], common::PLAIN,
                                   common::UNCOMPRESSED));
         }
-        if (has_column_categories) {
-            set_column_categories(column_categories);
-        }
+        set_column_categories(column_categories);
     }
 
     ~Tablet() { destroy(); }
@@ -118,7 +116,6 @@ class Tablet {
     void destroy();
     size_t get_column_count() const { return schema_vec_->size(); }
     int get_cur_row_size() const { return cur_row_size_; }
-    void set_row_size(int row_size) { cur_row_size_ = row_size; }
 
     int add_timestamp(uint32_t row_index, int64_t timestamp);
 
