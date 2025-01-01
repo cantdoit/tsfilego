@@ -67,6 +67,7 @@ struct PageHeader {
     ~PageHeader() { reset(); }
     void reset() {
         if (statistic_ != nullptr) {
+            statistic_->destroy();
             StatisticFactory::free(statistic_);
             statistic_ = nullptr;
         }

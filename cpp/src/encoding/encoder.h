@@ -37,6 +37,7 @@ class Encoder {
     virtual int encode(int64_t value, common::ByteStream &out_stream) = 0;
     virtual int encode(float value, common::ByteStream &out_stream) = 0;
     virtual int encode(double value, common::ByteStream &out_stream) = 0;
+    virtual int encode(common::String value, common::ByteStream &out_stream) = 0;
     virtual int flush(common::ByteStream &out_stream) = 0;
 
     /**

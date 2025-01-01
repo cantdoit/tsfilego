@@ -48,7 +48,7 @@ class IChunkReader {
     }
 
     virtual int get_next_page(common::TsBlock *tsblock,
-                              Filter *oneshoot_filter) {
+                              Filter *oneshoot_filter, common::PageArena &pa) {
         return common::E_OK;
     }
 

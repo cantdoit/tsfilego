@@ -100,6 +100,7 @@ int ValuePageWriter::init(TSDataType data_type, TSEncoding encoding,
             EncoderFactory::free(value_encoder_);
         }
         if (statistic_ != nullptr) {
+            statistic_->destroy();
             StatisticFactory::free(statistic_);
         }
     }

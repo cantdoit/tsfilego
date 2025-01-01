@@ -59,12 +59,13 @@ void TsFileIOReader::reset() {
 int TsFileIOReader::alloc_ssi(const std::string &device_path,
                               const std::string &measurement_name,
                               TsFileSeriesScanIterator *&ssi,
-                              Filter *time_filter) {
+                               common::PageArena &pa, 
+                                Filter *time_filter) {
     int ret = E_OK;
     if (RET_FAIL(load_tsfile_meta_if_necessary())) {
     } else {
         ssi = new TsFileSeriesScanIterator;
-        ssi->init(device_path, measurement_name, read_file_, time_filter);
+        ssi->init(device_path, measurement_name, read_file_, time_filter, pa);
         if (RET_FAIL(load_timeseries_index_for_ssi(device_path,
                                                    measurement_name, ssi))) {
         } else if (time_filter != nullptr &&

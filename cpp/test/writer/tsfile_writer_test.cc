@@ -121,9 +121,9 @@ TEST_F(TsFileWriterTest, WriteDiffDataType) {
     common::CompressionType compression_type =
         common::CompressionType::UNCOMPRESSED;
     std::vector<std::string> measurement_names = {"level", "num", "bools",
-                                                  "double"};
+                                                  "double", "id"};
     std::vector<common::TSDataType> data_types = {FLOAT, INT64, BOOLEAN,
-                                                  DOUBLE};
+                                                  DOUBLE, STRING};
     for (uint32_t i = 0; i < measurement_names.size(); i++) {
         std::string measurement_name = measurement_names[i];
         common::TSDataType data_type = data_types[i];
@@ -132,6 +132,10 @@ TEST_F(TsFileWriterTest, WriteDiffDataType) {
             storage::MeasurementSchema(measurement_name, data_type, encoding,
                                        compression_type));
     }
+
+    char* literal = new char[std::strlen("device_id") + 1];
+    std::strcpy(literal, "device_id");
+    String literal_str(literal, std::strlen("device_id"));
 
     int row_num = 1000;
     for (int i = 0; i < row_num; ++i) {
@@ -151,6 +155,9 @@ TEST_F(TsFileWriterTest, WriteDiffDataType) {
                     break;
                 case DOUBLE:
                     record.add_point(measurement_name, (double)2.0);
+                    break;
+                case STRING:
+                    record.add_point(measurement_name, literal_str);
                     break;
                 default:
                     break;
@@ -188,13 +195,16 @@ TEST_F(TsFileWriterTest, WriteDiffDataType) {
         ASSERT_EQ(qds->get_value<int64_t>(1), (int64_t)415412);
         ASSERT_EQ(qds->get_value<bool>(2), true);
         ASSERT_EQ(qds->get_value<double>(3), (double)2.0);
+        ASSERT_EQ(qds->get_value<common::String*>(4)->compare(literal_str), 0);
 
         ASSERT_EQ(qds->get_value<float>(measurement_names[0]), (float)1.0);
         ASSERT_EQ(qds->get_value<int64_t>(measurement_names[1]),
                   (int64_t)415412);
         ASSERT_EQ(qds->get_value<bool>(measurement_names[2]), true);
         ASSERT_EQ(qds->get_value<double>(measurement_names[3]), (double)2.0);
+        ASSERT_EQ(qds->get_value<common::String*>(measurement_names[4])->compare(literal_str), 0);
     } while (true);
+    delete[] literal;
     EXPECT_EQ(cur_record_num, row_num);
     reader.destroy_query_data_set(qds);
     reader.close();

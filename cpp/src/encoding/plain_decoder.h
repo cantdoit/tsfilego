@@ -48,6 +48,10 @@ class PlainDecoder : public Decoder {
     FORCE_INLINE int read_double(double &ret_double, common::ByteStream &in) {
         return common::SerializationUtil::read_double(ret_double, in);
     }
+
+    FORCE_INLINE int read_String(common::String &ret_String, common::PageArena &pa, common::ByteStream &in) {
+        return common::SerializationUtil::read_mystring(ret_String, &pa, in);
+    }
 };
 
 }  // end namespace storage

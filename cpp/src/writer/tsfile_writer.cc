@@ -481,6 +481,8 @@ int TsFileWriter::write_point(ChunkWriter *chunk_writer, int64_t timestamp,
             return chunk_writer->write(timestamp, point.u_.float_val_);
         case common::DOUBLE:
             return chunk_writer->write(timestamp, point.u_.double_val_);
+        case common::STRING:
+            return chunk_writer->write(timestamp, *point.u_.str_val_);
         case common::TEXT:
             ASSERT(false);
             return E_OK;

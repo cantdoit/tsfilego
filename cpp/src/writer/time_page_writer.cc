@@ -85,6 +85,7 @@ int TimePageWriter::init(TSEncoding encoding, CompressionType compression) {
             EncoderFactory::free(time_encoder_);
         }
         if (statistic_ != nullptr) {
+            statistic_->destroy();
             StatisticFactory::free(statistic_);
         }
     }
@@ -105,7 +106,7 @@ void TimePageWriter::destroy() {
         is_inited_ = false;
         time_encoder_->destroy();
         statistic_->destroy();
-
+    
         EncoderFactory::free(time_encoder_);
         StatisticFactory::free(statistic_);
         CompressorFactory::free(compressor_);

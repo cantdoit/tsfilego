@@ -73,7 +73,7 @@ class AlignedChunkReader : public IChunkReader {
                                      ChunkMeta *value_meta);
 
     virtual int get_next_page(common::TsBlock *tsblock,
-                              Filter *oneshoot_filter);
+                              Filter *oneshoot_filter, common::PageArena &pa);
 
    private:
     FORCE_INLINE bool chunk_has_only_one_page(

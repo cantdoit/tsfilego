@@ -67,6 +67,20 @@ class ResultSet {
         ASSERT(column_index >= 0 && column_index < row_record->get_col_num());
         return row_record->get_field(column_index)->get_value<T>();
     }
+    template<>
+    common::String* get_value(const std::string& column_name) {
+        RowRecord* row_record = get_row_record();
+        ASSERT(index_lookup_.count(column_name));
+        uint32_t index = index_lookup_[column_name];
+        ASSERT(index >= 0 && index < row_record->get_col_num());
+        return row_record->get_field(index)->get_string_value();
+    }
+    template<>
+    common::String* get_value(uint32_t column_index) {
+        RowRecord* row_record = get_row_record();
+        ASSERT(column_index >= 0 && column_index < row_record->get_col_num());
+        return row_record->get_field(column_index)->get_string_value();
+    }
     virtual RowRecord* get_row_record() = 0;
     virtual ResultSetMetadata* get_metadata() = 0;
     virtual void close() = 0;
