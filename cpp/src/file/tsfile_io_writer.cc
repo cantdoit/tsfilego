@@ -70,7 +70,8 @@ int TsFileIOWriter::init(WriteFile *write_file) {
 }
 
 void TsFileIOWriter::destroy() {
-    for (auto iter = chunk_group_meta_list_.begin(); iter != chunk_group_meta_list_.end(); iter++) {
+    for (auto iter = chunk_group_meta_list_.begin();
+         iter != chunk_group_meta_list_.end(); iter++) {
         if (iter.get() && iter.get()->device_name_) {
             iter.get()->device_name_.reset();
         }
@@ -99,7 +100,7 @@ int TsFileIOWriter::start_flush_chunk_group(
     if (ret != common::E_OK) {
         return ret;
     }
-    device_name->serialize(write_stream_);
+    ret = device_name->serialize(write_stream_);
     if (ret != common::E_OK) {
         return ret;
     }
@@ -108,8 +109,7 @@ int TsFileIOWriter::start_flush_chunk_group(
     use_prev_alloc_cgm_ = false;
     for (auto iter = chunk_group_meta_list_.begin();
          iter != chunk_group_meta_list_.end(); iter++) {
-        auto cur_device_name = cur_device_name_;
-        if (*iter.get()->device_name_ == *cur_device_name) {
+        if (*iter.get()->device_name_ == *cur_device_name_) {
             use_prev_alloc_cgm_ = true;
             cur_chunk_group_meta_ = iter.get();
             break;
@@ -467,14 +467,11 @@ int TsFileIOWriter::write_file_index() {
             tsfile_meta.tsfile_properties_.insert(
                 std::make_pair("encryptKey", encrypt_key_));
 
-            auto start_size = write_stream_.total_size();
-            if (!RET_FAIL(
-                    tsfile_meta.serialize_to_table_model(write_stream_))) {
-                auto total_write_size = write_stream_.total_size() - start_size;
-                if (RET_FAIL(common::SerializationUtil::write_i32(
-                        total_write_size, write_stream_))) {
-                    return ret;
-                }
+            auto total_write_size =
+                tsfile_meta.serialize_to_table_model(write_stream_);
+            if (RET_FAIL(common::SerializationUtil::write_i32(total_write_size,
+                                                              write_stream_))) {
+                return ret;
             }
             tsfile_meta.bloom_filter_ = nullptr;
             tsfile_meta.index_node_ = nullptr;
