@@ -175,55 +175,35 @@ int TSMIterator::get_next(String &ret_device_name, String &ret_measurement_name,
 }
 
 int TsFileMeta::serialize_to_table_model(common::ByteStream &out) {
-    int ret = common::E_OK;
-
-    if (RET_SUCC(common::SerializationUtil::write_var_uint(
-            table_metadata_index_node_map_.size(), out))) {
-        for (auto &idx_nodes_iter : table_metadata_index_node_map_) {
-            if (RET_FAIL(common::SerializationUtil::write_mystring(
-                    idx_nodes_iter.first, out))) {
-            } else if (RET_SUCC(idx_nodes_iter.second->serialize_to(out))) {
-            } else {
-                return ret;
-            }
-        }
+    auto start_idx = out.total_size();
+    common::SerializationUtil::write_var_uint(
+        table_metadata_index_node_map_.size(), out);
+    for (auto &idx_nodes_iter : table_metadata_index_node_map_) {
+        common::SerializationUtil::write_mystring(idx_nodes_iter.first, out);
+        idx_nodes_iter.second->serialize_to(out);
     }
 
-    if (RET_SUCC(common::SerializationUtil::write_var_uint(
-            table_schemas_.size(), out))) {
-        for (auto &table_schema_iter : table_schemas_) {
-            if (RET_FAIL(common::SerializationUtil::write_str(
-                    table_schema_iter.first, out))) {
-            } else if (RET_SUCC(common::SerializationUtil::write_str(
-                           table_schema_iter.first, out))) {
-            } else {
-                return ret;
-            }
-        }
+    common::SerializationUtil::write_var_uint(table_schemas_.size(), out);
+    for (auto &table_schema_iter : table_schemas_) {
+        common::SerializationUtil::write_str(table_schema_iter.first, out);
+        table_schema_iter.second->serialize_to(out);
     }
 
-    if (RET_FAIL(common::SerializationUtil::write_i64(meta_offset_, out))) {
-        return ret;
-    }
+    common::SerializationUtil::write_i64(meta_offset_, out);
+
     if (bloom_filter_ != nullptr) {
-        if (RET_FAIL(bloom_filter_->serialize_to(out))) {
-            return ret;
-        }
+        bloom_filter_->serialize_to(out);
+    } else {
+        common::SerializationUtil::write_ui8(0, out);
     }
 
-    if (RET_SUCC(common::SerializationUtil::write_var_int(
-            tsfile_properties_.size(), out))) {
-        for (auto tsfile_property : tsfile_properties_) {
-            if (RET_FAIL(common::SerializationUtil::write_str(
-                    tsfile_property.first, out))) {
-            } else if (RET_SUCC(common::SerializationUtil::write_str(
-                           tsfile_property.second, out))) {
-            } else {
-                return ret;
-            }
-        }
+    common::SerializationUtil::write_var_int(tsfile_properties_.size(), out);
+    for (const auto& tsfile_property : tsfile_properties_) {
+        common::SerializationUtil::write_str(tsfile_property.first, out);
+        common::SerializationUtil::write_str(tsfile_property.second, out);
     }
-    return ret;
+
+    return out.total_size() - start_idx;
 }
 
 /* ================ MetaIndexNode ================ */

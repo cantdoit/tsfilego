@@ -85,7 +85,7 @@ struct MeasurementSchema {
         if (ret == common::E_OK) {
             if (RET_FAIL(common::SerializationUtil::write_ui32(props_.size(),
                                                                out))) {
-                for (auto &prop : props_) {
+                for (const auto &prop : props_) {
                     if (RET_FAIL(common::SerializationUtil::write_str(
                             prop.first, out))) {
                     } else if (RET_FAIL(common::SerializationUtil::write_str(
@@ -132,7 +132,7 @@ class TableSchema {
           column_categories_(column_categories) {
         to_lowercase_inplace(table_name_);
         int idx = 0;
-        for (auto &measurement_schema : column_schemas_) {
+        for (const auto &measurement_schema : column_schemas_) {
             to_lowercase_inplace(measurement_schema->measurement_name_);
             column_pos_index_.insert(
                 std::make_pair(measurement_schema->measurement_name_, idx++));
@@ -166,7 +166,7 @@ class TableSchema {
 
     ~TableSchema() = default;
 
-    std::string get_table_name() { return table_name_; }
+    const std::string& get_table_name() { return table_name_; }
 
     std::vector<std::string> get_measurement_names() const {
         std::vector<std::string> ret;
@@ -200,16 +200,16 @@ class TableSchema {
              iter != chunk_group_meta->chunk_meta_list_.end(); iter++) {
             auto &chunk_meta = iter.get();
             int column_idx =
-                find_column_index(chunk_meta->measurement_name_.to_string());
+                find_column_index(chunk_meta->measurement_name_.to_std_string());
             if (column_idx == -1) {
                 auto measurement_schema = std::make_shared<MeasurementSchema>(
-                    chunk_meta->measurement_name_.to_string(),
+                    chunk_meta->measurement_name_.to_std_string(),
                     chunk_meta->data_type_, chunk_meta->encoding_,
                     chunk_meta->compression_type_);
                 column_schemas_.emplace_back(measurement_schema);
                 column_categories_.emplace_back(ColumnCategory::FIELD);
                 column_pos_index_.insert(
-                    std::make_pair(chunk_meta->measurement_name_.to_string(),
+                    std::make_pair(chunk_meta->measurement_name_.to_std_string(),
                                    column_schemas_.size() - 1));
             } else {
                 auto origin_measurement_schema = column_schemas_.at(column_idx);

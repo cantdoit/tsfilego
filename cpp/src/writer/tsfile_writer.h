@@ -129,6 +129,7 @@ class TsFileWriter {
                            common::BitMap &col_notnull_bitmap, int start_idx,
                            int end_idx);
 
+
     template <typename MeasurementNamesGetter>
     int do_check_schema(
         std::shared_ptr<IDeviceID> device_id,

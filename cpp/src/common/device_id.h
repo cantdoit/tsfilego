@@ -42,11 +42,16 @@ class IDeviceID {
     virtual int serialize(common::ByteStream& write_stream) { return 0; }
     virtual std::string get_table_name() { return ""; }
     virtual int segment_num() { return 0; }
-    virtual std::vector<std::string> get_segments() const { return {}; }
+    virtual const std::vector<std::string>& get_segments() const {
+        return empty_segments_;
+    }
     virtual std::string get_device_name() const { return ""; };
     virtual bool operator<(const IDeviceID& other) { return 0; }
     virtual bool operator==(const IDeviceID& other) { return false; }
     virtual bool operator!=(const IDeviceID& other) { return false; }
+
+   private:
+    const std::vector<std::string> empty_segments_;
 };
 
 struct IDeviceIDComparator {
@@ -95,7 +100,9 @@ class StringArrayDeviceID : public IDeviceID {
 
     int segment_num() override { return static_cast<int>(segments_.size()); }
 
-    std::vector<std::string> get_segments() const override { return segments_; }
+    const std::vector<std::string>& get_segments() const override {
+        return segments_;
+    }
 
     virtual bool operator<(const IDeviceID& other) override {
         auto other_segments = other.get_segments();
@@ -133,8 +140,8 @@ class StringArrayDeviceID : public IDeviceID {
         return split_device_id_string(splits);
     }
 
-    const char PATH_SEPARATOR = '.';
-    const int DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME = 3;
+    static const char PATH_SEPARATOR = '.';
+    static const int DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME = 3;
 
     std::vector<std::string> split_device_id_string(
         const std::vector<std::string>& splits) {
@@ -154,7 +161,7 @@ class StringArrayDeviceID : public IDeviceID {
             // "root.a.b" -> {"root.a", "b"}
             std::string table_name = std::accumulate(
                 splits.begin(), splits.end() - 1, std::string(),
-                [this](const std::string& a, const std::string& b) {
+                [](const std::string& a, const std::string& b) {
                     return a.empty() ? b : a + PATH_SEPARATOR + b;
                 });
             final_segments.push_back(table_name);
@@ -165,8 +172,7 @@ class StringArrayDeviceID : public IDeviceID {
             std::string table_name = std::accumulate(
                 splits.begin(),
                 splits.begin() + DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
-                std::string(),
-                [this](const std::string& a, const std::string& b) {
+                std::string(), [](const std::string& a, const std::string& b) {
                     return a.empty() ? b : a + PATH_SEPARATOR + b;
                 });
 

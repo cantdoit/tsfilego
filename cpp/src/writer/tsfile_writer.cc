@@ -618,7 +618,7 @@ std::vector<std::pair<std::shared_ptr<IDeviceID>, int>>
 TsFileWriter::split_tablet_by_device(const Tablet &tablet) {
     std::vector<std::pair<std::shared_ptr<IDeviceID>, int>> result;
     std::shared_ptr<IDeviceID> last_device_id =
-        std::make_shared<StringArrayDeviceID>("");
+        std::make_shared<StringArrayDeviceID>("last_device_id");
     for (int i = 0; i < tablet.get_cur_row_size(); i++) {
         std::shared_ptr<IDeviceID> cur_device_id(tablet.get_device_id(i));
         if (*cur_device_id != *last_device_id) {

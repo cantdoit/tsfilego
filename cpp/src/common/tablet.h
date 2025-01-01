@@ -122,7 +122,6 @@ class Tablet {
 
     int add_timestamp(uint32_t row_index, int64_t timestamp);
 
-    // int set_value(int row_index, int schema_index, double val);
     void *get_value(int row_index, uint32_t schema_index,
                     common::TSDataType &data_type) const;
     template <typename T>
