@@ -16,3 +16,7 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 ]]
+
+# install header files
+file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include/reader/filter)

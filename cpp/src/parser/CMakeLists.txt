@@ -20,3 +20,5 @@ message("Running in src/parser directory")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 file(GLOB_RECURSE PARSER_SRC_LIST "*.cpp")
 add_library(parser_obj OBJECT ${PARSER_SRC_LIST})
+
+target_link_libraries(parser_obj antlr4_static)

@@ -21,3 +21,8 @@ message("CMAKE_CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 file(GLOB_RECURSE read_SRC_LIST "*.cc")
 add_library(read_obj OBJECT ${read_SRC_LIST})
+
+add_subdirectory(filter)
+# install header files
+file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES ${HEADERS} DESTINATION ${LIBRARY_INCLUDE_DIR}/reader)

@@ -17,3 +17,6 @@ specific language governing permissions and limitations
 under the License.
 ]]
 message("Running in src/utils directory")
+# install header files
+file(GLOB HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+install(FILES ${HEADERS} DESTINATION ${LIBRARY_INCLUDE_DIR}/utils)

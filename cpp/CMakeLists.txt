@@ -65,22 +65,11 @@ elseif (CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
 endif()
 message("CMAKE DEBUG: CMAKE_CXX_FLAGS=${CMAKE_CXX_FLAGS}")
 
+
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/lib)
-set(PROJECT_INCLUDE_DIR ${PROJECT_INCLUDE_DIR}
-                        ${PROJECT_SOURCE_DIR}/src
-                        ${PROJECT_SOURCE_DIR}/third_party/lz4
-                        ${PROJECT_SOURCE_DIR}/third_party/lzokay
-                        ${PROJECT_SOURCE_DIR}/third_party/zlib-1.2.13
-                        ${PROJECT_BINARY_DIR}/third_party/zlib-1.2.13
-)
-
-set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-include_directories(${PROJECT_INCLUDE_DIR})
-
-include_directories(${PROJECT_SOURCE_DIR}/third_party/antlr4-cpp-runtime-4/runtime/src)
-
+set(PROJECT_SRC_DIR ${PROJECT_SOURCE_DIR}/src)
+set(LIBRARY_INCLUDE_DIR ${PROJECT_BINARY_DIR}/include)
 add_subdirectory(third_party)
-
 add_subdirectory(src)
 
 add_subdirectory(test)

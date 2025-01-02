@@ -33,3 +33,13 @@ add_library(common_obj OBJECT ${common_SRC_LIST}
     ${common_mutex_SRC_LIST} 
     ${common_datatype_SRC_LIST})
 
+# install header files recursively
+file(GLOB_RECURSE HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/*.h")
+foreach(HEADER_FILE ${HEADERS})
+    get_filename_component(HEADER_DIR ${HEADER_FILE} DIRECTORY)
+    file(RELATIVE_PATH HEADER_DIR_REL ${PROJECT_SRC_DIR} ${HEADER_DIR})
+    install(FILES ${HEADER_FILE} DESTINATION ${LIBRARY_INCLUDE_DIR}/${HEADER_DIR_REL})
+endforeach()
+
+
+
