@@ -135,7 +135,6 @@ class QDSWithTimeGenerator : public ResultSet {
     QueryExpression *qe_;
     Node *tree_;
     std::vector<ValueAt> value_at_vec_;
-    common::PageArena pa;
 };
 
 }  // namespace storage

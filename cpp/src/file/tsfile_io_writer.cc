@@ -75,6 +75,15 @@ void TsFileIOWriter::destroy() {
         if (iter.get() && iter.get()->device_name_) {
             iter.get()->device_name_.reset();
         }
+        if (iter.get()) {
+            for (auto chunk_meta = iter.get()->chunk_meta_list_.begin();
+                 chunk_meta != iter.get()->chunk_meta_list_.end();
+                 chunk_meta++) {
+                if (chunk_meta.get()) {
+                    chunk_meta.get()->statistic_->destroy();
+                }
+            }
+        }
     }
 
     meta_allocator_.destroy();

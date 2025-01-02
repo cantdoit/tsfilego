@@ -83,14 +83,14 @@ namespace storage {
 #define STRING_VALUE_STAT_UPDATE(value)         \
     do {                                        \
         if (UNLIKELY(count_ == 0)) {            \
-            max_value_.dup_from(value, pa);     \
-            min_value_.dup_from(value, pa);     \
-            first_value_.dup_from(value, pa);   \
-            last_value_.dup_from(value, pa);    \
+            max_value_.dup_from(value, *pa_);     \
+            min_value_.dup_from(value, *pa_);     \
+            first_value_.dup_from(value, *pa_);   \
+            last_value_.dup_from(value, *pa_);    \
         } else {                                \
-            max_value_.max(value, pa);          \
-            min_value_.min(value, pa);          \
-            last_value_.dup_from(value, pa);    \
+            max_value_.max(value, *pa_);          \
+            min_value_.min(value, *pa_);          \
+            last_value_.dup_from(value, *pa_);    \
         }                                       \
     } while (false)
 
@@ -289,22 +289,22 @@ class Statistic {
             count_ = typed_stat->count_;                               \
             start_time_ = typed_stat->start_time_;                     \
             end_time_ = typed_stat->end_time_;                         \
-            first_value_.dup_from(typed_stat->first_value_, pa);       \
-            last_value_.dup_from(typed_stat->last_value_, pa);         \
-            min_value_.dup_from(typed_stat->min_value_, pa);           \
-            max_value_.dup_from(typed_stat->max_value_, pa);           \
+            first_value_.dup_from(typed_stat->first_value_, *pa_);       \
+            last_value_.dup_from(typed_stat->last_value_, *pa_);         \
+            min_value_.dup_from(typed_stat->min_value_, *pa_);           \
+            max_value_.dup_from(typed_stat->max_value_, *pa_);           \
         } else {                                                       \
             count_ += typed_stat->count_;                              \
             if (typed_stat->start_time_ < start_time_) {               \
                 start_time_ = typed_stat->start_time_;                 \
-                first_value_.dup_from(typed_stat->first_value_, pa);   \
+                first_value_.dup_from(typed_stat->first_value_, *pa_);   \
             }                                                          \
             if (typed_stat->end_time_ > end_time_) {                   \
                 end_time_ = typed_stat->end_time_;                     \
-                last_value_.dup_from(typed_stat->last_value_, pa);      \
+                last_value_.dup_from(typed_stat->last_value_, *pa_);      \
             }                                                          \
-            min_value_.min(typed_stat->min_value_, pa);                \
-            max_value_.max(typed_stat->max_value_, pa);                \
+            min_value_.min(typed_stat->min_value_, *pa_);                \
+            max_value_.max(typed_stat->max_value_, *pa_);                \
         }                                                              \
         return common::E_OK;                                           \
     } while (false)
@@ -387,10 +387,10 @@ class Statistic {
         count_ = typed_stat->count_;                       \
         start_time_ = typed_stat->start_time_;             \
         end_time_ = typed_stat->end_time_;                 \
-        first_value_.dup_from(typed_stat->first_value_, pa);\
-        last_value_.dup_from(typed_stat->last_value_, pa);  \
-        min_value_.dup_from(typed_stat->min_value_, pa);    \
-        max_value_.dup_from(typed_stat->max_value_, pa);    \
+        first_value_.dup_from(typed_stat->first_value_, *pa_);\
+        last_value_.dup_from(typed_stat->last_value_, *pa_);  \
+        min_value_.dup_from(typed_stat->min_value_, *pa_);    \
+        max_value_.dup_from(typed_stat->max_value_, *pa_);    \
         return common::E_OK;                               \
     } while (false)
 
@@ -832,17 +832,26 @@ class StringStatistic : public Statistic {
           max_value_(),
           first_value_(),
           last_value_() {
-        pa.init(512, common::MOD_STATISTIC_OBJ);
-        min_value_.dup_from("", pa);
-        max_value_.dup_from("", pa);
-        first_value_.dup_from("", pa);
-        last_value_.dup_from("", pa);
+        pa_ = new common::PageArena();
+        pa_->init(512, common::MOD_STATISTIC_OBJ);
     }
+
+    StringStatistic(common::PageArena *pa)
+        : min_value_(),
+          max_value_(),
+          first_value_(),
+          last_value_(),
+          pa_(pa) {
+    }
+
 
     ~StringStatistic() { destroy(); }
 
     void destroy() {
-        pa.destroy();
+        if (pa_) {
+            delete pa_;
+            pa_ = nullptr;
+        }
     }
 
     void clone_from(const StringStatistic &that) {
@@ -850,10 +859,10 @@ class StringStatistic : public Statistic {
         start_time_ = that.start_time_;
         end_time_ = that.end_time_;
     
-        min_value_.dup_from(that.min_value_, pa);
-        max_value_.dup_from(that.max_value_, pa);
-        first_value_.dup_from(that.first_value_, pa);
-        last_value_.dup_from(that.last_value_, pa);
+        min_value_.dup_from(that.min_value_, *pa_);
+        max_value_.dup_from(that.max_value_, *pa_);
+        first_value_.dup_from(that.first_value_, *pa_);
+        last_value_.dup_from(that.last_value_, *pa_);
     }
 
     FORCE_INLINE void update(int64_t time, common::String value) {
@@ -877,12 +886,12 @@ class StringStatistic : public Statistic {
     }
     int deserialize_typed_stat(common::ByteStream &in) {
         int ret = common::E_OK;
-        if (RET_FAIL(common::SerializationUtil::read_mystring(min_value_, &pa, in))) {
-        } else if (RET_FAIL(common::SerializationUtil::read_mystring(max_value_, &pa,
+        if (RET_FAIL(common::SerializationUtil::read_mystring(min_value_, pa_, in))) {
+        } else if (RET_FAIL(common::SerializationUtil::read_mystring(max_value_, pa_,
                                                                    in))) {
-        } else if (RET_FAIL(common::SerializationUtil::read_mystring(first_value_, &pa,
+        } else if (RET_FAIL(common::SerializationUtil::read_mystring(first_value_, pa_,
                                                                    in))) {
-        } else if (RET_FAIL(common::SerializationUtil::read_mystring(last_value_, &pa,
+        } else if (RET_FAIL(common::SerializationUtil::read_mystring(last_value_, pa_,
                                                                    in))) {
         }
         return ret;
@@ -894,7 +903,7 @@ class StringStatistic : public Statistic {
         DEEP_COPY_STRING_STAT_FROM(StringStatistic, stat);
     }
     private:
-      common::PageArena pa;
+      common::PageArena *pa_;
 };
 
 FORCE_INLINE uint32_t get_typed_statistic_sizeof(common::TSDataType type) {
@@ -1025,6 +1034,14 @@ FORCE_INLINE void clone_statistic(Statistic *from, Statistic *to,
         }                                  \
     } while (false);
 
+#define ALLOC_HEAP_STATISTIC_WITH_PA(StatType)  \
+    do {                                   \
+        buf = pa->alloc(sizeof(StatType)); \
+        if (buf != nullptr) {              \
+            stat = new (buf) StatType(pa);     \
+        }                                  \
+    } while (false);
+
 class StatisticFactory {
    public:
     static Statistic *alloc_statistic(common::TSDataType data_type) {
@@ -1082,7 +1099,7 @@ class StatisticFactory {
                 ALLOC_STATISTIC_WITH_PA(DoubleStatistic);
                 break;
             case common::STRING:
-                ALLOC_STATISTIC_WITH_PA(StringStatistic);
+                ALLOC_HEAP_STATISTIC_WITH_PA(StringStatistic);
                 break;
             case common::TEXT:
                 ASSERT(false);

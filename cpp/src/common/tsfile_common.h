@@ -67,7 +67,6 @@ struct PageHeader {
     ~PageHeader() { reset(); }
     void reset() {
         if (statistic_ != nullptr) {
-            statistic_->destroy();
             StatisticFactory::free(statistic_);
             statistic_ = nullptr;
         }
@@ -358,7 +357,9 @@ class TimeseriesIndex : public ITimeseriesIndex {
           chunk_meta_list_(nullptr) {
         // page_arena_.init(PAGE_ARENA_PAGE_SIZE, PAGE_ARENA_MOD_ID);
     }
-    ~TimeseriesIndex() { destroy(); }
+    ~TimeseriesIndex() { 
+        destroy(); 
+    }
     void destroy() {
         // page_arena_.destroy();
         reset();
@@ -402,6 +403,10 @@ class TimeseriesIndex : public ITimeseriesIndex {
         return data_type_;
     }
     int init_statistic(common::TSDataType data_type) {
+        if (statistic_ != nullptr && !statistic_from_pa_) { // clear old statistic
+            StatisticFactory::free(statistic_);
+            statistic_ = nullptr;
+        }
         statistic_ = StatisticFactory::alloc_statistic(data_type);
         if (IS_NULL(statistic_)) {
             return common::E_OOM;

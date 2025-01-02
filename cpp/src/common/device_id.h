@@ -50,6 +50,9 @@ class IDeviceID {
     virtual bool operator==(const IDeviceID& other) { return false; }
     virtual bool operator!=(const IDeviceID& other) { return false; }
 
+   protected:
+    IDeviceID() : empty_segments_() {}
+
    private:
     const std::vector<std::string> empty_segments_;
 };

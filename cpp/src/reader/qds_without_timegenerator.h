@@ -64,7 +64,6 @@ class QDSWithoutTimeGenerator : public ResultSet {
     std::vector<common::ColIterator *> value_iters_;
     std::multimap<int64_t, uint32_t>
         heap_time_;  // key-->time, value-->path_index
-    common::PageArena pa;
 };
 
 }  // namespace storage

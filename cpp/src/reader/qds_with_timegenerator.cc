@@ -344,6 +344,7 @@ void QDSWithTimeGenerator::close() {
         qe_ = nullptr;
     }
     value_at_vec_.clear();
+    pa.destroy();
 }
 
 bool QDSWithTimeGenerator::next() {
