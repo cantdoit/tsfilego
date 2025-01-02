@@ -156,13 +156,14 @@ struct TsRecord {
         return ret;
     }
 
-    template <>
-    int add_point(const std::string &measurement_name, common::String val) {
-        int ret = common::E_OK;
-        points_.emplace_back(DataPoint(measurement_name, val, pa));
-        return ret;
-    }
 };
+
+template<>
+inline int TsRecord::add_point(const std::string &measurement_name, common::String val) {
+    int ret = common::E_OK;
+    points_.emplace_back(DataPoint(measurement_name, val, pa));
+    return ret;
+}
 
 }  // end namespace storage
 #endif  // COMMON_RECORD_H
