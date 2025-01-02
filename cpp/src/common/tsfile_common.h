@@ -294,17 +294,15 @@ struct ChunkMeta {
 };
 
 struct ChunkGroupMeta {
-    std::shared_ptr<IDeviceID> device_name_;
-    common::String device_name_str_;
+    std::shared_ptr<IDeviceID> device_id_;
     common::SimpleList<ChunkMeta *> chunk_meta_list_;
 
     explicit ChunkGroupMeta(common::PageArena *pa_ptr)
         : chunk_meta_list_(pa_ptr) {}
 
-    FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id,
-                          common::PageArena &pa) {
-        device_name_ = device_id;
-        return device_name_str_.dup_from(device_id->get_device_name(), pa);
+    FORCE_INLINE int init(std::shared_ptr<IDeviceID> device_id) {
+        device_id_ = device_id;
+        return 0;
     }
     FORCE_INLINE int push(ChunkMeta *cm) {
         return chunk_meta_list_.push_back(cm);
@@ -637,7 +635,7 @@ class TSMIterator {
     // sort => iterate
     int init();
     bool has_next() const;
-    int get_next(common::String &ret_device_name,
+    int get_next(std::shared_ptr<IDeviceID> &ret_device_id,
                  common::String &ret_measurement_name,
                  TimeseriesIndex &ret_ts_index);
 
@@ -656,11 +654,11 @@ class TSMIterator {
 
     // timeseries measurenemnt chunk meta info
     // map <device_name, <measurement_name, vector<chunk_meta>>>
-    std::map<common::String, std::map<common::String, std::vector<ChunkMeta *>>>
+    std::map<std::shared_ptr<IDeviceID>, std::map<common::String, std::vector<ChunkMeta *>>>
         tsm_chunk_meta_info_;
 
     // device iterator
-    std::map<common::String,
+    std::map<std::shared_ptr<IDeviceID>,
              std::map<common::String, std::vector<ChunkMeta *>>>::iterator
         tsm_device_iter_;
 
@@ -670,17 +668,53 @@ class TSMIterator {
 };
 
 /* =============== TsFile Index ================ */
-struct MetaIndexEntry {
+struct IMetaIndexEntry {
+    virtual ~IMetaIndexEntry() = default;
+
+    virtual int serialize_to(common::ByteStream &out) { return common::E_OK; }
+    virtual int deserialize_from(common::ByteStream &out, common::PageArena *pa) { return common::E_OK; }
+};
+
+struct DeviceMetaIndexEntry : IMetaIndexEntry {
+    std::shared_ptr<IDeviceID> device_id_;
+    int64_t offset_;
+
+    DeviceMetaIndexEntry(const std::shared_ptr<IDeviceID> &device_id, const int64_t offset) : device_id_(device_id),
+            offset_(offset) {}
+
+    ~DeviceMetaIndexEntry() override = default;
+
+    int serialize_to(common::ByteStream &out) override {
+        int ret = common::E_OK;
+        if (RET_FAIL(device_id_->serialize(out))) {
+        } else if (RET_FAIL(
+                       common::SerializationUtil::write_i64(offset_, out))) {
+                       }
+        return ret;
+    }
+
+    int deserialize_from(common::ByteStream &in, common::PageArena *pa) override {
+        int ret = common::E_OK;
+        if (RET_FAIL(device_id_->deserialize(in))) {
+        } else if (RET_FAIL(common::SerializationUtil::read_i64(offset_, in))) {
+        }
+        return ret;
+    }
+};
+
+struct MeasurementMetaIndexEntry : IMetaIndexEntry {
     common::String name_;
     int64_t offset_;
 
-    FORCE_INLINE int init(const std::string &str, int64_t offset,
+    ~MeasurementMetaIndexEntry() override = default;
+
+    FORCE_INLINE int init(const std::string &str, const int64_t offset,
                           common::PageArena &pa) {
         offset_ = offset;
         return name_.dup_from(str, pa);
     }
 
-    int serialize_to(common::ByteStream &out) {
+    int serialize_to(common::ByteStream &out) override {
         int ret = common::E_OK;
         if (RET_FAIL(common::SerializationUtil::write_mystring(name_, out))) {
         } else if (RET_FAIL(
@@ -689,7 +723,7 @@ struct MetaIndexEntry {
         return ret;
     }
 
-    int deserialize_from(common::ByteStream &in, common::PageArena *pa) {
+    int deserialize_from(common::ByteStream &in, common::PageArena *pa) override {
         int ret = common::E_OK;
         if (RET_FAIL(common::SerializationUtil::read_mystring(name_, pa, in))) {
         } else if (RET_FAIL(common::SerializationUtil::read_i64(offset_, in))) {
@@ -699,7 +733,7 @@ struct MetaIndexEntry {
 
 #ifndef NDEBUG
     friend std::ostream &operator<<(std::ostream &os,
-                                    const MetaIndexEntry &entry) {
+                                    const MeasurementMetaIndexEntry &entry) {
         os << "name=" << entry.name_ << ", offset=" << entry.offset_;
         return os;
     }
@@ -722,7 +756,7 @@ static const char *meta_index_node_type_names[5] = {
 struct MetaIndexNode {
     // TODO use vector to support binary search
     // common::SimpleList<MetaIndexEntry*> children_;
-    std::vector<MetaIndexEntry *> children_;
+    std::vector<IMetaIndexEntry *> children_;
     int64_t end_offset_;
     MetaIndexNodeType node_type_;
     common::PageArena *pa_;
@@ -739,7 +773,7 @@ struct MetaIndexNode {
     }
 
     int binary_search_children(const common::String &name, bool exact_search,
-                               MetaIndexEntry &ret_index_entry,
+                               IMetaIndexEntry &ret_index_entry,
                                int64_t &ret_end_offset);
 
     int serialize_to(common::ByteStream &out) {
@@ -751,7 +785,7 @@ struct MetaIndexNode {
                                                                out))) {
         } else {
             for (size_t i = 0; IS_SUCC(ret) && i < children_.size(); i++) {
-                MetaIndexEntry *entry = children_[i];
+                IMetaIndexEntry *entry = children_[i];
                 if (RET_FAIL(entry->serialize_to(out))) {
                 }
             }
@@ -851,7 +885,7 @@ class TableSchema;
 
 struct TsFileMeta {
     MetaIndexNode *index_node_;
-    typedef std::map<common::String, MetaIndexNode *, common::StringLessThan>
+    typedef std::map<std::shared_ptr<IDeviceID>, MetaIndexNode *, IDeviceIDComparator>
         DeviceNodeMap;
     DeviceNodeMap table_metadata_index_node_map_;
     std::unordered_map<std::string, std::string> tsfile_properties_;

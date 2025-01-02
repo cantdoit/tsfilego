@@ -40,6 +40,7 @@ class IDeviceID {
    public:
     virtual ~IDeviceID() = default;
     virtual int serialize(common::ByteStream& write_stream) { return 0; }
+    virtual int deserialize(common::ByteStream& read_stream) { return 0; }
     virtual std::string get_table_name() { return ""; }
     virtual int segment_num() { return 0; }
     virtual const std::vector<std::string>& get_segments() const {
@@ -93,6 +94,23 @@ class StringArrayDeviceID : public IDeviceID {
                                                               write_stream))) {
                 return ret;
             }
+        }
+        return ret;
+    }
+
+    int deserialize(common::ByteStream& read_stream) override {
+        int ret = common::E_OK;
+        uint32_t num_segments;
+        if (RET_FAIL(common::SerializationUtil::read_var_uint(num_segments, read_stream))) {
+            return ret;
+        }
+        segments_.clear();
+        for (uint32_t i = 0; i < num_segments; ++i) {
+            std::string segment;
+            if (RET_FAIL(common::SerializationUtil::read_str(segment, read_stream))) {
+                return ret;
+            }
+            segments_.push_back(segment);
         }
         return ret;
     }

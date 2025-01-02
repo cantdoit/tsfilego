@@ -50,7 +50,7 @@ struct FileIndexWritingMemManager {
 
 class TsFileIOWriter {
    public:
-    typedef std::map<common::String, MetaIndexNode *, common::StringLessThan>
+    typedef std::map<std::shared_ptr<IDeviceID>, MetaIndexNode *, IDeviceIDComparator>
         DeviceNodeMap;
     typedef DeviceNodeMap::iterator DeviceNodeMapIterator;
 
@@ -154,12 +154,12 @@ class TsFileIOWriter {
                                        MetaIndexNode *&ret_node,
                                        const MetaIndexNodeType node_type);
     int add_cur_index_node_to_queue(MetaIndexNode *node,
-                                    common::SimpleList<MetaIndexNode *> *queue);
+                                    common::SimpleList<MetaIndexNode *> *queue) const;
     int alloc_meta_index_node_queue(
         FileIndexWritingMemManager &wmm,
         common::SimpleList<MetaIndexNode *> *&queue);
     int add_device_node(
-        DeviceNodeMap &device_map, common::String device_name,
+        DeviceNodeMap &device_map, std::shared_ptr<IDeviceID> device_id,
         common::SimpleList<MetaIndexNode *> *measurement_index_node_queue,
         FileIndexWritingMemManager &wmm);
     int clone_node_list(common::SimpleList<MetaIndexNode *> *src,

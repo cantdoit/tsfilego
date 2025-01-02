@@ -105,7 +105,7 @@ int TSMIterator::init() {
         }
         if (!tmp.empty()) {
             tsm_chunk_meta_info_[chunk_group_meta_iter_.get()
-                                     ->device_name_str_] = tmp;
+                                     ->device_id_] = tmp;
         }
 
         chunk_group_meta_iter_++;
@@ -119,7 +119,7 @@ bool TSMIterator::has_next() const {
     return tsm_device_iter_ != tsm_chunk_meta_info_.end();
 }
 
-int TSMIterator::get_next(String &ret_device_name, String &ret_measurement_name,
+int TSMIterator::get_next(std::shared_ptr<IDeviceID> &ret_device_id, String &ret_measurement_name,
                           TimeseriesIndex &ret_ts_index) {
     int ret = E_OK;
     SimpleList<ChunkMeta *> chunk_meta_list_of_this_ts(
@@ -132,7 +132,7 @@ int TSMIterator::get_next(String &ret_device_name, String &ret_measurement_name,
             tsm_measurement_iter_ = tsm_device_iter_->second.begin();
         }
     }
-    ret_device_name.shallow_copy_from(tsm_device_iter_->first);
+    ret_device_id = tsm_device_iter_->first;
     ret_measurement_name.shallow_copy_from(tsm_measurement_iter_->first);
     for (auto meta : tsm_measurement_iter_->second) {
         chunk_meta_list_of_this_ts.push_back(meta);
@@ -165,7 +165,7 @@ int TSMIterator::get_next(String &ret_device_name, String &ret_measurement_name,
     if (IS_SUCC(ret)) {
         ret_ts_index.finish();
     }
-    if (UNLIKELY(ret_device_name.is_null())) {
+    if (UNLIKELY(ret_device_id == nullptr)) {
         ret = E_TSFILE_WRITER_META_ERR;
         // log_err("null device name from chunk_group_meta_iter, ret=%d", ret);
         ASSERT(false);

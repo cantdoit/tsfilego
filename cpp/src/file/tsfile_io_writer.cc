@@ -72,8 +72,8 @@ int TsFileIOWriter::init(WriteFile *write_file) {
 void TsFileIOWriter::destroy() {
     for (auto iter = chunk_group_meta_list_.begin();
          iter != chunk_group_meta_list_.end(); iter++) {
-        if (iter.get() && iter.get()->device_name_) {
-            iter.get()->device_name_.reset();
+        if (iter.get() && iter.get()->device_id_) {
+            iter.get()->device_id_.reset();
         }
         if (iter.get()) {
             for (auto chunk_meta = iter.get()->chunk_meta_list_.begin();
@@ -118,7 +118,7 @@ int TsFileIOWriter::start_flush_chunk_group(
     use_prev_alloc_cgm_ = false;
     for (auto iter = chunk_group_meta_list_.begin();
          iter != chunk_group_meta_list_.end(); iter++) {
-        if (*iter.get()->device_name_ == *cur_device_name_) {
+        if (*iter.get()->device_id_ == *cur_device_name_) {
             use_prev_alloc_cgm_ = true;
             cur_chunk_group_meta_ = iter.get();
             break;
@@ -130,7 +130,7 @@ int TsFileIOWriter::start_flush_chunk_group(
             ret = E_OOM;
         } else {
             cur_chunk_group_meta_ = new (buf) ChunkGroupMeta(&meta_allocator_);
-            ret = cur_chunk_group_meta_->init(device_name, meta_allocator_);
+            cur_chunk_group_meta_->init(device_name);
         }
     }
     return ret;
@@ -316,12 +316,12 @@ int TsFileIOWriter::write_file_index() {
 
     // TODO: better memory manage for this while-loop, cur_index_node_queue
     FileIndexWritingMemManager writing_mm;
-    String device_name;
+    std::shared_ptr<IDeviceID> device_id;
     String measurement_name;
     TimeseriesIndex ts_index;
-    String prev_device_name;
+    std::shared_ptr<IDeviceID> prev_device_id;
     int entry_count_in_cur_device = 0;
-    MetaIndexEntry *meta_index_entry = nullptr;
+    IMetaIndexEntry *meta_index_entry = nullptr;
     MetaIndexNode *cur_index_node = nullptr;
     SimpleList<MetaIndexNode *> *cur_index_node_queue = nullptr;
     DeviceNodeMap device_map;
@@ -341,7 +341,7 @@ int TsFileIOWriter::write_file_index() {
     while (IS_SUCC(ret) && tsm_iter.has_next()) {
         ts_index.reset();  // TODO reuse
         if (RET_FAIL(
-                tsm_iter.get_next(device_name, measurement_name, ts_index))) {
+                tsm_iter.get_next(device_id, measurement_name, ts_index))) {
             break;
         }
 #if DEBUG_SE
@@ -351,12 +351,12 @@ int TsFileIOWriter::write_file_index() {
 #endif
 
         // prepare if it is an entry of a new device
-        if (!prev_device_name.equal_to(device_name)) {
-            if (!prev_device_name.is_null()) {
+        if (prev_device_id == nullptr || prev_device_id != device_id) {
+            if (prev_device_id != nullptr) {
                 if (RET_FAIL(add_cur_index_node_to_queue(
                         cur_index_node, cur_index_node_queue))) {
                 } else if (RET_FAIL(add_device_node(
-                               device_map, prev_device_name,
+                               device_map, prev_device_id,
                                cur_index_node_queue, writing_mm))) {
                 }
             }
@@ -367,7 +367,7 @@ int TsFileIOWriter::write_file_index() {
                                writing_mm, cur_index_node, LEAF_MEASUREMENT))) {
                 }
             }
-            prev_device_name.shallow_copy_from(device_name);
+            prev_device_id = device_id;
             entry_count_in_cur_device = 0;
         }
 
@@ -395,7 +395,9 @@ int TsFileIOWriter::write_file_index() {
         if (IS_SUCC(ret)) {
             OFFSET_DEBUG("before ts_index written");
             if (ts_index.get_data_type() != common::VECTOR) {
-                ret = filter.add_path_entry(device_name, measurement_name);
+                common::String tmp_device_name;
+                tmp_device_name.dup_from(device_id->get_device_name(), meta_allocator_);
+                ret = filter.add_path_entry(tmp_device_name, measurement_name);
             }
 
             if (RET_FAIL(ts_index.serialize_to(write_stream_))) {
@@ -419,7 +421,7 @@ int TsFileIOWriter::write_file_index() {
         ASSERT(cur_index_node_queue != nullptr);
         if (RET_FAIL(add_cur_index_node_to_queue(cur_index_node,
                                                  cur_index_node_queue))) {
-        } else if (RET_FAIL(add_device_node(device_map, prev_device_name,
+        } else if (RET_FAIL(add_device_node(device_map, prev_device_id,
                                             cur_index_node_queue,
                                             writing_mm))) {
         }
@@ -461,11 +463,8 @@ int TsFileIOWriter::write_file_index() {
             tsfile_meta.bloom_filter_ = &filter;
             for (auto device_map_iter = device_map.begin();
                  device_map_iter != device_map.end(); device_map_iter++) {
-                common::String insert_device_name;
-                insert_device_name.dup_from(device_map_iter->first,
-                                            meta_allocator_);
                 tsfile_meta.table_metadata_index_node_map_.insert(
-                    std::make_pair(insert_device_name,
+                    std::make_pair(device_map_iter->first,
                                    device_map_iter->second));
             }
             tsfile_meta.table_schemas_ = schema_->table_schema_map_;
@@ -628,7 +627,7 @@ int TsFileIOWriter::alloc_and_init_meta_index_node(
 }
 
 int TsFileIOWriter::add_cur_index_node_to_queue(
-    MetaIndexNode *node, SimpleList<MetaIndexNode *> *queue) {
+    MetaIndexNode *node, SimpleList<MetaIndexNode *> *queue) const {
     node->end_offset_ = cur_file_position();
 #if DEBUG_SE
     std::cout << "add_cur_index_node_to_queue, node=" << (void *)node << " = "
@@ -648,12 +647,12 @@ int TsFileIOWriter::alloc_meta_index_node_queue(
 }
 
 int TsFileIOWriter::add_device_node(
-    DeviceNodeMap &device_map, String device_name,
+    DeviceNodeMap &device_map, std::shared_ptr<IDeviceID> device_id,
     SimpleList<MetaIndexNode *> *measurement_index_node_queue,
     FileIndexWritingMemManager &wmm) {
     ASSERT(measurement_index_node_queue->size() > 0);
     int ret = E_OK;
-    DeviceNodeMapIterator find_iter = device_map.find(device_name);
+    DeviceNodeMapIterator find_iter = device_map.find(device_id);
     if (find_iter != device_map.end()) {
         return E_ALREADY_EXIST;
     }
@@ -662,12 +661,8 @@ int TsFileIOWriter::add_device_node(
     if (RET_FAIL(generate_root(measurement_index_node_queue, root,
                                INTERNAL_MEASUREMENT, wmm))) {
     } else {
-        std::pair<String, MetaIndexNode *> ins_pair;
-        ins_pair.first.shallow_copy_from(device_name);
-        ins_pair.second = root;
-
         std::pair<DeviceNodeMapIterator, bool> ins_res =
-            device_map.insert(ins_pair);
+            device_map.insert(std::make_pair(device_id, root));
         if (!ins_res.second) {
             ASSERT(false);
         }
