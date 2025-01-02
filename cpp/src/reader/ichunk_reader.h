@@ -47,8 +47,8 @@ class IChunkReader {
         return common::E_INVALID_ARG;
     }
 
-    virtual int get_next_page(common::TsBlock *tsblock,
-                              Filter *oneshoot_filter, common::PageArena &pa) {
+    virtual int get_next_page(common::TsBlock *tsblock, Filter *oneshoot_filter,
+                              common::PageArena &pa) {
         return common::E_OK;
     }
 

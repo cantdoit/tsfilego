@@ -22,16 +22,15 @@
 #include <sstream>
 #include <vector>
 
-#include "common/db_common.h"
 #include "common/allocator/my_string.h"
+#include "common/db_common.h"
 
 namespace storage {
 struct Field {
     Field() : type_(common::INVALID_DATATYPE) {}
     Field(common::TSDataType type) : type_(type) {}
 
-    ~Field() {
-    }
+    ~Field() {}
 
     FORCE_INLINE void free_memory() {
         if (type_ == common::TEXT && value_.sval_) {
@@ -55,7 +54,8 @@ struct Field {
     }
 
     template <class T>
-    FORCE_INLINE void set_value(common::TSDataType type, T val, common::PageArena &pa) {
+    FORCE_INLINE void set_value(common::TSDataType type, T val,
+                                common::PageArena &pa) {
         type_ = type;
         switch (type) {
             case common::BOOLEAN: {
@@ -116,7 +116,7 @@ struct Field {
         return -1;  // when data type is unknown
     }
 
-    FORCE_INLINE common::String* get_string_value() {
+    FORCE_INLINE common::String *get_string_value() {
         if (type_ == common::STRING) {
             return value_.strval_;
         } else {
@@ -134,7 +134,7 @@ struct Field {
         int32_t ival_;
         float fval_;
         double dval_;
-        common::String* strval_;
+        common::String *strval_;
         char *sval_;
     } value_;
 };
@@ -205,7 +205,8 @@ class RowRecord {
 
     FORCE_INLINE void reset() {
         for (uint32_t i = 0; i < col_num_; ++i) {
-            if ((*fields_)[i]->type_ == common::TEXT || (*fields_)[i]->type_ == common::STRING) {
+            if ((*fields_)[i]->type_ == common::TEXT ||
+                (*fields_)[i]->type_ == common::STRING) {
                 (*fields_)[i]->free_memory();
             }
             (*fields_)[i]->type_ = common::NULL_TYPE;

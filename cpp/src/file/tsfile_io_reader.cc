@@ -59,8 +59,7 @@ void TsFileIOReader::reset() {
 int TsFileIOReader::alloc_ssi(const std::string &device_path,
                               const std::string &measurement_name,
                               TsFileSeriesScanIterator *&ssi,
-                               common::PageArena &pa, 
-                                Filter *time_filter) {
+                              common::PageArena &pa, Filter *time_filter) {
     int ret = E_OK;
     if (RET_FAIL(load_tsfile_meta_if_necessary())) {
     } else {

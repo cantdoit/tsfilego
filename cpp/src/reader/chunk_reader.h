@@ -66,8 +66,8 @@ class ChunkReader : public IChunkReader {
      */
     virtual int load_by_meta(ChunkMeta *meta);
 
-    virtual int get_next_page(common::TsBlock *tsblock,
-                              Filter *oneshoot_filter, common::PageArena &pa);
+    virtual int get_next_page(common::TsBlock *tsblock, Filter *oneshoot_filter,
+                              common::PageArena &pa);
 
    private:
     FORCE_INLINE bool chunk_has_only_one_page() const {
@@ -80,7 +80,8 @@ class ChunkReader : public IChunkReader {
     int read_from_file_and_rewrap(int want_size = 0);
     bool cur_page_statisify_filter(Filter *filter);
     int skip_cur_page();
-    int decode_cur_page_data(common::TsBlock *&ret_tsblock, Filter *filter, common::PageArena &pa);
+    int decode_cur_page_data(common::TsBlock *&ret_tsblock, Filter *filter,
+                             common::PageArena &pa);
     int decode_tv_buf_into_tsblock(char *time_buf, char *value_buf,
                                    uint32_t time_buf_size,
                                    uint32_t value_buf_size,
@@ -101,10 +102,10 @@ class ChunkReader : public IChunkReader {
                                          common::RowAppender &row_appender,
                                          Filter *filter);
     int STRING_DECODE_TYPED_TV_INTO_TSBLOCK(common::ByteStream &time_in,
-                                                         common::ByteStream &value_in,
-                                                         common::RowAppender &row_appender, 
-                                                         common::PageArena &pa, 
-                                                         Filter *filter);
+                                            common::ByteStream &value_in,
+                                            common::RowAppender &row_appender,
+                                            common::PageArena &pa,
+                                            Filter *filter);
 
    private:
     ReadFile *read_file_;

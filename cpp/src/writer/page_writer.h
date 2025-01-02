@@ -26,7 +26,6 @@
 #include "encoding/encoder.h"
 #include "utils/db_utils.h"
 
-
 namespace storage {
 
 /* ================ PageData ================ */

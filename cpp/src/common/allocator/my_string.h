@@ -139,7 +139,7 @@ struct String {
             this->dup_from(that, pa);
         }
     }
-    
+
     bool operator<(const String &other) const {
         if (this->is_null() && other.is_null()) {
             return false;

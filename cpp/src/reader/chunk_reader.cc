@@ -148,7 +148,8 @@ int ChunkReader::alloc_compressor_and_value_decoder(
     return E_OK;
 }
 
-int ChunkReader::get_next_page(TsBlock *ret_tsblock, Filter *oneshoot_filter, PageArena &pa) {
+int ChunkReader::get_next_page(TsBlock *ret_tsblock, Filter *oneshoot_filter,
+                               PageArena &pa) {
     int ret = E_OK;
     Filter *filter =
         (oneshoot_filter != nullptr ? oneshoot_filter : time_filter_);
@@ -260,7 +261,8 @@ int ChunkReader::skip_cur_page() {
     return ret;
 }
 
-int ChunkReader::decode_cur_page_data(TsBlock *&ret_tsblock, Filter *filter, PageArena &pa) {
+int ChunkReader::decode_cur_page_data(TsBlock *&ret_tsblock, Filter *filter,
+                                      PageArena &pa) {
     int ret = E_OK;
 
     // Step 1: make sure we load the whole page data in @in_stream_
@@ -414,30 +416,31 @@ int ChunkReader::i32_DECODE_TYPED_TV_INTO_TSBLOCK(ByteStream &time_in,
     return ret;
 }
 
-int ChunkReader::STRING_DECODE_TYPED_TV_INTO_TSBLOCK(ByteStream &time_in, ByteStream &value_in,
-                                                     RowAppender &row_appender, PageArena &pa, Filter *filter) {
+int ChunkReader::STRING_DECODE_TYPED_TV_INTO_TSBLOCK(ByteStream &time_in,
+                                                     ByteStream &value_in,
+                                                     RowAppender &row_appender,
+                                                     PageArena &pa,
+                                                     Filter *filter) {
     int ret = E_OK;
-    int64_t time = 0;                                                      
-    common::String value;                                                         
-    while (time_decoder_->has_remaining() || time_in.has_remaining()) {    
-        ASSERT(value_decoder_->has_remaining() ||                          
-                value_in.has_remaining());                                  
-        if (UNLIKELY(!row_appender.add_row())) {                           
-            ret = E_OVERFLOW;                                              
-            break;                                                         
-        } else if (RET_FAIL(time_decoder_->read_int64(time, time_in))) {   
-        } else if (RET_FAIL(value_decoder_->read_String(value, pa,   
-                                                            value_in))) {  
-        } else if (filter != nullptr && !filter->satisfy(time, value)) {   
-            row_appender.backoff_add_row();                                
-            continue;                                                      
-        } else {                                                           
-            /*std::cout << "decoder: time=" << time << ", value=" << value 
-                * << std::endl;*/                                             
-            row_appender.append(0, (char *)&time, sizeof(time));           
-            row_appender.append(1, (char *)&value, sizeof(value));         
-        }                                                                  
-    }      
+    int64_t time = 0;
+    common::String value;
+    while (time_decoder_->has_remaining() || time_in.has_remaining()) {
+        ASSERT(value_decoder_->has_remaining() || value_in.has_remaining());
+        if (UNLIKELY(!row_appender.add_row())) {
+            ret = E_OVERFLOW;
+            break;
+        } else if (RET_FAIL(time_decoder_->read_int64(time, time_in))) {
+        } else if (RET_FAIL(value_decoder_->read_String(value, pa, value_in))) {
+        } else if (filter != nullptr && !filter->satisfy(time, value)) {
+            row_appender.backoff_add_row();
+            continue;
+        } else {
+            /*std::cout << "decoder: time=" << time << ", value=" << value
+             * << std::endl;*/
+            row_appender.append(0, (char *)&time, sizeof(time));
+            row_appender.append(1, (char *)&value, sizeof(value));
+        }
+    }
     return ret;
 }
 
@@ -472,7 +475,8 @@ int ChunkReader::decode_tv_buf_into_tsblock_by_datatype(ByteStream &time_in,
                                          row_appender);
             break;
         case common::STRING:
-            STRING_DECODE_TYPED_TV_INTO_TSBLOCK(time_in, value_in, row_appender, *pa, filter);
+            STRING_DECODE_TYPED_TV_INTO_TSBLOCK(time_in, value_in, row_appender,
+                                                *pa, filter);
             break;
         default:
             ret = E_NOT_SUPPORT;

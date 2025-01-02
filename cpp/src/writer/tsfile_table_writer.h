@@ -32,6 +32,7 @@ class TsFileTableWriter {
     int write_table(const Tablet& tablet);
     int flush();
     int close();
+
    private:
     std::shared_ptr<TsFileWriter> tsfile_writer_;
 };

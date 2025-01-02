@@ -155,7 +155,8 @@ int DataRun::fill_tsblock_from_typed_tvlist(SeqTVListBase *tvlist,
     return ret;
 }
 
-int DataRun::reinit_io_reader(SimpleList<OpenFile *>::Iterator &it, common::PageArena *pa) {
+int DataRun::reinit_io_reader(SimpleList<OpenFile *>::Iterator &it,
+                              common::PageArena *pa) {
     int ret = E_OK;
     // maybe io_reader_ destroy before re-init
     OpenFile *open_file = it.get();
@@ -170,8 +171,8 @@ int DataRun::reinit_io_reader(SimpleList<OpenFile *>::Iterator &it, common::Page
             delete ssi_;
             ssi_ = nullptr;
         }
-        if (RET_FAIL(
-                io_reader_.alloc_ssi(device_name, measurement_name, ssi_, *pa))) {
+        if (RET_FAIL(io_reader_.alloc_ssi(device_name, measurement_name, ssi_,
+                                          *pa))) {
         }
     }
     return ret;

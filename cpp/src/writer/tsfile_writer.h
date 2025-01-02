@@ -21,11 +21,11 @@
 
 #include <fcntl.h>
 
+#include <climits>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <climits>
 
 #include "common/container/simple_vector.h"
 #include "common/device_id.h"
@@ -65,7 +65,7 @@ class TsFileWriter {
     int register_aligned_timeseries(
         const std::string &device_id,
         const std::vector<MeasurementSchema *> &measurement_schemas);
-    void register_table(const std::shared_ptr<TableSchema>& table_schema);
+    void register_table(const std::shared_ptr<TableSchema> &table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
     int write_record_aligned(const TsRecord &record);
@@ -129,7 +129,6 @@ class TsFileWriter {
                            common::BitMap &col_notnull_bitmap, int start_idx,
                            int end_idx);
 
-
     template <typename MeasurementNamesGetter>
     int do_check_schema(
         std::shared_ptr<IDeviceID> device_id,
@@ -165,7 +164,7 @@ class TsFileWriter {
     // record count for next memory check
     int64_t record_count_for_next_mem_check_;
     bool write_file_created_;
-    
+
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, bool *col_values,
                            common::BitMap &col_notnull_bitmap,

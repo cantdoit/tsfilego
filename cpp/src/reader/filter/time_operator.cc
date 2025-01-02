@@ -128,7 +128,9 @@ bool TimeEq::satisfy(Statistic *statistic) {
 
 bool TimeEq::satisfy(int64_t time, int64_t value) { return value_ == time; }
 
-bool TimeEq::satisfy(int64_t time, common::String value) { return value_ == time; }
+bool TimeEq::satisfy(int64_t time, common::String value) {
+    return value_ == time;
+}
 
 bool TimeEq::satisfy_start_end_time(int64_t start_time, int64_t end_time) {
     return value_ <= end_time && value_ >= start_time;
@@ -153,9 +155,13 @@ bool TimeNotEq::satisfy(Statistic *statistic) {
              value_ == statistic->end_time_);
 }
 
-bool TimeNotEq::satisfy(int64_t time, int64_t value) { return !(value_ == time); }
+bool TimeNotEq::satisfy(int64_t time, int64_t value) {
+    return !(value_ == time);
+}
 
-bool TimeNotEq::satisfy(int64_t time, common::String value) { return !(value_ == time); }
+bool TimeNotEq::satisfy(int64_t time, common::String value) {
+    return !(value_ == time);
+}
 
 bool TimeNotEq::satisfy_start_end_time(int64_t start_time, int64_t end_time) {
     return value_ != end_time && value_ != start_time;
@@ -192,7 +198,9 @@ bool TimeGt::satisfy(Statistic *statistic) {
 
 bool TimeGt::satisfy(int64_t time, int64_t value) { return value_ < time; }
 
-bool TimeGt::satisfy(int64_t time, common::String value) { return value_ < time; }
+bool TimeGt::satisfy(int64_t time, common::String value) {
+    return value_ < time;
+}
 
 bool TimeGt::satisfy_start_end_time(int64_t start_time, int64_t end_time) {
     return value_ < end_time;
@@ -221,7 +229,9 @@ bool TimeGtEq::satisfy(Statistic *statistic) {
 
 bool TimeGtEq::satisfy(int64_t time, int64_t value) { return value_ <= time; }
 
-bool TimeGtEq::satisfy(int64_t time, common::String value) { return value_ <= time; }
+bool TimeGtEq::satisfy(int64_t time, common::String value) {
+    return value_ <= time;
+}
 
 bool TimeGtEq::satisfy_start_end_time(int64_t start_time, int64_t end_time) {
     return value_ <= end_time;
@@ -248,7 +258,9 @@ bool TimeLt::satisfy(Statistic *statistic) {
 
 bool TimeLt::satisfy(int64_t time, int64_t value) { return value_ > time; }
 
-bool TimeLt::satisfy(int64_t time, common::String value) { return value_ > time; }
+bool TimeLt::satisfy(int64_t time, common::String value) {
+    return value_ > time;
+}
 
 bool TimeLt::satisfy_start_end_time(int64_t start_time, int64_t end_time) {
     return value_ > start_time;
@@ -277,7 +289,9 @@ bool TimeLtEq::satisfy(Statistic *statistic) {
 
 bool TimeLtEq::satisfy(int64_t time, int64_t value) { return value_ >= time; }
 
-bool TimeLtEq::satisfy(int64_t time, common::String value) { return value_ >= time; }
+bool TimeLtEq::satisfy(int64_t time, common::String value) {
+    return value_ >= time;
+}
 
 bool TimeLtEq::satisfy_start_end_time(int64_t start_time, int64_t end_time) {
     return value_ >= start_time;

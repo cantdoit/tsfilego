@@ -72,8 +72,8 @@ class AlignedChunkReader : public IChunkReader {
     virtual int load_by_aligned_meta(ChunkMeta *time_meta,
                                      ChunkMeta *value_meta);
 
-    virtual int get_next_page(common::TsBlock *tsblock,
-                              Filter *oneshoot_filter, common::PageArena &pa);
+    virtual int get_next_page(common::TsBlock *tsblock, Filter *oneshoot_filter,
+                              common::PageArena &pa);
 
    private:
     FORCE_INLINE bool chunk_has_only_one_page(

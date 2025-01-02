@@ -87,12 +87,13 @@ std::vector<std::string> TsFileReader::get_all_devices() {
     if (tsfile_meta != nullptr) {
         PageArena pa;
         pa.init(512, MOD_TSFILE_READER);
-        get_all_devices(device_ids, tsfile_meta->index_node_, pa);  
+        get_all_devices(device_ids, tsfile_meta->index_node_, pa);
     }
     return device_ids;
 }
 
-int TsFileReader::get_all_devices(std::vector<std::string> &device_ids, MetaIndexNode *index_node, PageArena &pa) {
+int TsFileReader::get_all_devices(std::vector<std::string> &device_ids,
+                                  MetaIndexNode *index_node, PageArena &pa) {
     int ret = E_OK;
     if (index_node != nullptr) {
         if (index_node->node_type_ == LEAF_DEVICE) {
@@ -101,7 +102,7 @@ int TsFileReader::get_all_devices(std::vector<std::string> &device_ids, MetaInde
             }
         } else {
             for (size_t idx = 0; idx < index_node->children_.size(); idx++) {
-                MetaIndexEntry* meta_index_entry = index_node->children_[idx];
+                MetaIndexEntry *meta_index_entry = index_node->children_[idx];
                 int start_offset = meta_index_entry->offset_;
                 int end_offset = index_node->end_offset_;
                 if (idx + 1 < index_node->children_.size()) {
@@ -115,10 +116,12 @@ int TsFileReader::get_all_devices(std::vector<std::string> &device_ids, MetaInde
                 if (IS_NULL(data_buf) || IS_NULL(m_idx_node_buf)) {
                     return E_OOM;
                 }
-                MetaIndexNode *top_node = new (m_idx_node_buf) MetaIndexNode(&pa);
+                MetaIndexNode *top_node =
+                    new (m_idx_node_buf) MetaIndexNode(&pa);
                 if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
-                                ret_read_len))) {
-                } else if (RET_FAIL(top_node->deserialize_from(data_buf, read_size))) {
+                                              ret_read_len))) {
+                } else if (RET_FAIL(top_node->deserialize_from(data_buf,
+                                                               read_size))) {
                 } else {
                     ret = get_all_devices(device_ids, top_node, pa);
                 }

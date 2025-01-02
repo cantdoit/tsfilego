@@ -269,7 +269,8 @@ FORCE_INLINE int IntTS2DIFFEncoder::encode(double value,
     return common::E_TYPE_NOT_MATCH;
 }
 template <>
-FORCE_INLINE int IntTS2DIFFEncoder::encode(common::String value, common::ByteStream &out) {
+FORCE_INLINE int IntTS2DIFFEncoder::encode(common::String value,
+                                           common::ByteStream &out) {
     return common::E_TYPE_NOT_MATCH;
 }
 
@@ -299,7 +300,8 @@ FORCE_INLINE int LongTS2DIFFEncoder::encode(double value,
     return common::E_TYPE_NOT_MATCH;
 }
 template <>
-FORCE_INLINE int LongTS2DIFFEncoder::encode(common::String value, common::ByteStream &out) {
+FORCE_INLINE int LongTS2DIFFEncoder::encode(common::String value,
+                                            common::ByteStream &out) {
     return common::E_TYPE_NOT_MATCH;
 }
 FORCE_INLINE int FloatTS2DIFFEncoder::encode(bool value,

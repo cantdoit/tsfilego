@@ -19,8 +19,8 @@
 #ifndef READER_FILTER_BASIC_OBJECT_H
 #define READER_FILTER_BASIC_OBJECT_H
 
-#include "common/db_common.h"
 #include "common/allocator/my_string.h"
+#include "common/db_common.h"
 #include "string.h"
 
 namespace storage {

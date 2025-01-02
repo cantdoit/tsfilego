@@ -115,7 +115,8 @@ void TsFileWriter::set_generate_table_schema(bool generate_table_schema) {
     io_writer_->set_generate_table_schema(generate_table_schema);
 }
 
-void TsFileWriter::register_table(const std::shared_ptr<TableSchema>& table_schema) {
+void TsFileWriter::register_table(
+    const std::shared_ptr<TableSchema> &table_schema) {
     if (!table_schema) return;
     table_schema_map_.emplace(table_schema->get_table_name(), table_schema);
 }
@@ -200,8 +201,7 @@ int TsFileWriter::register_timeseries(
     const std::string &device_id,
     const std::vector<MeasurementSchema *> &measurement_schema_vec) {
     int ret = E_OK;
-    auto it =
-        measurement_schema_vec.begin();
+    auto it = measurement_schema_vec.begin();
     for (; it != measurement_schema_vec.end();
          it++) {  // cppcheck-suppress postfixOperator
         ret = register_timeseries(device_id, *it);
@@ -423,8 +423,8 @@ int TsFileWriter::write_record(const TsRecord &record) {
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromRecord mnames_getter(record);
     if (RET_FAIL(do_check_schema(
-            std::make_shared<StringArrayDeviceID>(record.device_id_), mnames_getter,
-            chunk_writers))) {
+            std::make_shared<StringArrayDeviceID>(record.device_id_),
+            mnames_getter, chunk_writers))) {
         return ret;
     }
 
@@ -449,8 +449,8 @@ int TsFileWriter::write_record_aligned(const TsRecord &record) {
     TimeChunkWriter *time_chunk_writer;
     MeasurementNamesFromRecord mnames_getter(record);
     if (RET_FAIL(do_check_schema_aligned(
-            std::make_shared<StringArrayDeviceID>(record.device_id_), mnames_getter,
-            time_chunk_writer, value_chunk_writers))) {
+            std::make_shared<StringArrayDeviceID>(record.device_id_),
+            mnames_getter, time_chunk_writer, value_chunk_writers))) {
         return ret;
     }
     if (value_chunk_writers.size() != record.points_.size()) {

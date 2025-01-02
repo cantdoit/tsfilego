@@ -299,8 +299,8 @@ int QDSWithTimeGenerator::init(TsFileIOReader *io_reader, QueryExpression *qe) {
     for (size_t i = 0; i < paths.size(); i++) {
         ValueAt va;
         index_lookup_.insert({paths[i].measurement_, i});
-        if (RET_FAIL(io_reader_->alloc_ssi(paths[i].device_,
-                                           paths[i].measurement_, va.ssi_, pa))) {
+        if (RET_FAIL(io_reader_->alloc_ssi(
+                paths[i].device_, paths[i].measurement_, va.ssi_, pa))) {
         } else {
             va.io_reader_ = io_reader_;
             data_types.push_back(va.value_col_iter_->get_data_type());

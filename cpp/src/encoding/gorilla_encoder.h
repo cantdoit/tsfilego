@@ -421,7 +421,8 @@ FORCE_INLINE int LongGorillaEncoder::encode(double value,
     return common::E_TYPE_NOT_MATCH;
 }
 template <>
-FORCE_INLINE int LongGorillaEncoder::encode(common::String value, common::ByteStream &out_stream) {
+FORCE_INLINE int LongGorillaEncoder::encode(common::String value,
+                                            common::ByteStream &out_stream) {
     ASSERT(false);
     return common::E_TYPE_NOT_MATCH;
 }

@@ -23,9 +23,9 @@
 #include <string>
 #include <vector>
 
+#include "common/allocator/my_string.h"
 #include "common/db_common.h"
 #include "utils/errno_define.h"
-#include "common/allocator/my_string.h"
 
 namespace storage {
 
@@ -53,7 +53,7 @@ struct DataPoint {
         int64_t i64_val_;
         float float_val_;
         double double_val_;
-        common::String* str_val_;
+        common::String *str_val_;
     } u_;
     TextType text_val_;
 
@@ -92,7 +92,8 @@ struct DataPoint {
         u_.double_val_ = d;
     }
 
-    DataPoint(const std::string &measurement_name, common::String &str, common::PageArena &pa)
+    DataPoint(const std::string &measurement_name, common::String &str,
+              common::PageArena &pa)
         : measurement_name_(measurement_name),
           data_type_(common::STRING),
           text_val_() {
@@ -155,7 +156,7 @@ struct TsRecord {
         return ret;
     }
 
-    template<>
+    template <>
     int add_point(const std::string &measurement_name, common::String val) {
         int ret = common::E_OK;
         points_.emplace_back(DataPoint(measurement_name, val, pa));

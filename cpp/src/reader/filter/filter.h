@@ -21,8 +21,8 @@
 
 #include <vector>
 
-#include "common/db_common.h"
 #include "common/allocator/my_string.h"
+#include "common/db_common.h"
 
 namespace storage {
 
