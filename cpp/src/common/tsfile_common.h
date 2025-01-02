@@ -668,11 +668,66 @@ class TSMIterator {
 };
 
 /* =============== TsFile Index ================ */
+struct IComparable {
+    virtual ~IComparable() = default;
+    virtual bool operator<(const IComparable &other) const = 0;
+    virtual bool operator==(const IComparable &other) const = 0;
+    virtual std::string to_string() const = 0;
+};
+
+struct DeviceIDComparable : IComparable {
+    std::shared_ptr<IDeviceID> device_id_;
+
+    explicit DeviceIDComparable(const std::shared_ptr<IDeviceID> &device_id) : device_id_(device_id) {}
+
+    bool operator<(const IComparable &other) const override {
+        const auto *other_device = dynamic_cast<const DeviceIDComparable *>(&other);
+        if (!other_device) throw std::runtime_error("Incompatible comparison");
+        return device_id_->get_device_name() < other_device->device_id_->get_device_name();
+    }
+
+    bool operator==(const IComparable &other) const override {
+        const auto *other_device = dynamic_cast<const DeviceIDComparable *>(&other);
+        if (!other_device) throw std::runtime_error("Incompatible comparison");
+        return device_id_->get_device_name() == other_device->device_id_->get_device_name();
+    }
+
+    std::string to_string() const override {
+        return device_id_->get_device_name();
+    }
+};
+
+struct StringComparable : IComparable {
+    std::string value_;
+
+    explicit StringComparable(const std::string &value) : value_(value) {}
+
+    bool operator<(const IComparable &other) const override {
+        const auto *other_string = dynamic_cast<const StringComparable *>(&other);
+        if (!other_string) throw std::runtime_error("Incompatible comparison");
+        return value_ < other_string->value_;
+    }
+
+    bool operator==(const IComparable &other) const override {
+        const auto *other_string = dynamic_cast<const StringComparable *>(&other);
+        if (!other_string) throw std::runtime_error("Incompatible comparison");
+        return value_ == other_string->value_;
+    }
+
+    std::string to_string() const override {
+        return value_;
+    }
+};
+
+
 struct IMetaIndexEntry {
     virtual ~IMetaIndexEntry() = default;
 
     virtual int serialize_to(common::ByteStream &out) { return common::E_OK; }
     virtual int deserialize_from(common::ByteStream &out, common::PageArena *pa) { return common::E_OK; }
+    virtual int64_t get_offset() const { return 0; }
+    virtual bool is_device_level() const { return false; }
+    virtual std::shared_ptr<IComparable> get_compare_key() const = 0;
 };
 
 struct DeviceMetaIndexEntry : IMetaIndexEntry {
@@ -693,12 +748,28 @@ struct DeviceMetaIndexEntry : IMetaIndexEntry {
         return ret;
     }
 
+    std::shared_ptr<IDeviceID>& get_device_id() {
+        return device_id_;
+    }
+
     int deserialize_from(common::ByteStream &in, common::PageArena *pa) override {
         int ret = common::E_OK;
         if (RET_FAIL(device_id_->deserialize(in))) {
         } else if (RET_FAIL(common::SerializationUtil::read_i64(offset_, in))) {
         }
         return ret;
+    }
+
+    int64_t get_offset() const override {
+        return offset_;
+    }
+
+    std::shared_ptr<IComparable> get_compare_key() const override {
+        return std::make_shared<DeviceIDComparable>(device_id_);
+    }
+
+    bool is_device_level() const override {
+        return true;
     }
 };
 
@@ -731,6 +802,18 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
         return ret;
     }
 
+    int64_t get_offset() const override {
+        return offset_;
+    }
+
+    std::shared_ptr<IComparable> get_compare_key() const override {
+        return std::make_shared<StringComparable>(name_.to_std_string());
+    }
+
+    bool is_device_level() const override {
+        return false;
+    }
+
 #ifndef NDEBUG
     friend std::ostream &operator<<(std::ostream &os,
                                     const MeasurementMetaIndexEntry &entry) {
@@ -756,7 +839,7 @@ static const char *meta_index_node_type_names[5] = {
 struct MetaIndexNode {
     // TODO use vector to support binary search
     // common::SimpleList<MetaIndexEntry*> children_;
-    std::vector<IMetaIndexEntry *> children_;
+    std::vector<std::shared_ptr<IMetaIndexEntry>> children_;
     int64_t end_offset_;
     MetaIndexNodeType node_type_;
     common::PageArena *pa_;
@@ -764,15 +847,11 @@ struct MetaIndexNode {
     explicit MetaIndexNode(common::PageArena *pa)
         : children_(), end_offset_(0), node_type_(), pa_(pa) {}
 
-    int get_first_child_name(common::String &ret_str) {
-        if (children_.size() == 0) {
-            return common::E_NOT_EXIST;
-        }
-        ret_str.shallow_copy_from(children_[0]->name_);
-        return common::E_OK;
+    std::shared_ptr<IMetaIndexEntry> peek() {
+        return children_[0];
     }
 
-    int binary_search_children(const common::String &name, bool exact_search,
+    int binary_search_children(std::shared_ptr<IComparable> key, bool exact_search,
                                IMetaIndexEntry &ret_index_entry,
                                int64_t &ret_end_offset);
 

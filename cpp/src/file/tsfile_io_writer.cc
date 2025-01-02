@@ -355,9 +355,9 @@ int TsFileIOWriter::write_file_index() {
             if (prev_device_id != nullptr) {
                 if (RET_FAIL(add_cur_index_node_to_queue(
                         cur_index_node, cur_index_node_queue))) {
-                } else if (RET_FAIL(add_device_node(
-                               device_map, prev_device_id,
-                               cur_index_node_queue, writing_mm))) {
+                } else if (RET_FAIL(add_device_node(device_map, prev_device_id,
+                                                    cur_index_node_queue,
+                                                    writing_mm))) {
                 }
             }
             if (IS_SUCC(ret)) {
@@ -396,7 +396,8 @@ int TsFileIOWriter::write_file_index() {
             OFFSET_DEBUG("before ts_index written");
             if (ts_index.get_data_type() != common::VECTOR) {
                 common::String tmp_device_name;
-                tmp_device_name.dup_from(device_id->get_device_name(), meta_allocator_);
+                tmp_device_name.dup_from(device_id->get_device_name(),
+                                         meta_allocator_);
                 ret = filter.add_path_entry(tmp_device_name, measurement_name);
             }
 
@@ -551,9 +552,8 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
     for (device_map_iter = device_map.begin();
          device_map_iter != device_map.end() && IS_SUCC(ret);
          device_map_iter++) {
-        String device_name;
-        device_name.shallow_copy_from(device_map_iter->first);
-        MetaIndexEntry *entry = nullptr;
+        auto device_id = device_map_iter->first;
+        std::shared_ptr<IMetaIndexEntry> entry;
         if (cur_index_node->is_full()) {
             cur_index_node->end_offset_ = cur_file_position();
 #if DEBUG_SE
@@ -565,8 +565,7 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
                            wmm, cur_index_node, LEAF_DEVICE))) {
             }
         }
-        if (RET_FAIL(
-                alloc_and_init_meta_index_entry(wmm, entry, device_name))) {
+        if (RET_FAIL(alloc_and_init_meta_index_entry(wmm, entry, device_id))) {
         } else if (RET_FAIL(
                        device_map_iter->second->serialize_to(write_stream_))) {
         } else if (RET_FAIL(cur_index_node->push_entry(entry))) {
@@ -594,13 +593,16 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
 }
 
 int TsFileIOWriter::alloc_and_init_meta_index_entry(
-    FileIndexWritingMemManager &wmm, MetaIndexEntry *&ret_entry, String &name) {
-    void *buf = wmm.pa_.alloc(sizeof(MetaIndexEntry));
+    FileIndexWritingMemManager &wmm,
+    std::shared_ptr<IMetaIndexEntry> &ret_entry,
+    const std::shared_ptr<IDeviceID>& device_id) {
+    void *buf = wmm.pa_.alloc(sizeof(DeviceMetaIndexEntry));
     if (IS_NULL(buf)) {
         return E_OOM;
     }
-    ret_entry = new (buf) MetaIndexEntry;
-    ret_entry->name_.shallow_copy_from(name);
+    std::shared_ptr<IMetaIndexEntry> entry(static_cast<DeviceMetaIndexEntry*>(buf), PageArenaDeleter());
+    ret_entry = entry;
+    ret_entry->;
     ret_entry->offset_ = cur_file_position();
 #if DEBUG_SE
     std::cout << "alloc_and_init_meta_index_entry, MetaIndexEntry="

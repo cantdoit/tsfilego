@@ -214,8 +214,8 @@ struct MetaIndexEntryComp {
     }
 };
 
-int MetaIndexNode::binary_search_children(const String &name, bool exact_search,
-                                          MetaIndexEntry &ret_index_entry,
+int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool exact_search,
+                                          IMetaIndexEntry &ret_index_entry,
                                           int64_t &ret_end_offset) {
 #if DEBUG_SE
     std::cout << "MetaIndexNode::binary_search_children start, name=" << name
@@ -227,7 +227,7 @@ int MetaIndexNode::binary_search_children(const String &name, bool exact_search,
 #endif
     bool is_aligned = false;
     if (node_type_ == LEAF_MEASUREMENT && children_.size() == 1 &&
-        children_[0]->name_.len_ == 0) {
+        children_[0]->get_compare_key()->to_string().empty()) {
         is_aligned = true;
     }
     // children_[l] <= name < children_[h]
