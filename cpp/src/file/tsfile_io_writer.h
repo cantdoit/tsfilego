@@ -148,8 +148,12 @@ class TsFileIOWriter {
     int build_device_level(DeviceNodeMap &device_map, MetaIndexNode *&ret_root,
                            FileIndexWritingMemManager &wmm);
     int alloc_and_init_meta_index_entry(FileIndexWritingMemManager &wmm,
-                                        MetaIndexEntry *&ret_entry,
+                                        IMetaIndexEntry *&ret_entry,
                                         common::String &name);
+    int alloc_and_init_meta_index_entry(
+    FileIndexWritingMemManager &wmm,
+    std::shared_ptr<IMetaIndexEntry> &ret_entry,
+    const std::shared_ptr<IDeviceID>& device_id);
     int alloc_and_init_meta_index_node(FileIndexWritingMemManager &wmm,
                                        MetaIndexNode *&ret_node,
                                        const MetaIndexNodeType node_type);
