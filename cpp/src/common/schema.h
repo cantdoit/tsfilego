@@ -76,16 +76,16 @@ struct MeasurementSchema {
         if (RET_FAIL(
                 common::SerializationUtil::write_str(measurement_name_, out))) {
         } else if (RET_FAIL(
-                       common::SerializationUtil::write_i32(data_type_, out))) {
+                       common::SerializationUtil::write_ui8(data_type_, out))) {
         } else if (RET_FAIL(
-                       common::SerializationUtil::write_i32(encoding_, out))) {
-        } else if (RET_FAIL(common::SerializationUtil::write_i32(
+                       common::SerializationUtil::write_ui8(encoding_, out))) {
+        } else if (RET_FAIL(common::SerializationUtil::write_ui8(
                        compression_type_, out))) {
         }
         if (ret == common::E_OK) {
-            if (RET_FAIL(common::SerializationUtil::write_str(measurement_name_,
-                                                              out))) {
-                for (auto &prop : props_) {
+            if (RET_FAIL(common::SerializationUtil::write_ui32(props_.size(),
+                                                               out))) {
+                for (const auto &prop : props_) {
                     if (RET_FAIL(common::SerializationUtil::write_str(
                             prop.first, out))) {
                     } else if (RET_FAIL(common::SerializationUtil::write_str(
@@ -113,20 +113,27 @@ struct MeasurementSchemaGroup {
     TimeChunkWriter *time_chunk_writer_ = nullptr;
 };
 
-enum class ColumnCategory { ID, MEASUREMENT };
+enum class ColumnCategory { TAG, FIELD };
 
 class TableSchema {
    public:
+    static void to_lowercase_inplace(std::string& str) {
+        std::transform(str.begin(), str.end(), str.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+    }
+
     TableSchema() = default;
     TableSchema(const std::string &table_name,
                 const std::vector<std::shared_ptr<MeasurementSchema>>
-                    &measurement_schemas,
+                    &column_schemas,
                 const std::vector<ColumnCategory> &column_categories)
         : table_name_(table_name),
-          measurement_schemas_(measurement_schemas),
+          column_schemas_(column_schemas),
           column_categories_(column_categories) {
+        to_lowercase_inplace(table_name_);
         int idx = 0;
-        for (auto &measurement_schema : measurement_schemas_) {
+        for (const auto &measurement_schema : column_schemas_) {
+            to_lowercase_inplace(measurement_schema->measurement_name_);
             column_pos_index_.insert(
                 std::make_pair(measurement_schema->measurement_name_, idx++));
         }
@@ -134,7 +141,7 @@ class TableSchema {
 
     TableSchema(TableSchema &&other) noexcept
         : table_name_(std::move(other.table_name_)),
-          measurement_schemas_(std::move(other.measurement_schemas_)),
+          column_schemas_(std::move(other.column_schemas_)),
           column_categories_(std::move(other.column_categories_)) {}
 
     TableSchema(const TableSchema &other) = default;
@@ -142,15 +149,16 @@ class TableSchema {
     int serialize_to(common::ByteStream &out) {
         int ret = common::E_OK;
         if (RET_FAIL(common::SerializationUtil::write_var_uint(
-                measurement_schemas_.size(), out))) {
+                column_schemas_.size(), out))) {
         } else {
-            for (size_t i = 0; IS_SUCC(ret) && i < measurement_schemas_.size();
+            for (size_t i = 0; IS_SUCC(ret) && i < column_schemas_.size();
                  i++) {
-                auto column_schema = measurement_schemas_[i];
+                auto column_schema = column_schemas_[i];
                 auto column_category = column_categories_[i];
-                // column_schema-
-                common::SerializationUtil::write_i32(
-                    static_cast<int32_t>(column_category), out);
+                if (RET_FAIL(column_schema->serialize_to(out))) {
+                } else if (RET_FAIL(common::SerializationUtil::write_i8(
+                               static_cast<int32_t>(column_category), out))) {
+                }
             }
         }
         return ret;
@@ -158,25 +166,25 @@ class TableSchema {
 
     ~TableSchema() = default;
 
-    std::string get_table_name() { return table_name_; }
+    const std::string& get_table_name() { return table_name_; }
 
     std::vector<std::string> get_measurement_names() const {
         std::vector<std::string> ret;
-        for (const auto &measurement_schema : measurement_schemas_) {
+        for (const auto &measurement_schema : column_schemas_) {
             ret.emplace_back(measurement_schema->measurement_name_);
         }
         return ret;
     }
 
-    int find_column_index(std::string column_name) {
+    int find_column_index(const std::string& column_name) {
         std::string lower_case_column_name = to_lower(column_name);
         auto it = column_pos_index_.find(lower_case_column_name);
         if (it != column_pos_index_.end()) {
             return it->second;
         } else {
             int index = -1;
-            for (size_t i = 0; i < measurement_schemas_.size(); ++i) {
-                if (to_lower(measurement_schemas_[i]->measurement_name_) ==
+            for (size_t i = 0; i < column_schemas_.size(); ++i) {
+                if (to_lower(column_schemas_[i]->measurement_name_) ==
                     lower_case_column_name) {
                     index = static_cast<int>(i);
                     break;
@@ -192,20 +200,19 @@ class TableSchema {
              iter != chunk_group_meta->chunk_meta_list_.end(); iter++) {
             auto &chunk_meta = iter.get();
             int column_idx =
-                find_column_index(chunk_meta->measurement_name_.to_string());
+                find_column_index(chunk_meta->measurement_name_.to_std_string());
             if (column_idx == -1) {
                 auto measurement_schema = std::make_shared<MeasurementSchema>(
-                    chunk_meta->measurement_name_.to_string(),
+                    chunk_meta->measurement_name_.to_std_string(),
                     chunk_meta->data_type_, chunk_meta->encoding_,
                     chunk_meta->compression_type_);
-                measurement_schemas_.emplace_back(measurement_schema);
-                column_categories_.emplace_back(ColumnCategory::MEASUREMENT);
+                column_schemas_.emplace_back(measurement_schema);
+                column_categories_.emplace_back(ColumnCategory::FIELD);
                 column_pos_index_.insert(
-                    std::make_pair(chunk_meta->measurement_name_.to_string(),
-                                   measurement_schemas_.size() - 1));
+                    std::make_pair(chunk_meta->measurement_name_.to_std_string(),
+                                   column_schemas_.size() - 1));
             } else {
-                auto origin_measurement_schema =
-                    measurement_schemas_.at(column_idx);
+                auto origin_measurement_schema = column_schemas_.at(column_idx);
                 if (origin_measurement_schema->data_type_ !=
                     chunk_meta->data_type_) {
                     origin_measurement_schema->data_type_ =
@@ -217,15 +224,20 @@ class TableSchema {
 
     std::vector<common::TSDataType> get_data_types() const {
         std::vector<common::TSDataType> ret;
-        for (const auto &measurement_schema : measurement_schemas_) {
+        for (const auto &measurement_schema : column_schemas_) {
             ret.emplace_back(measurement_schema->data_type_);
         }
         return ret;
     }
 
-    std::vector<ColumnCategory> get_column_categories() const { return column_categories_; }
+    std::vector<ColumnCategory> get_column_categories() const {
+        return column_categories_;
+    }
 
-    std::vector<std::shared_ptr<MeasurementSchema>> get_measurement_schemas() const { return measurement_schemas_; }
+    std::vector<std::shared_ptr<MeasurementSchema>> get_measurement_schemas()
+        const {
+        return column_schemas_;
+    }
 
    private:
     std::string to_lower(const std::string &str) {
@@ -235,7 +247,7 @@ class TableSchema {
         return result;
     }
     std::string table_name_;
-    std::vector<std::shared_ptr<MeasurementSchema>> measurement_schemas_;
+    std::vector<std::shared_ptr<MeasurementSchema>> column_schemas_;
     std::vector<ColumnCategory> column_categories_;
     std::map<std::string, int> column_pos_index_;
 };

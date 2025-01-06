@@ -63,6 +63,7 @@ class TsFileWriter {
                             common::TSDataType data_type,
                             common::TSEncoding encoding,
                             common::CompressionType compression_type);
+    int register_timeseries(const std::string &device_id, const MeasurementSchema &measurement_schema);
     int register_aligned_timeseries(const std::string &device_path,
                                     const std::string &measurement_name,
                                     common::TSDataType data_type,
@@ -71,6 +72,9 @@ class TsFileWriter {
     int register_aligned_timeseries(
         const std::string &device_id,
         const std::vector<MeasurementSchema *> &measurement_schemas);
+    int register_aligned_timeseries(
+        const std::string &device_id,
+        const MeasurementSchema &measurement_schema);
     void register_table(const std::shared_ptr<TableSchema>& table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);

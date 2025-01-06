@@ -19,7 +19,7 @@
 
 #include "tablet.h"
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "utils/errno_define.h"
 
@@ -28,7 +28,7 @@ using namespace common;
 namespace storage {
 
 int Tablet::init() {
-    ASSERT(timestamps_ == nullptr);
+    ASSERT(timestamps_ == NULL);
     timestamps_ = (int64_t *)malloc(sizeof(int64_t) * max_row_num_);
 
     size_t schema_count = schema_vec_->size();
@@ -73,10 +73,6 @@ void Tablet::destroy() {
     if (bitmaps_ != NULL) {
         delete[] bitmaps_;
     }
-    if (schema_vec_ != nullptr && owned_schemas_) {
-        delete schema_vec_;
-        schema_vec_ = nullptr;
-    }
 }
 
 int Tablet::add_timestamp(uint32_t row_index, int64_t timestamp) {
@@ -86,68 +82,31 @@ int Tablet::add_timestamp(uint32_t row_index, int64_t timestamp) {
         return E_OUT_OF_RANGE;
     }
     timestamps_[row_index] = timestamp;
-    cur_row_size_++;
+    cur_row_size_ = std::max(row_index, cur_row_size_);
     return E_OK;
 }
 
-#define DO_SET_VALUE_BY_COL_NAME(row_index, measurement_name, val)        \
-    do {                                                                  \
-        SchemaMapIterator find_iter = schema_map_.find(measurement_name); \
-        if (LIKELY(find_iter == schema_map_.end())) {                     \
-            ASSERT(false);                                                \
-            return E_INVALID_ARG;                                         \
-        }                                                                 \
-        return set_value(row_index, find_iter->second, val);              \
-    } while (false)
-
-#define DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, CppType, val) \
-    do {                                                                 \
-        if (LIKELY(schema_index >= schema_vec_->size())) {               \
-            ASSERT(false);                                               \
-            return E_OUT_OF_RANGE;                                       \
-        }                                                                \
-        const MeasurementSchema &schema = schema_vec_->at(schema_index); \
-        if (LIKELY(GetDataTypeFromTemplateType<CppType>() !=             \
-                   schema.data_type_)) {                                 \
-            return E_TYPE_NOT_MATCH;                                     \
-        }                                                                \
-        CppType *column_values = (CppType *)value_matrix_[schema_index]; \
-        column_values[row_index] = val;                                  \
-        bitmaps_[schema_index].set(row_index); /* mark as non-null*/     \
-    } while (false)
-
-int Tablet::set_value(int row_index, const std::string &measurement_name,
-                      bool val) {
-    DO_SET_VALUE_BY_COL_NAME(row_index, measurement_name, val);
-}
-
-int Tablet::set_value(int row_index, const std::string &measurement_name,
-                      int32_t val) {
-    DO_SET_VALUE_BY_COL_NAME(row_index, measurement_name, val);
-}
-
-int Tablet::set_value(int row_index, const std::string &measurement_name,
-                      int64_t val) {
-    DO_SET_VALUE_BY_COL_NAME(row_index, measurement_name, val);
-}
-
-int Tablet::set_value(int row_index, const std::string &measurement_name,
-                      float val) {
-    DO_SET_VALUE_BY_COL_NAME(row_index, measurement_name, val);
-}
-
-int Tablet::set_value(int row_index, const std::string &measurement_name,
-                      double val) {
-    DO_SET_VALUE_BY_COL_NAME(row_index, measurement_name, val);
-}
-
-int Tablet::set_value(int row_index, uint32_t schema_index, bool val) {
-    DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, bool, val);
-    return E_OK;
+template <typename T>
+int Tablet::add_value(uint32_t row_index, uint32_t schema_index, T val) {
+    int ret = common::E_OK;
+    if (UNLIKELY(schema_index >= schema_vec_->size())) {
+        ASSERT(false);
+        ret = common::E_OUT_OF_RANGE;
+    } else {
+        const MeasurementSchema &schema = schema_vec_->at(schema_index);
+        if (UNLIKELY(GetDataTypeFromTemplateType<T>() != schema.data_type_)) {
+            ret = common::E_TYPE_NOT_MATCH;
+        } else {
+            T *column_values = (T *)value_matrix_[schema_index];
+            column_values[row_index] = val;
+            bitmaps_[schema_index].set(row_index); /* mark as non-null*/
+        }
+    }
+    return ret;
 }
 
 void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType& data_type) const {
-    if (LIKELY(schema_index >= schema_vec_->size())) {
+    if (UNLIKELY(schema_index >= schema_vec_->size())) {
         return nullptr;
     }
     const MeasurementSchema& schema = schema_vec_->at(schema_index);
@@ -187,33 +146,49 @@ void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType
     }
 }
 
-
-int Tablet::set_value(int row_index, uint32_t schema_index, int32_t val) {
-    DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, int32_t, val);
-    return E_OK;
+template <typename T>
+int Tablet::add_value(uint32_t row_index, const std::string &measurement_name,
+                      T val) {
+    int ret = common::E_OK;
+    SchemaMapIterator find_iter = schema_map_.find(measurement_name);
+    if (LIKELY(find_iter == schema_map_.end())) {
+        ASSERT(false);
+        ret = E_INVALID_ARG;
+    } else {
+        ret = add_value(row_index, find_iter->second, val);
+    }
+    return ret;
 }
 
-int Tablet::set_value(int row_index, uint32_t schema_index, int64_t val) {
-    DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, int64_t, val);
-    return E_OK;
-}
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               bool val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               int32_t val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               int64_t val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               float val);
+template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
+                               double val);
 
-int Tablet::set_value(int row_index, uint32_t schema_index, float val) {
-    DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, float, val);
-    return E_OK;
-}
-
-int Tablet::set_value(int row_index, uint32_t schema_index, double val) {
-    DO_SET_VALUE_BY_COL_INDEX(row_index, schema_index, double, val);
-    return E_OK;
-}
-
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name, bool val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name,
+                               int32_t val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name,
+                               int64_t val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name, float val);
+template int Tablet::add_value(uint32_t row_index,
+                               const std::string &measurement_name, double val);
 void Tablet::set_column_categories(const std::vector<ColumnCategory>& column_categories) {
     column_categories_ = column_categories;
     id_column_indexes_.clear();
     for (size_t i = 0; i < column_categories_.size(); i++) {
         ColumnCategory columnCategory = column_categories_[i];
-        if (columnCategory == ColumnCategory::ID) {
+        if (columnCategory == ColumnCategory::TAG) {
             id_column_indexes_.push_back(i);
         }
     }
@@ -224,7 +199,7 @@ std::shared_ptr<IDeviceID> Tablet::get_device_id(int i) const {
     id_array.push_back(insert_target_name_);
     for (auto id_column_idx : id_column_indexes_) {
         // TODO: support TEXT
-        common::TSDataType data_type;
+        common::TSDataType data_type = INVALID_DATATYPE;
         void* value_ptr = get_value(i, id_column_idx, data_type);
         switch (data_type) {
             case INT64:

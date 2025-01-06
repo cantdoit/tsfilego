@@ -175,9 +175,9 @@ int TsFileWriter::register_timeseries(
 int TsFileWriter::register_timeseries(const std::string &device_id,
                                       MeasurementSchema *measurement_schema,
                                       bool is_aligned) {
-    std::shared_ptr<IDeviceID> device_id =
-        std::make_shared<PlainDeviceID>(device_path);
-    DeviceSchemasMapIter device_iter = schemas_.find(device_id);
+    std::shared_ptr<IDeviceID> plain_device_id =
+        std::make_shared<PlainDeviceID>(device_id);
+    DeviceSchemasMapIter device_iter = schemas_.find(plain_device_id);
     if (device_iter != schemas_.end()) {
         MeasurementSchemaMap &msm =
             device_iter->second->measurement_schema_map_;
@@ -191,8 +191,8 @@ int TsFileWriter::register_timeseries(const std::string &device_id,
         ms_group->is_aligned_ = is_aligned;
         ms_group->measurement_schema_map_.insert(std::make_pair(
             measurement_schema->measurement_name_, measurement_schema));
-        schemas_.insert(std::make_pair(device_id, ms_group));
-        schemas_.insert(std::make_pair(device_id, ms_group));
+        schemas_.insert(std::make_pair(plain_device_id, ms_group));
+        schemas_.insert(std::make_pair(plain_device_id, ms_group));
     }
     return E_OK;
 }
@@ -424,7 +424,7 @@ int TsFileWriter::write_record(const TsRecord &record) {
     SimpleVector<ChunkWriter *> chunk_writers;
     MeasurementNamesFromRecord mnames_getter(record);
     if (RET_FAIL(do_check_schema(
-            std::make_shared<PlainDeviceID>(record.device_name_), mnames_getter,
+            std::make_shared<PlainDeviceID>(record.device_id_), mnames_getter,
             chunk_writers))) {
         return ret;
     }
@@ -450,7 +450,7 @@ int TsFileWriter::write_record_aligned(const TsRecord &record) {
     TimeChunkWriter *time_chunk_writer;
     MeasurementNamesFromRecord mnames_getter(record);
     if (RET_FAIL(do_check_schema_aligned(
-            std::make_shared<PlainDeviceID>(record.device_name_), mnames_getter,
+            std::make_shared<PlainDeviceID>(record.device_id_), mnames_getter,
             time_chunk_writer, value_chunk_writers))) {
         return ret;
     }
@@ -639,7 +639,7 @@ int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,
     int64_t *timestamps = tablet.timestamps_;
     void *col_values = tablet.value_matrix_[col_idx];
     BitMap &col_notnull_bitmap = tablet.bitmaps_[col_idx];
-    end_idx = std::min(end_idx, tablet.max_rows_);
+    end_idx = std::min(end_idx, tablet.max_row_num_);
 
     if (data_type == common::BOOLEAN) {
         ret = write_typed_column(chunk_writer, timestamps, (bool *)col_values,
