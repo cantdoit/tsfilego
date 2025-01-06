@@ -174,12 +174,12 @@ int TSMIterator::get_next(std::shared_ptr<IDeviceID> &ret_device_id, String &ret
     return ret;
 }
 
-int TsFileMeta::serialize_to_table_model(common::ByteStream &out) {
+int TsFileMeta::serialize_to(common::ByteStream &out) {
     auto start_idx = out.total_size();
     common::SerializationUtil::write_var_uint(
         table_metadata_index_node_map_.size(), out);
     for (auto &idx_nodes_iter : table_metadata_index_node_map_) {
-        common::SerializationUtil::write_mystring(idx_nodes_iter.first, out);
+        idx_nodes_iter.first->serialize(out);
         idx_nodes_iter.second->serialize_to(out);
     }
 
@@ -207,13 +207,6 @@ int TsFileMeta::serialize_to_table_model(common::ByteStream &out) {
 }
 
 /* ================ MetaIndexNode ================ */
-
-struct MetaIndexEntryComp {
-    bool operator()(MetaIndexEntry *entry, const String &target_name) {
-        return entry->name_.less_than(target_name);
-    }
-};
-
 int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool exact_search,
                                           IMetaIndexEntry &ret_index_entry,
                                           int64_t &ret_end_offset) {

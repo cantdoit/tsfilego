@@ -779,6 +779,12 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
 
     ~MeasurementMetaIndexEntry() override = default;
 
+    MeasurementMetaIndexEntry() = default;
+    MeasurementMetaIndexEntry(const common::String &name, const int64_t offset, common::PageArena pa) {
+        offset_ = offset;
+        name_.dup_from(name, pa);
+    }
+
     FORCE_INLINE int init(const std::string &str, const int64_t offset,
                           common::PageArena &pa) {
         offset_ = offset;
@@ -864,7 +870,7 @@ struct MetaIndexNode {
                                                                out))) {
         } else {
             for (size_t i = 0; IS_SUCC(ret) && i < children_.size(); i++) {
-                IMetaIndexEntry *entry = children_[i];
+                auto entry = children_[i];
                 if (RET_FAIL(entry->serialize_to(out))) {
                 }
             }
@@ -897,14 +903,15 @@ struct MetaIndexNode {
             return ret;
         }
         for (uint32_t i = 0; i < children_size && IS_SUCC(ret); i++) {
-            void *entry_buf = pa_->alloc(sizeof(MetaIndexEntry));
+            void *entry_buf = pa_->alloc(sizeof(MeasurementMetaIndexEntry));
             if (IS_NULL(entry_buf)) {
                 return common::E_OOM;
             }
-            MetaIndexEntry *entry = new (entry_buf) MetaIndexEntry;
+            auto entry = new (entry_buf) MeasurementMetaIndexEntry;
+
             if (RET_FAIL(entry->deserialize_from(in, pa_))) {
             } else {
-                children_.push_back(entry);
+                children_.push_back(std::shared_ptr<IMetaIndexEntry>(entry, pa_->get_deleter()));
             }
         }  // end for
         if (IS_SUCC(ret)) {
@@ -947,7 +954,7 @@ struct MetaIndexNode {
 
     FORCE_INLINE bool is_empty() const { return children_.size() == 0; }
 
-    FORCE_INLINE int push_entry(MetaIndexEntry *entry) {
+    FORCE_INLINE int push_entry(std::shared_ptr<IMetaIndexEntry> entry) {
 #if DEBUG_SE
         std::cout << "MetaIndexNode.push_entry(" << *entry << ")" << std::endl;
 #endif
@@ -963,8 +970,8 @@ struct MetaIndexNode {
 class TableSchema;
 
 struct TsFileMeta {
-    MetaIndexNode *index_node_;
-    typedef std::map<std::shared_ptr<IDeviceID>, MetaIndexNode *, IDeviceIDComparator>
+    std::shared_ptr<MetaIndexNode> index_node_;
+    typedef std::map<std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>, IDeviceIDComparator>
         DeviceNodeMap;
     DeviceNodeMap table_metadata_index_node_map_;
     std::unordered_map<std::string, std::string> tsfile_properties_;
@@ -995,16 +1002,7 @@ struct TsFileMeta {
         }
     }
 
-    int serialize_to(common::ByteStream &out) {
-        int ret = common::E_OK;
-        if (RET_FAIL(index_node_->serialize_to(out))) {
-        } else if (RET_FAIL(common::SerializationUtil::write_i64(meta_offset_,
-                                                                 out))) {
-        }
-        return ret;
-    }
-
-    int serialize_to_table_model(common::ByteStream &out);
+    int serialize_to(common::ByteStream &out);
 
     int deserialize_from(common::ByteStream &in) {
         int ret = common::E_OK;

@@ -271,7 +271,8 @@ int TsFileIOReader::load_device_index_entry(const std::string &device_name_str,
 
 int TsFileIOReader::load_measurement_index_entry(
     const std::string &measurement_name_str, int64_t start_offset,
-    int64_t end_offset, MetaIndexEntry &ret_measurement_index_entry,
+    int64_t end_offset, MetaIndexEn
+    try &ret_measurement_index_entry,
     int64_t &ret_end_offset) {
 #if DEBUG_SE
     std::cout << "load_measurement_index_entry: measurement_name_str="

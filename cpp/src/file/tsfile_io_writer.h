@@ -35,7 +35,7 @@ namespace storage {
 
 struct FileIndexWritingMemManager {
     common::PageArena pa_;
-    std::vector<MetaIndexNode *> all_index_nodes_;
+    std::vector<std::shared_ptr<MetaIndexNode>> all_index_nodes_;
 
     FileIndexWritingMemManager() {
         pa_.init(512, common::MOD_WRITER_INDEX_NODE);
@@ -50,7 +50,7 @@ struct FileIndexWritingMemManager {
 
 class TsFileIOWriter {
    public:
-    typedef std::map<std::shared_ptr<IDeviceID>, MetaIndexNode *, IDeviceIDComparator>
+    typedef std::map<std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>, IDeviceIDComparator>
         DeviceNodeMap;
     typedef DeviceNodeMap::iterator DeviceNodeMapIterator;
 
@@ -145,35 +145,34 @@ class TsFileIOWriter {
         return ret;
     }
     int write_file_footer();
-    int build_device_level(DeviceNodeMap &device_map, MetaIndexNode *&ret_root,
+    int build_device_level(DeviceNodeMap &device_map, std::shared_ptr<MetaIndexNode> &ret_root,
                            FileIndexWritingMemManager &wmm);
     int alloc_and_init_meta_index_entry(FileIndexWritingMemManager &wmm,
-                                        IMetaIndexEntry *&ret_entry,
+                                        std::shared_ptr<IMetaIndexEntry> &ret_entry,
                                         common::String &name);
     int alloc_and_init_meta_index_entry(
     FileIndexWritingMemManager &wmm,
     std::shared_ptr<IMetaIndexEntry> &ret_entry,
     const std::shared_ptr<IDeviceID>& device_id);
     int alloc_and_init_meta_index_node(FileIndexWritingMemManager &wmm,
-                                       MetaIndexNode *&ret_node,
-                                       const MetaIndexNodeType node_type);
-    int add_cur_index_node_to_queue(MetaIndexNode *node,
-                                    common::SimpleList<MetaIndexNode *> *queue) const;
+                                       std::shared_ptr<MetaIndexNode> &ret_node,
+                                       MetaIndexNodeType node_type);
+    int add_cur_index_node_to_queue(std::shared_ptr<MetaIndexNode> node,
+                                    common::SimpleList<std::shared_ptr<MetaIndexNode>> *queue) const;
     int alloc_meta_index_node_queue(
-        FileIndexWritingMemManager &wmm,
-        common::SimpleList<MetaIndexNode *> *&queue);
+        FileIndexWritingMemManager &wmm, common::SimpleList<std::shared_ptr<MetaIndexNode>> *&queue);
     int add_device_node(
         DeviceNodeMap &device_map, std::shared_ptr<IDeviceID> device_id,
-        common::SimpleList<MetaIndexNode *> *measurement_index_node_queue,
+        common::SimpleList<std::shared_ptr<MetaIndexNode>> *measurement_index_node_queue,
         FileIndexWritingMemManager &wmm);
-    int clone_node_list(common::SimpleList<MetaIndexNode *> *src,
-                        common::SimpleList<MetaIndexNode *> *dest);
-    int generate_root(common::SimpleList<MetaIndexNode *> *node_queue,
-                      MetaIndexNode *&root_node, MetaIndexNodeType node_type,
+    int clone_node_list(common::SimpleList<std::shared_ptr<MetaIndexNode>> *src,
+                        common::SimpleList<std::shared_ptr<MetaIndexNode>> *dest);
+    int generate_root(common::SimpleList<std::shared_ptr<MetaIndexNode>> *node_queue,
+                      std::shared_ptr<MetaIndexNode> &root_node, MetaIndexNodeType node_type,
                       FileIndexWritingMemManager &wmm);
-    FORCE_INLINE void swap_list(common::SimpleList<MetaIndexNode *> *&l1,
-                                common::SimpleList<MetaIndexNode *> *&l2) {
-        common::SimpleList<MetaIndexNode *> *tmp = l1;
+    FORCE_INLINE void swap_list(common::SimpleList<std::shared_ptr<MetaIndexNode>> *&l1,
+                                common::SimpleList<std::shared_ptr<MetaIndexNode>> *&l2) {
+        auto tmp = l1;
         l1 = l2;
         l2 = tmp;
     }
