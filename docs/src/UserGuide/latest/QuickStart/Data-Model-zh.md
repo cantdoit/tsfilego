@@ -33,7 +33,7 @@
 
 <table>       
   <tr>             
-    <th rowspan="1">概念</th>             
+    <th rowspan="1">概念    </th>             
     <th rowspan="1">定义</th>                          
   </tr>       
   <tr>             
@@ -65,4 +65,4 @@
 
 此时通过【地区】-【工厂】-【设备】（下图橙色列，又称设备标识信息）可以唯一确定一个实体设备，设备最终采集的指标为【温度】、【湿度】、【状态】、【到达时间】（下图蓝色列）。
 
-![]()
+![](https://alioss.timecho.com/docs/img/data_model_example_image-zh.png)
