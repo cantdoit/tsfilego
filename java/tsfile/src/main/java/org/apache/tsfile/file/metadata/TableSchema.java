@@ -19,7 +19,7 @@
 
 package org.apache.tsfile.file.metadata;
 
-import org.apache.tsfile.common.TsFileApi;
+import org.apache.tsfile.annotations.TsFileApi;
 import org.apache.tsfile.compatibility.DeserializeConfig;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
@@ -75,6 +75,7 @@ public class TableSchema {
                         measurementSchema.getProps()))
             .collect(Collectors.toList());
     this.columnCategories = columnCategories;
+    this.updatable = false;
   }
 
   public TableSchema(
@@ -82,18 +83,26 @@ public class TableSchema {
       List<IMeasurementSchema> columnSchemas,
       List<ColumnCategory> columnCategories) {
     this.tableName = tableName.toLowerCase();
-    this.measurementSchemas =
-        columnSchemas.stream()
-            .map(
-                measurementSchema ->
-                    new MeasurementSchema(
-                        measurementSchema.getMeasurementName().toLowerCase(),
-                        measurementSchema.getType(),
-                        measurementSchema.getEncodingType(),
-                        measurementSchema.getCompressor(),
-                        measurementSchema.getProps()))
-            .collect(Collectors.toList());
+    this.measurementSchemas = new ArrayList<>(columnSchemas.size());
+    this.columnPosIndex = new HashMap<>(columnSchemas.size());
+    for (int i = 0; i < columnSchemas.size(); i++) {
+      IMeasurementSchema columnSchema = columnSchemas.get(i);
+      String measurementName = columnSchema.getMeasurementName().toLowerCase();
+      this.measurementSchemas.add(
+          new MeasurementSchema(
+              measurementName,
+              columnSchema.getType(),
+              columnSchema.getEncodingType(),
+              columnSchema.getCompressor(),
+              columnSchema.getProps()));
+      columnPosIndex.put(measurementName, i);
+    }
+    if (measurementSchemas.size() != columnPosIndex.size()) {
+      throw new IllegalArgumentException(
+          "Each column name in the table should be unique(case insensitive).");
+    }
     this.columnCategories = columnCategories;
+    this.updatable = false;
   }
 
   public TableSchema(
@@ -103,11 +112,18 @@ public class TableSchema {
       List<ColumnCategory> categoryList) {
     this.tableName = tableName.toLowerCase();
     this.measurementSchemas = new ArrayList<>(columnNameList.size());
+    this.columnPosIndex = new HashMap<>(columnNameList.size());
     for (int i = 0; i < columnNameList.size(); i++) {
-      measurementSchemas.add(
-          new MeasurementSchema(columnNameList.get(i).toLowerCase(), dataTypeList.get(i)));
+      String columnName = columnNameList.get(i).toLowerCase();
+      measurementSchemas.add(new MeasurementSchema(columnName, dataTypeList.get(i)));
+      columnPosIndex.put(columnName, i);
+    }
+    if (columnNameList.size() != columnPosIndex.size()) {
+      throw new IllegalArgumentException(
+          "Each column name in the table should be unique(case insensitive).");
     }
     this.columnCategories = categoryList;
+    this.updatable = false;
   }
 
   @TsFileApi
@@ -115,12 +131,19 @@ public class TableSchema {
     this.tableName = tableName.toLowerCase();
     this.measurementSchemas = new ArrayList<>(columnSchemaList.size());
     this.columnCategories = new ArrayList<>(columnSchemaList.size());
-    for (ColumnSchema columnSchema : columnSchemaList) {
-      this.measurementSchemas.add(
-          new MeasurementSchema(
-              columnSchema.getColumnName().toLowerCase(), columnSchema.getDataType()));
+    this.columnPosIndex = new HashMap<>(columnSchemaList.size());
+    for (int i = 0; i < columnSchemaList.size(); i++) {
+      ColumnSchema columnSchema = columnSchemaList.get(i);
+      String columnName = columnSchema.getColumnName().toLowerCase();
+      this.measurementSchemas.add(new MeasurementSchema(columnName, columnSchema.getDataType()));
       this.columnCategories.add(columnSchema.getColumnCategory());
+      this.columnPosIndex.put(columnName, i);
     }
+    if (columnSchemaList.size() != columnPosIndex.size()) {
+      throw new IllegalArgumentException(
+          "Each column name in the table should be unique(case insensitive).");
+    }
+    this.updatable = false;
   }
 
   public Map<String, Integer> getColumnPosIndex() {
@@ -183,9 +206,9 @@ public class TableSchema {
               int columnOrder = 0;
               for (int i = 0; i < measurementSchemas.size(); i++) {
                 if (measurementSchemas.get(i).getMeasurementName().equals(lowerCaseColumnName)
-                    && columnCategories.get(i) == ColumnCategory.ID) {
+                    && columnCategories.get(i) == ColumnCategory.TAG) {
                   return columnOrder;
-                } else if (columnCategories.get(i) == ColumnCategory.ID) {
+                } else if (columnCategories.get(i) == ColumnCategory.TAG) {
                   columnOrder++;
                 }
               }
@@ -208,7 +231,7 @@ public class TableSchema {
       // if the measurement is not found in the column list, add it
       if (columnIndex == -1) {
         measurementSchemas.add(chunkMetadata.toMeasurementSchema());
-        columnCategories.add(ColumnCategory.MEASUREMENT);
+        columnCategories.add(ColumnCategory.FIELD);
         getColumnPosIndex().put(chunkMetadata.getMeasurementUid(), measurementSchemas.size() - 1);
       } else {
         final IMeasurementSchema originSchema = measurementSchemas.get(columnIndex);

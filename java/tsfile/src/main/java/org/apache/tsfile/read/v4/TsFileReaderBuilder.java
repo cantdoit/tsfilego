@@ -19,7 +19,7 @@
 
 package org.apache.tsfile.read.v4;
 
-import org.apache.tsfile.common.TsFileApi;
+import org.apache.tsfile.annotations.TsFileApi;
 
 import java.io.File;
 import java.io.IOException;

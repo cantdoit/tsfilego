@@ -26,7 +26,7 @@ ___________    ___________.__.__
 \__    ___/____\_   _____/|__|  |   ____  
   |    | /  ___/|    __)  |  |  | _/ __ \ 
   |    | \___ \ |     \   |  |  |_\  ___/ 
-  |____|/____  >\___  /   |__|____/\___  >  version 1.0.0
+  |____|/____  >\___  /   |__|____/\___  >  version 2.0.0
              \/     \/                 \/  
 </pre>
 
@@ -73,6 +73,13 @@ sudo apt-get install -y cmake make g++ clang-format
 To build tsfile, you can run: `bash build.sh`. If you have Maven tools, you can run: `mvn package -P with-cpp clean verify`. Then, you can find the shared object at `./build`.
 
 Before you submit your code to GitHub, please ensure that the `mvn` compilation is correct.
+
+If you compile using MinGW on windows and encounter an error, you can try replacing MinGW with the following version that we have tried without problems:
+
+* GCC 14.2.0 (with **POSIX** threads) + LLVM/Clang/LLD/LLDB 18.1.8 + MinGW-w64 12.0.0 UCRT - release 1
+* GCC 12.2.0 + LLVM/Clang/LLD/LLDB 16.0.0 + MinGW-w64 10.0.0 (UCRT) - release 5
+* GCC 12.2.0 + LLVM/Clang/LLD/LLDB 16.0.0 + MinGW-w64 10.0.0 (MSVCRT) - release 5
+* GCC 11.2.0 + MinGW-w64 10.0.0 (MSVCRT) - release 1
 
 ## Use TsFile
 

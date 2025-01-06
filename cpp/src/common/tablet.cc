@@ -29,7 +29,7 @@ namespace storage {
 
 int Tablet::init() {
     ASSERT(timestamps_ == nullptr);
-    timestamps_ = (int64_t *)malloc(sizeof(int64_t) * max_rows_);
+    timestamps_ = (int64_t *)malloc(sizeof(int64_t) * max_row_num_);
 
     size_t schema_count = schema_vec_->size();
     std::pair<std::map<std::string, int>::iterator, bool> ins_res;
@@ -48,12 +48,12 @@ int Tablet::init() {
     for (size_t c = 0; c < schema_count; c++) {
         const MeasurementSchema &schema = schema_vec_->at(c);
         value_matrix_[c] =
-            malloc(get_data_type_size(schema.data_type_) * max_rows_);
+            malloc(get_data_type_size(schema.data_type_) * max_row_num_);
     }
 
     bitmaps_ = new BitMap[schema_count];
     for (size_t c = 0; c < schema_count; c++) {
-        bitmaps_[c].init(max_rows_, /*init_as_zero=*/true);
+        bitmaps_[c].init(max_row_num_, /*init_as_zero=*/true);
     }
     return E_OK;
 }
@@ -79,9 +79,9 @@ void Tablet::destroy() {
     }
 }
 
-int Tablet::set_timestamp(int row_index, int64_t timestamp) {
+int Tablet::add_timestamp(uint32_t row_index, int64_t timestamp) {
     ASSERT(timestamps_ != NULL);
-    if (UNLIKELY(row_index >= max_rows_)) {
+    if (UNLIKELY(row_index >= static_cast<uint32_t>(max_row_num_))) {
         ASSERT(false);
         return E_OUT_OF_RANGE;
     }

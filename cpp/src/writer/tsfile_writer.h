@@ -53,6 +53,7 @@ class TsFileWriter {
     void destroy();
 
     int open(const std::string &file_path, int flags, mode_t mode);
+    int open(const std::string &file_path);
     int init(storage::WriteFile *write_file);
 
     void set_generate_table_schema(bool generate_table_schema);
@@ -68,8 +69,8 @@ class TsFileWriter {
                                     common::TSEncoding encoding,
                                     common::CompressionType compression_type);
     int register_aligned_timeseries(
-        const std::string &device_path,
-        const std::vector<MeasurementSchema *> &measurement_schema_vec);
+        const std::string &device_id,
+        const std::vector<MeasurementSchema *> &measurement_schemas);
     void register_table(const std::shared_ptr<TableSchema>& table_schema);
     int write_record(const TsRecord &record);
     int write_tablet(const Tablet &tablet);
@@ -149,11 +150,11 @@ class TsFileWriter {
     // std::vector<storage::ChunkWriter*> &chunk_writers);
     int write_column(storage::ChunkWriter *chunk_writer, const Tablet &tablet,
                      int col_idx, int start_idx = 0, int end_idx = INT_MAX);
-    int register_timeseries(const std::string &device_path,
+    int register_timeseries(const std::string &device_id,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);
     int register_timeseries(
-        const std::string &device_path,
+        const std::string &device_id,
         const std::vector<MeasurementSchema *> &measurement_schema_vec);
     std::vector<std::pair<std::shared_ptr<IDeviceID>, int>>
     split_tablet_by_device(const Tablet &tablet);

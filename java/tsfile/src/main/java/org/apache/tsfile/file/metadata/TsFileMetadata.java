@@ -107,7 +107,7 @@ public class TsFileMetadata {
     fileMetaData.propertiesOffset = buffer.position() - startPos;
 
     if (buffer.hasRemaining()) {
-      int propertiesSize = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
+      int propertiesSize = ReadWriteForEncodingUtils.readVarInt(buffer);
       Map<String, String> propertiesMap = new HashMap<>();
       for (int i = 0; i < propertiesSize; i++) {
         String key = ReadWriteIOUtils.readVarIntString(buffer);
@@ -147,7 +147,7 @@ public class TsFileMetadata {
         }
         IDecryptor decryptor =
             IDecryptor.getDecryptor(
-                TSFileDescriptor.getInstance().getConfig().getEncryptType(),
+                propertiesMap.get("encryptType"),
                 TSFileDescriptor.getInstance().getConfig().getEncryptKey().getBytes());
         String str = propertiesMap.get("encryptKey");
         fileMetaData.dataEncryptKey = decryptor.decrypt(EncryptUtils.getSecondKeyFromStr(str));
@@ -221,7 +221,7 @@ public class TsFileMetadata {
     if (bloomFilter != null) {
       byteLen += serializeBloomFilter(outputStream, bloomFilter);
     } else {
-      byteLen += ReadWriteIOUtils.write(0, outputStream);
+      byteLen += ReadWriteForEncodingUtils.writeUnsignedVarInt(0, outputStream);
     }
 
     byteLen +=
@@ -283,5 +283,9 @@ public class TsFileMetadata {
 
   public Map<String, TableSchema> getTableSchemaMap() {
     return tableSchemaMap;
+  }
+
+  public Map<String, String> getTsFileProperties() {
+    return tsFileProperties;
   }
 }

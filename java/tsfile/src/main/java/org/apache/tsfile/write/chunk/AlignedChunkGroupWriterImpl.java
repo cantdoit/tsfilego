@@ -171,7 +171,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
           break;
         case INT32:
         case DATE:
-          valueChunkWriter.write(time, (int) point.getValue(), isNull);
+          valueChunkWriter.write(time, isNull ? 0 : (int) point.getValue(), isNull);
           break;
         case INT64:
         case TIMESTAMP:
@@ -237,7 +237,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
       checkIsHistoryData(time);
       for (int columnIndex = 0; columnIndex < tablet.getSchemas().size(); columnIndex++) {
         if (tablet.getColumnTypes() != null
-            && tablet.getColumnTypes().get(columnIndex) != ColumnCategory.MEASUREMENT) {
+            && tablet.getColumnTypes().get(columnIndex) != ColumnCategory.FIELD) {
           continue;
         }
 
