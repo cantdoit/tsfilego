@@ -87,7 +87,7 @@ class ColumnSchemaBuilder {
   // Column Name
   public ColumnSchemaBuilder name(String columnName);
   
-  // The data data type of the column
+  // The data type of the column
   public ColumnSchemaBuilder dataType(TSDataType columnType);
   
   // Column category
