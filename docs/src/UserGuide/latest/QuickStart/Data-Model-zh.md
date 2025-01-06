@@ -33,7 +33,7 @@
 
 <table>       
   <tr>             
-    <th rowspan="1">概念    </th>             
+    <th rowspan="1">概念</th>             
     <th rowspan="1">定义</th>                          
   </tr>       
   <tr>             
