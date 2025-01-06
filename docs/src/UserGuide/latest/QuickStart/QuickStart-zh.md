@@ -18,27 +18,27 @@
     under the License.
 
 -->
-# Quick Start
+# 快速上手
 
-## Dependencies
+## 依赖
 
 - JDK >=1.8
 - Maven >=3.6
 
-## Installation Method
+## 安装
 
-Clone the source code from git:
+从git克隆源代码:
 
 ```shell
 git clone https://github.com/apache/tsfile.git
 ```
-Run Maven to compile in the TsFile root directory:
+在 TsFile 根目录下执行 maven 编译:
 
 ```shell
 mvn clean install -P with-java -DskipTests
 ```
 
-Using TsFile API with Maven:
+在 Maven 中引用 TsFile API:
 
 ```shell
 <dependency>
@@ -48,9 +48,9 @@ Using TsFile API with Maven:
 </dependency>
 ```
 
-## Writing Process
+## 写入示例
 
-### Construct ITsFileWriter
+### 构造 ITsFileWriter
 
 ```shell
 String path = "test.tsfile";
@@ -92,7 +92,7 @@ ITsFileWriter writer =
                      .build();
 ```
 
-### Write Data
+### 写入数据
 
 ```shell
 Tablet tablet =
@@ -113,19 +113,19 @@ for (int row = 0; row < 5; row++) {
 writer.write(tablet);
 ```
 
-### Close File
+### 关闭文件
 
 ```shell
 writer.close();
 ```
 
-### Sample Code
+### 示例代码
 
-The sample code of using these interfaces is in <https://github.com/apache/tsfile/blob/develop/java/examples/src/main/java/org/apache/tsfile/v4/WriteTabletWithITsFileWriter.java>
+使用这些接口的示例代码位于：<https://github.com/apache/tsfile/blob/develop/java/examples/src/main/java/org/apache/tsfile/v4/WriteTabletWithITsFileWriter.java>
 
-## Query Process
+## 查询示例
 
-### Construct ITsFileReader
+### 构造 ITsFileReader
 
 ```shell
 String path = "test.tsfile";
@@ -137,13 +137,13 @@ ITsFileReader reader =
                      .build();
 ```
 
-### Construct Query Request
+### 构建查询请求
 
 ```shell
 ResultSet resultSet = reader.query(tableName, Arrays.asList("id1", "id2", "s1", "s2"), 2, 8)
 ```
 
-### Query Data
+### 查询数据
 
 ```shell
 ResultSetMetadata metadata = resultSet.getMetadata();
@@ -172,13 +172,13 @@ while (resultSet.next()) {
 }
 ```
 
-### Close File
+### 关闭文件
 
 ```shell
 reader.close();
 ```
 
-### Sample Code
+### 示例代码
 
-The sample code of using these interfaces is in <https://github.com/apache/tsfile/blob/develop/java/examples/src/main/java/org/apache/tsfile/v4/ITsFileReaderAndITsFileWriter.java>
+使用这些接口的示例代码位于：<https://github.com/apache/tsfile/blob/develop/java/examples/src/main/java/org/apache/tsfile/v4/ITsFileReaderAndITsFileWriter.java>
 
