@@ -26,7 +26,7 @@
 
 用于写入数据至 tsfile
 
-```shell
+```Java
 interface ITsFileWriter extends AutoCloseable {
   // 写入数据
   void write(Tablet tablet);
@@ -39,7 +39,7 @@ interface ITsFileWriter extends AutoCloseable {
 
 用于构造 ITsFileWriter
 
-```shell
+```Java
 class TsFileWriterBuilder {
   // 构建 ITsFileWriter 对象
   public ITsFileWriter build();
@@ -56,7 +56,7 @@ class TsFileWriterBuilder {
 
 描述表 schema 的数据结构
 
-```shell
+```Java
 class TableSchema {
   // 构造函数
   public TableSchema(String tableName, List<ColumnSchema> columnSchemaList);
@@ -107,32 +107,32 @@ class ColumnSchemaBuilder {
 
 写入的列式内存结构
 
-```shell
+```Java
 class Tablet {
   // 构造函数
   public Tablet(List<String> columnNameList, List<TSDataType> dataTypeList);
   public Tablet(List<String> columnNameList, List<TSDataType> dataTypeList, int maxRowNum);
   // 添加时间戳的接口
-  void addTimestamp(int rowIndex, long timestamp)
+  void addTimestamp(int rowIndex, long timestamp);
   // 添加值的接口
   // 根据列名添加值
-  void addValue(int rowIndex, String columnName, int val)  
-  void addValue(int rowIndex, String columnName, long val)  
-  void addValue(int rowIndex, String columnName, float val)  
-  void addValue(int rowIndex, String columnName, double val)  
-  void addValue(int rowIndex, String columnName, boolean val)  
-  void addValue(int rowIndex, String columnName, String val)  
-  void addValue(int rowIndex, String columnName, byte[] val)  
-  void addValue(int rowIndex, String columnName, LocalDate val) 
+  void addValue(int rowIndex, String columnName, int val);
+  void addValue(int rowIndex, String columnName, long val);  
+  void addValue(int rowIndex, String columnName, float val);  
+  void addValue(int rowIndex, String columnName, double val);  
+  void addValue(int rowIndex, String columnName, boolean val);  
+  void addValue(int rowIndex, String columnName, String val);
+  void addValue(int rowIndex, String columnName, byte[] val);
+  void addValue(int rowIndex, String columnName, LocalDate val); 
   // 根据索引位置添加值
-  void addValue(int rowIndex, int columnIndex, int val)  
-  void addValue(int rowIndex, int columnIndex, long val)  
-  void addValue(int rowIndex, int columnIndex, float val)  
-  void addValue(int rowIndex, int columnIndex, double val)  
-  void addValue(int rowIndex, int columnIndex, boolean val) 
-  void addValue(int rowIndex, int columnIndex, String val)  
-  void addValue(int rowIndex, int columnIndex, byte[] val)  
-  void addValue(int rowIndex, int columnIndex, LocalDate val)
+  void addValue(int rowIndex, int columnIndex, int val);
+  void addValue(int rowIndex, int columnIndex, long val);  
+  void addValue(int rowIndex, int columnIndex, float val);  
+  void addValue(int rowIndex, int columnIndex, double val);  
+  void addValue(int rowIndex, int columnIndex, boolean val); 
+  void addValue(int rowIndex, int columnIndex, String val);
+  void addValue(int rowIndex, int columnIndex, byte[] val); 
+  void addValue(int rowIndex, int columnIndex, LocalDate val);
 }
 ```
 
@@ -142,7 +142,7 @@ class Tablet {
 
 用于查询 tsfile 中的数据
 
-```shell
+```Java
 interface ITsFileReader extends AutoCloseable {
   // 用于执行查询并返回结果
   ResultSet query(String tableName, List<String> columnNames, long startTime, long endTime);
@@ -159,7 +159,7 @@ interface ITsFileReader extends AutoCloseable {
 
 用于构建 ITsFileWriter
 
-```shell
+```Java
 class TsFileReaderBuilder {
   // 构建 ITsFileReader 对象
   public ITsFileReader build();
@@ -172,7 +172,7 @@ class TsFileReaderBuilder {
 
 用于构建 ITsFileWriter
 
-```shell
+```Java
 interface ResultSet extends AutoCloseable {  
   // 将光标移动到下一行并返回是否还有数据
   boolean next();
@@ -203,7 +203,7 @@ interface ResultSet extends AutoCloseable {
   void close();
     
   // 获取结果集的表头
-  ResultSetMetadata getMetadata()
+  ResultSetMetadata getMetadata();
 }
 ```
 
@@ -211,11 +211,11 @@ interface ResultSet extends AutoCloseable {
 
 用于获取结果集的元数据
 
-```shell
+```Java
 interface ResultSetMetadata {
   // 获取结果集第N列的列名
-  String getColumnName(int columnIndex)  
+  String getColumnName(int columnIndex);
   // 获取结果集第N列的数据类型
-  TSDataType getColumnType(int columnIndex)
+  TSDataType getColumnType(int columnIndex);
 }
 ```

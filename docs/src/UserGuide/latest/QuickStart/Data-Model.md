@@ -22,14 +22,14 @@
 
 ## Basic Concepts
 
-To manage industrial IoT timing data, the measurement point data model of TsFile includes the following information
+To manage industrial IoT time series data, the data model of TsFile includes the following concepts
 
-- TAG：Tag Column 
-  - name（String）：Column Name 
-  - dataType（TSDataType）：Data Type
-- FIELD：Field Column
-    - name（String）：Column Name 
-    - dataType（TSDataType）：Data Type
+- Tag: The description of an IoT device of one dimension in the form of a string key-value pair. For example, "category=XT451" describes the category of a wind turbine is "XT451" and "year=2021" says it is built in the year 2021.
+- Field: A variable that is being measured by a device. Like fan speed, voltage, temperature, wind speed, and so on. Unlike a Tagthat is currently fixed to STRING data type, Fields are supported by various data types.
+- Timestamp and Timeseries: Each value of a FIELD measured by a device is associated with a unique timestamp. The sequence of the timestamps and values of a FIELD is a Timeseries.
+- Schema: A set of Tags that can uniquely identify a kind of device, and the set of Fields that are measured by these devices. E.g., a wind turbine can be uniquely located by "Province," "City," "WindField," and "SerialNumber," so the TAG set of SCHEMA "wind_turbine" can be "Province," "City," "WindField," and "SerialNumber." While its the FIELD set contains "FanSpeed," "Voltage," "Temperature," "WindSpeed," and so on.
+- DeviceId: The unique identifier of an IoT device, which consists of the schema name and all tag values. For example, for the Schema "wind_turbine" above, a DeviceId can be ("wind_turbine", "Beijing", "Beijing", "Field_1135", "T1523678").
+
 
 <table>       
   <tr>             
@@ -61,8 +61,8 @@ To manage industrial IoT timing data, the measurement point data model of TsFile
 
 ## Example
 
-A table is a collection of devices with the same pattern. As shown in the figure below, it is a modeling management of factory equipment, and the physical quantity collection of each device has certain commonalities (such as collecting temperature and humidity physical quantities, collecting physical quantities of the same device on the same frequency, etc.), so it can be managed on a device by device basis.
+A schema describes is a collection of devices with the same pattern. As shown in the figure below, it models the management of factory equipment, and the physical variable collection of each device has certain commonalities (such as collecting temperature and humidity physical quantities, collecting physical quantities of the same device on the same frequency, etc.), so it can be managed on a device-by-device basis.
 
-At this point, a physical device can be uniquely identified through [Region] - [Factory] - [Equipment] (orange column in the figure below, also known as device identification information). The final indicators collected by the device are [Temperature], [Humidity], [Status], and [Arrival Time] (blue column in the figure below).
+At this point, a physical device can be uniquely identified through 3 Tags [Region] - [Factory] - [Equipment] (orange column in the figure below, also known as device identification information). The Fields collected by the device are [Temperature], [Humidity], [Status], and [Arrival Time] (blue column in the figure below).
 
 ![](https://alioss.timecho.com/docs/img/data_model_example_image.png)

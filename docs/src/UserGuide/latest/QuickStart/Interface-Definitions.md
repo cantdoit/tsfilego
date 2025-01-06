@@ -26,7 +26,7 @@
 
 Used to write data to tsfile
 
-```shell
+```Java
 interface ITsFileWriter extends AutoCloseable {
   // Write data
   void write(Tablet tablet);
@@ -40,7 +40,7 @@ interface ITsFileWriter extends AutoCloseable {
 
 Used to construct ITsFileWriter
 
-```shell
+```Java
 class TsFileWriterBuilder {
   // Build ITsFileWriter object
   public ITsFileWriter build();
@@ -60,7 +60,7 @@ class TsFileWriterBuilder {
 
 Describe the data structure of the table schema
 
-```shell
+```Java
 class TableSchema {
   // Constructor function
   public TableSchema(String tableName, List<ColumnSchema> columnSchemaList);
@@ -87,7 +87,7 @@ class ColumnSchemaBuilder {
   // Column Name
   public ColumnSchemaBuilder name(String columnName);
   
-  // The data category of the column
+  // The data data type of the column
   public ColumnSchemaBuilder dataType(TSDataType columnType);
   
   // Column category
@@ -119,34 +119,34 @@ class ColumnSchemaBuilder {
 
 Write column memory structure
 
-```shell
+```Java
 class Tablet {
   // Constructor function
   public Tablet(List<String> columnNameList, List<TSDataType> dataTypeList);
   public Tablet(List<String> columnNameList, List<TSDataType> dataTypeList, int maxRowNum);
   
   // Interface for adding timestamps
-  void addTimestamp(int rowIndex, long timestamp)
+  void addTimestamp(int rowIndex, long timestamp);
   
   // Interface for adding values
   // Add values based on column names
-  void addValue(int rowIndex, String columnName, int val)  
-  void addValue(int rowIndex, String columnName, long val)  
-  void addValue(int rowIndex, String columnName, float val)  
-  void addValue(int rowIndex, String columnName, double val)  
-  void addValue(int rowIndex, String columnName, boolean val)  
-  void addValue(int rowIndex, String columnName, String val)  
-  void addValue(int rowIndex, String columnName, byte[] val)  
-  void addValue(int rowIndex, String columnName, LocalDate val) 
+  void addValue(int rowIndex, String columnName, int val);
+  void addValue(int rowIndex, String columnName, long val);  
+  void addValue(int rowIndex, String columnName, float val);  
+  void addValue(int rowIndex, String columnName, double val);  
+  void addValue(int rowIndex, String columnName, boolean val);  
+  void addValue(int rowIndex, String columnName, String val);
+  void addValue(int rowIndex, String columnName, byte[] val); 
+  void addValue(int rowIndex, String columnName, LocalDate val); 
   // Add values based on index position
-  void addValue(int rowIndex, int columnIndex, int val)  
-  void addValue(int rowIndex, int columnIndex, long val)  
-  void addValue(int rowIndex, int columnIndex, float val)  
-  void addValue(int rowIndex, int columnIndex, double val)  
-  void addValue(int rowIndex, int columnIndex, boolean val) 
-  void addValue(int rowIndex, int columnIndex, String val)  
-  void addValue(int rowIndex, int columnIndex, byte[] val)  
-  void addValue(int rowIndex, int columnIndex, LocalDate val)
+  void addValue(int rowIndex, int columnIndex, int val);
+  void addValue(int rowIndex, int columnIndex, long val);  
+  void addValue(int rowIndex, int columnIndex, float val);  
+  void addValue(int rowIndex, int columnIndex, double val);  
+  void addValue(int rowIndex, int columnIndex, boolean val); 
+  void addValue(int rowIndex, int columnIndex, String val);
+  void addValue(int rowIndex, int columnIndex, byte[] val); 
+  void addValue(int rowIndex, int columnIndex, LocalDate val);
 }
 ```
 
@@ -156,7 +156,7 @@ class Tablet {
 
 Used to query data in tsfile
 
-```shell
+```Java
 interface ITsFileReader extends AutoCloseable {
   // Used to execute queries and return results
   ResultSet query(String tableName, List<String> columnNames, long startTime, long endTime);
@@ -176,7 +176,7 @@ interface ITsFileReader extends AutoCloseable {
 
 Used to construct ITsFileWriter
 
-```shell
+```Java
 class TsFileReaderBuilder {
   // Build ITsFileReader object
   public ITsFileReader build();
@@ -190,9 +190,9 @@ class TsFileReaderBuilder {
 
 The result set of the query
 
-```shell
+```Java
 interface ResultSet extends AutoCloseable {  
-  // Move the cursor to the next line and return whether there is still data
+  // Move the cursor to the next row and return whether there is still data
   boolean next();  
     
   // Get the value of the current row and a certain column
@@ -221,7 +221,7 @@ interface ResultSet extends AutoCloseable {
   void close();
     
   // Obtain the header of the result set
-  ResultSetMetadata getMetadata()
+  ResultSetMetadata getMetadata();
 }
 ```
 
@@ -229,7 +229,7 @@ interface ResultSet extends AutoCloseable {
 
 Used to obtain metadata for the result set
 
-```shell
+```Java
 interface ResultSetMetadata {  
   // Obtain the column name of the Nth column in the result set
   String getColumnName(int columnIndex);
