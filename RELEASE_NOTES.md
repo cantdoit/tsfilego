@@ -18,7 +18,7 @@
     under the License.
 
 -->
-# Apache TsFile 2.2.0
+# Apache TsFile 2.0.0
 
 ## New Feature
 - TsFile V4 for Table Model by @jt2594838 in #196
