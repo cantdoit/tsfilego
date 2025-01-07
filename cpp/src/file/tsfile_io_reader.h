@@ -73,41 +73,41 @@ class TsFileIOReader {
     FORCE_INLINE int32_t file_size() const { return read_file_->file_size(); }
     int load_tsfile_meta();
     int load_tsfile_meta_if_necessary();
-    int load_device_index_entry(const std::string &device_path,
-                                MetaIndexEntry &device_index_entry,
+    int load_device_index_entry(std::shared_ptr<IComparable> target_name,
+                                IMetaIndexEntry &device_index_entry,
                                 int64_t &end_offset);
     int load_measurement_index_entry(
         const std::string &measurement_name, int64_t start_offset,
-        int64_t end_offset, MetaIndexEntry &ret_measurement_index_entry,
+        int64_t end_offset, IMetaIndexEntry &ret_measurement_index_entry,
         int64_t &ret_end_offset);
     int load_all_measurement_index_entry(
         int64_t start_offset, int64_t end_offset, common::PageArena &pa,
-        std::vector<std::pair<MetaIndexEntry *, int64_t>>
+        std::vector<std::pair<IMetaIndexEntry *, int64_t>>
             &ret_measurement_index_entry);
     int do_load_timeseries_index(const std::string &measurement_name_str,
                                  int64_t start_offset, int64_t end_offset,
                                  common::PageArena &pa,
                                  ITimeseriesIndex *&ts_index);
     int do_load_all_timeseries_index(
-        std::vector<std::pair<MetaIndexEntry *, int64_t>>
+        std::vector<std::pair<IMetaIndexEntry *, int64_t>>
             &index_node_entry_list,
         common::PageArena &in_timeseries_index_pa,
         std::vector<ITimeseriesIndex *> &ts_indexs);
     int load_timeseries_index_for_ssi(const std::string &device_path,
                                       const std::string &measurement_name,
                                       TsFileSeriesScanIterator *&ssi);
-    int search_from_leaf_node(const common::String &target_name,
+    int search_from_leaf_node(std::shared_ptr<IComparable> target_name,
                               MetaIndexNode *index_node,
-                              MetaIndexEntry &ret_index_entry,
+                              IMetaIndexEntry &ret_index_entry,
                               int64_t &ret_end_offset);
-    int search_from_internal_node(const common::String &target_name,
-                                  MetaIndexNode *index_node,
-                                  MetaIndexEntry &ret_index_entry,
+    int search_from_internal_node(std::shared_ptr<IComparable> target_name,
+                                  std::shared_ptr<MetaIndexNode> index_node,
+                                  IMetaIndexEntry &ret_index_entry,
                                   int64_t &ret_end_offset);
     bool filter_stasify(ITimeseriesIndex *ts_index, Filter *time_filter);
 
     int get_all_leaf(MetaIndexNode *index_node,
-                     std::vector<std::pair<MetaIndexEntry *, int64_t>>
+                     std::vector<std::pair<IMetaIndexEntry *, int64_t>>
                          &index_node_entry_list);
 
    private:

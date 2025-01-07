@@ -429,62 +429,36 @@ int TsFileIOWriter::write_file_index() {
     }
 
     if (IS_SUCC(ret)) {
-        if (!generate_table_schema_) {
-            std::shared_ptr<MetaIndexNode> device_index_root_node = nullptr;
-            if (RET_FAIL(build_device_level(device_map, device_index_root_node,
-                                            writing_mm))) {
-            } else {
-                TsFileMeta tsfile_meta;
-                tsfile_meta.index_node_ = device_index_root_node;
-                tsfile_meta.meta_offset_ = meta_offset;
-                tsfile_meta.bloom_filter_ = &filter;
-                int64_t tsfile_meta_offset = cur_file_position();
-                uint32_t size = 0;  // cppcheck-suppress unreadVariable
-                OFFSET_DEBUG("before tsfile_meta written");
-                if (RET_FAIL(tsfile_meta.serialize_to(write_stream_))) {
-                } else if (RET_FAIL(filter.serialize_to(write_stream_))) {
-                } else {
-                    int64_t tsfile_meta_end_offset = cur_file_position();
-                    size =
-                        (uint32_t)(tsfile_meta_end_offset - tsfile_meta_offset);
-                    ret = SerializationUtil::write_ui32(size, write_stream_);
-                }
-#if DEBUG_SE
-                std::cout << "writer tsfile_meta: " << tsfile_meta
-                          << ", tsfile_meta_offset=" << tsfile_meta_offset
-                          << ", size=" << size << std::endl;
-#endif
-                tsfile_meta.index_node_ =
-                    nullptr;  // memory management is delegated to writing_mm
-                tsfile_meta.bloom_filter_ = nullptr;
-            }
-        } else {
-            TsFileMeta tsfile_meta;
-            tsfile_meta.meta_offset_ = meta_offset;
-            tsfile_meta.bloom_filter_ = &filter;
-            for (auto device_map_iter = device_map.begin();
-                 device_map_iter != device_map.end(); device_map_iter++) {
-                tsfile_meta.table_metadata_index_node_map_.insert(
-                    std::make_pair(device_map_iter->first,
-                                   device_map_iter->second));
-            }
-            tsfile_meta.table_schemas_ = schema_->table_schema_map_;
-            tsfile_meta.tsfile_properties_.insert(
-                std::make_pair("encryptLevel", encrypt_level_));
-            tsfile_meta.tsfile_properties_.insert(
-                std::make_pair("encryptType", encrypt_type_));
-            tsfile_meta.tsfile_properties_.insert(
-                std::make_pair("encryptKey", encrypt_key_));
-
-            auto total_write_size =
-                tsfile_meta.serialize_to_table_model(write_stream_);
-            if (RET_FAIL(common::SerializationUtil::write_i32(total_write_size,
-                                                              write_stream_))) {
-                return ret;
-            }
-            tsfile_meta.bloom_filter_ = nullptr;
-            tsfile_meta.index_node_ = nullptr;
+        TsFileMeta tsfile_meta;
+        tsfile_meta.meta_offset_ = meta_offset;
+        tsfile_meta.bloom_filter_ = &filter;
+        for (auto device_map_iter = device_map.begin();
+             device_map_iter != device_map.end(); device_map_iter++) {
+            tsfile_meta.table_metadata_index_node_map_.insert(
+                std::make_pair(device_map_iter->first,
+                               device_map_iter->second));
         }
+        tsfile_meta.table_schemas_ = schema_->table_schema_map_;
+        tsfile_meta.tsfile_properties_.insert(
+            std::make_pair("encryptLevel", encrypt_level_));
+        tsfile_meta.tsfile_properties_.insert(
+            std::make_pair("encryptType", encrypt_type_));
+        tsfile_meta.tsfile_properties_.insert(
+            std::make_pair("encryptKey", encrypt_key_));
+
+        auto total_write_size =
+            tsfile_meta.serialize_to(write_stream_);
+        if (RET_FAIL(common::SerializationUtil::write_i32(total_write_size,
+                                                          write_stream_))) {
+            return ret;
+        }
+        tsfile_meta.bloom_filter_ = nullptr;
+        tsfile_meta.index_node_ = nullptr;
+#if DEBUG_SE
+        std::cout << "writer tsfile_meta: " << tsfile_meta
+                  << ", tsfile_meta_offset=" << tsfile_meta_offset
+                  << ", size=" << size << std::endl;
+#endif
     }
     return ret;
 }
@@ -602,7 +576,7 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
     auto entry_ptr = static_cast<DeviceMetaIndexEntry*>(buf);
     new (entry_ptr) DeviceMetaIndexEntry(device_id, cur_file_position());
     ret_entry = std::shared_ptr<IMetaIndexEntry>(entry_ptr,
-            [buf](IMetaIndexEntry* ptr) {
+            [](IMetaIndexEntry* ptr) {
                 if (ptr) {
                     ptr->~IMetaIndexEntry(); // 显式调用析构函数
                 }
@@ -625,7 +599,7 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
     auto entry_ptr = static_cast<MeasurementMetaIndexEntry*>(buf);
     new (entry_ptr) MeasurementMetaIndexEntry(name, cur_file_position(), wmm.pa_);
     ret_entry = std::shared_ptr<IMetaIndexEntry>(entry_ptr,
-            [buf](IMetaIndexEntry* ptr) {
+            [](IMetaIndexEntry* ptr) {
                 if (ptr) {
                     ptr->~IMetaIndexEntry(); // 显式调用析构函数
                 }
@@ -647,12 +621,11 @@ int TsFileIOWriter::alloc_and_init_meta_index_node(
     }
     auto* node_ptr = new (buf) MetaIndexNode(&wmm.pa_);
     node_ptr->node_type_ = node_type;
-    ret_node = std::shared_ptr<MetaIndexNode>(node_ptr,
-        [&wmm](MetaIndexNode* ptr) {
-            if (ptr) {
-                ptr->~MetaIndexNode();
-            }
-        });
+    ret_node = std::shared_ptr<MetaIndexNode>(node_ptr, [](MetaIndexNode *ptr) {
+        if (ptr) {
+            ptr->~MetaIndexNode();
+        }
+    });
     wmm.all_index_nodes_.push_back(ret_node);
     return E_OK;
 }

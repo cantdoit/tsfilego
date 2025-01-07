@@ -93,9 +93,9 @@ int TsFileIOReader::get_device_timeseries_meta_without_chunk_meta(
     PageArena &pa) {
     int ret = E_OK;
     load_tsfile_meta_if_necessary();
-    MetaIndexEntry meta_index_entry;
+    DeviceMetaIndexEntry meta_index_entry;
     int64_t end_offset;
-    std::vector<std::pair<MetaIndexEntry *, int64_t>> meta_index_entry_list;
+    std::vector<std::pair<IMetaIndexEntry *, int64_t>> meta_index_entry_list;
     if (RET_FAIL(
             load_device_index_entry(device_id, meta_index_entry, end_offset))) {
     } else if (RET_FAIL(load_all_measurement_index_entry(
@@ -129,8 +129,8 @@ int TsFileIOReader::load_tsfile_meta_if_necessary() {
 int TsFileIOReader::load_tsfile_meta() {
     const int32_t TSFILE_READ_IO_SIZE = 1024;  // TODO make it configurable
     const int32_t TAIL_MAGIC_AND_META_SIZE_SIZE =
-        10;                   // magic(6B) + meta_size(4B)
-    ASSERT(file_size() > 0);  // > 13
+        10;                                    // magic(6B) + meta_size(4B)
+    ASSERT(file_size() > 0);                   // > 13
 
     int ret = E_OK;
     uint32_t tsfile_meta_size = 0;
@@ -212,13 +212,15 @@ int TsFileIOReader::load_timeseries_index_for_ssi(
     const std::string &device_path, const std::string &measurement_name,
     TsFileSeriesScanIterator *&ssi) {
     int ret = E_OK;
-    MetaIndexEntry device_index_entry;
+    DeviceMetaIndexEntry device_index_entry;
     int64_t device_ie_end_offset = 0;
-    MetaIndexEntry measurement_index_entry;
+    MeasurementMetaIndexEntry measurement_index_entry;
     int64_t measurement_ie_end_offset = 0;
     // bool is_aligned = false;
-    if (RET_FAIL(load_device_index_entry(device_path, device_index_entry,
-                                         device_ie_end_offset))) {
+    auto device_id = std::make_shared<StringArrayDeviceID>(device_path);
+    if (RET_FAIL(load_device_index_entry(
+            std::make_shared<DeviceIDComparable>(device_id), device_index_entry,
+            device_ie_end_offset))) {
     } else if (RET_FAIL(load_measurement_index_entry(
                    measurement_name, device_index_entry.offset_,
                    device_ie_end_offset, measurement_index_entry,
@@ -243,13 +245,11 @@ int TsFileIOReader::load_timeseries_index_for_ssi(
     return ret;
 }
 
-int TsFileIOReader::load_device_index_entry(const std::string &device_name_str,
-                                            MetaIndexEntry &device_index_entry,
-                                            int64_t &end_offset) {
+int TsFileIOReader::load_device_index_entry(
+    std::shared_ptr<IComparable> device_name,
+    IMetaIndexEntry &device_index_entry, int64_t &end_offset) {
     int ret = E_OK;
-    const String device_name((char *)device_name_str.c_str(),
-                             strlen(device_name_str.c_str()));
-    MetaIndexNode *index_node = tsfile_meta_.index_node_;
+    auto index_node = tsfile_meta_.index_node_;
     if (index_node->node_type_ == LEAF_DEVICE) {
         // FIXME
         ret = index_node->binary_search_children(
@@ -271,8 +271,7 @@ int TsFileIOReader::load_device_index_entry(const std::string &device_name_str,
 
 int TsFileIOReader::load_measurement_index_entry(
     const std::string &measurement_name_str, int64_t start_offset,
-    int64_t end_offset, MetaIndexEn
-    try &ret_measurement_index_entry,
+    int64_t end_offset, IMetaIndexEntry &ret_measurement_index_entry,
     int64_t &ret_end_offset) {
 #if DEBUG_SE
     std::cout << "load_measurement_index_entry: measurement_name_str="
@@ -292,7 +291,14 @@ int TsFileIOReader::load_measurement_index_entry(
     if (IS_NULL(data_buf) || IS_NULL(m_idx_node_buf)) {
         return E_OOM;
     }
-    MetaIndexNode *top_node = new (m_idx_node_buf) MetaIndexNode(&pa);
+    auto* top_node_ptr = new (m_idx_node_buf) MetaIndexNode(&pa);
+    auto top_node = std::shared_ptr<MetaIndexNode>(top_node_ptr, [](MetaIndexNode *ptr) {
+        if (ptr) {
+            ptr->~MetaIndexNode();
+        }
+    });
+
+
     if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
                                   ret_read_len))) {
     } else if (RET_FAIL(top_node->deserialize_from(data_buf, read_size))) {
@@ -305,8 +311,8 @@ int TsFileIOReader::load_measurement_index_entry(
 #endif
     // 2. search from top_node in top-down way
     if (IS_SUCC(ret)) {
-        const String measurement_name((char *)measurement_name_str.c_str(),
-                                      strlen(measurement_name_str.c_str()));
+        auto measurement_name =
+            std::make_shared<StringComparable>(measurement_name_str);
         if (top_node->node_type_ == LEAF_MEASUREMENT) {
             ret = top_node->binary_search_children(
                 measurement_name, /*exact*/ false, ret_measurement_index_entry,
@@ -326,7 +332,7 @@ int TsFileIOReader::load_measurement_index_entry(
 
 int TsFileIOReader::load_all_measurement_index_entry(
     int64_t start_offset, int64_t end_offset, common::PageArena &pa,
-    std::vector<std::pair<MetaIndexEntry *, int64_t>>
+    std::vector<std::pair<IMetaIndexEntry *, int64_t>>
         &ret_measurement_index_entry) {
 #if DEBUG_SE
     std::cout << "load_measurement_index_entry: measurement_name_str="
@@ -369,22 +375,21 @@ int TsFileIOReader::load_all_measurement_index_entry(
  * @target_name device_name or measurement_name
  * @index_node  leaf device node or leaf measurement node
  */
-int TsFileIOReader::search_from_leaf_node(const String &target_name,
-                                          MetaIndexNode *index_node,
-                                          MetaIndexEntry &ret_index_entry,
-                                          int64_t &ret_end_offset) {
+int TsFileIOReader::search_from_leaf_node(
+    std::shared_ptr<IComparable> target_name, MetaIndexNode *index_node,
+    IMetaIndexEntry &ret_index_entry, int64_t &ret_end_offset) {
     int ret = E_OK;
     ret = index_node->binary_search_children(target_name, true, ret_index_entry,
                                              ret_end_offset);
     return ret;
 }
 
-int TsFileIOReader::search_from_internal_node(const String &target_name,
-                                              MetaIndexNode *index_node,
-                                              MetaIndexEntry &ret_index_entry,
-                                              int64_t &ret_end_offset) {
+int TsFileIOReader::search_from_internal_node(
+    std::shared_ptr<IComparable> target_name,
+    std::shared_ptr<MetaIndexNode> index_node, IMetaIndexEntry &ret_index_entry,
+    int64_t &ret_end_offset) {
     int ret = E_OK;
-    MetaIndexEntry index_entry;
+    IMetaIndexEntry index_entry;
     int64_t end_offset = 0;
 
     ASSERT(index_node->node_type_ == INTERNAL_MEASUREMENT ||
@@ -519,7 +524,7 @@ int TsFileIOReader::do_load_timeseries_index(
 }
 
 int TsFileIOReader::do_load_all_timeseries_index(
-    std::vector<std::pair<MetaIndexEntry *, int64_t>> &index_node_entry_list,
+    std::vector<std::pair<IMetaIndexEntry *, int64_t>> &index_node_entry_list,
     common::PageArena &in_timeseries_index_pa,
     std::vector<ITimeseriesIndex *> &ts_indexs) {
     int ret = E_OK;
@@ -541,7 +546,7 @@ int TsFileIOReader::do_load_all_timeseries_index(
 
 int TsFileIOReader::get_all_leaf(
     MetaIndexNode *index_node,
-    std::vector<std::pair<MetaIndexEntry *, int64_t>> &index_node_entry_list) {
+    std::vector<std::pair<IMetaIndexEntry *, int64_t>> &index_node_entry_list) {
     int ret = E_OK;
     if (index_node->node_type_ == LEAF_MEASUREMENT ||
         index_node->node_type_ == LEAF_DEVICE) {

@@ -654,7 +654,8 @@ class TSMIterator {
 
     // timeseries measurenemnt chunk meta info
     // map <device_name, <measurement_name, vector<chunk_meta>>>
-    std::map<std::shared_ptr<IDeviceID>, std::map<common::String, std::vector<ChunkMeta *>>>
+    std::map<std::shared_ptr<IDeviceID>,
+             std::map<common::String, std::vector<ChunkMeta *>>>
         tsm_chunk_meta_info_;
 
     // device iterator
@@ -678,18 +679,23 @@ struct IComparable {
 struct DeviceIDComparable : IComparable {
     std::shared_ptr<IDeviceID> device_id_;
 
-    explicit DeviceIDComparable(const std::shared_ptr<IDeviceID> &device_id) : device_id_(device_id) {}
+    explicit DeviceIDComparable(const std::shared_ptr<IDeviceID> &device_id)
+        : device_id_(device_id) {}
 
     bool operator<(const IComparable &other) const override {
-        const auto *other_device = dynamic_cast<const DeviceIDComparable *>(&other);
+        const auto *other_device =
+            dynamic_cast<const DeviceIDComparable *>(&other);
         if (!other_device) throw std::runtime_error("Incompatible comparison");
-        return device_id_->get_device_name() < other_device->device_id_->get_device_name();
+        return device_id_->get_device_name() <
+               other_device->device_id_->get_device_name();
     }
 
     bool operator==(const IComparable &other) const override {
-        const auto *other_device = dynamic_cast<const DeviceIDComparable *>(&other);
+        const auto *other_device =
+            dynamic_cast<const DeviceIDComparable *>(&other);
         if (!other_device) throw std::runtime_error("Incompatible comparison");
-        return device_id_->get_device_name() == other_device->device_id_->get_device_name();
+        return device_id_->get_device_name() ==
+               other_device->device_id_->get_device_name();
     }
 
     std::string to_string() const override {
@@ -703,39 +709,47 @@ struct StringComparable : IComparable {
     explicit StringComparable(const std::string &value) : value_(value) {}
 
     bool operator<(const IComparable &other) const override {
-        const auto *other_string = dynamic_cast<const StringComparable *>(&other);
+        const auto *other_string =
+            dynamic_cast<const StringComparable *>(&other);
         if (!other_string) throw std::runtime_error("Incompatible comparison");
         return value_ < other_string->value_;
     }
 
     bool operator==(const IComparable &other) const override {
-        const auto *other_string = dynamic_cast<const StringComparable *>(&other);
+        const auto *other_string =
+            dynamic_cast<const StringComparable *>(&other);
         if (!other_string) throw std::runtime_error("Incompatible comparison");
         return value_ == other_string->value_;
     }
 
-    std::string to_string() const override {
-        return value_;
-    }
+    std::string to_string() const override { return value_; }
 };
 
-
 struct IMetaIndexEntry {
+    IMetaIndexEntry() = default;
     virtual ~IMetaIndexEntry() = default;
 
     virtual int serialize_to(common::ByteStream &out) { return common::E_OK; }
-    virtual int deserialize_from(common::ByteStream &out, common::PageArena *pa) { return common::E_OK; }
+    virtual int deserialize_from(common::ByteStream &out,
+                                 common::PageArena *pa) {
+        return common::E_OK;
+    }
     virtual int64_t get_offset() const { return 0; }
     virtual bool is_device_level() const { return false; }
-    virtual std::shared_ptr<IComparable> get_compare_key() const = 0;
+    virtual std::shared_ptr<IComparable> get_compare_key() const {
+        return std::shared_ptr<IComparable>();
+    }
 };
 
 struct DeviceMetaIndexEntry : IMetaIndexEntry {
     std::shared_ptr<IDeviceID> device_id_;
     int64_t offset_;
 
-    DeviceMetaIndexEntry(const std::shared_ptr<IDeviceID> &device_id, const int64_t offset) : device_id_(device_id),
-            offset_(offset) {}
+    DeviceMetaIndexEntry() = default;
+
+    DeviceMetaIndexEntry(const std::shared_ptr<IDeviceID> &device_id,
+                         const int64_t offset)
+        : device_id_(device_id), offset_(offset) {}
 
     ~DeviceMetaIndexEntry() override = default;
 
@@ -744,15 +758,14 @@ struct DeviceMetaIndexEntry : IMetaIndexEntry {
         if (RET_FAIL(device_id_->serialize(out))) {
         } else if (RET_FAIL(
                        common::SerializationUtil::write_i64(offset_, out))) {
-                       }
+        }
         return ret;
     }
 
-    std::shared_ptr<IDeviceID>& get_device_id() {
-        return device_id_;
-    }
+    std::shared_ptr<IDeviceID> &get_device_id() { return device_id_; }
 
-    int deserialize_from(common::ByteStream &in, common::PageArena *pa) override {
+    int deserialize_from(common::ByteStream &in,
+                         common::PageArena *pa) override {
         int ret = common::E_OK;
         if (RET_FAIL(device_id_->deserialize(in))) {
         } else if (RET_FAIL(common::SerializationUtil::read_i64(offset_, in))) {
@@ -760,17 +773,13 @@ struct DeviceMetaIndexEntry : IMetaIndexEntry {
         return ret;
     }
 
-    int64_t get_offset() const override {
-        return offset_;
-    }
+    int64_t get_offset() const override { return offset_; }
 
     std::shared_ptr<IComparable> get_compare_key() const override {
         return std::make_shared<DeviceIDComparable>(device_id_);
     }
 
-    bool is_device_level() const override {
-        return true;
-    }
+    bool is_device_level() const override { return true; }
 };
 
 struct MeasurementMetaIndexEntry : IMetaIndexEntry {
@@ -780,7 +789,8 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
     ~MeasurementMetaIndexEntry() override = default;
 
     MeasurementMetaIndexEntry() = default;
-    MeasurementMetaIndexEntry(const common::String &name, const int64_t offset, common::PageArena pa) {
+    MeasurementMetaIndexEntry(const common::String &name, const int64_t offset,
+                              common::PageArena pa) {
         offset_ = offset;
         name_.dup_from(name, pa);
     }
@@ -800,7 +810,8 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
         return ret;
     }
 
-    int deserialize_from(common::ByteStream &in, common::PageArena *pa) override {
+    int deserialize_from(common::ByteStream &in,
+                         common::PageArena *pa) override {
         int ret = common::E_OK;
         if (RET_FAIL(common::SerializationUtil::read_mystring(name_, pa, in))) {
         } else if (RET_FAIL(common::SerializationUtil::read_i64(offset_, in))) {
@@ -808,17 +819,13 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
         return ret;
     }
 
-    int64_t get_offset() const override {
-        return offset_;
-    }
+    int64_t get_offset() const override { return offset_; }
 
     std::shared_ptr<IComparable> get_compare_key() const override {
         return std::make_shared<StringComparable>(name_.to_std_string());
     }
 
-    bool is_device_level() const override {
-        return false;
-    }
+    bool is_device_level() const override { return false; }
 
 #ifndef NDEBUG
     friend std::ostream &operator<<(std::ostream &os,
@@ -837,9 +844,9 @@ enum MetaIndexNodeType {
     INVALID_META_NODE_TYPE = 4,
 };
 #ifndef NDEBUG
-static const char *meta_index_node_type_names[5] = {
-    "INTERNAL_DEVICE", "LEAF_DEVICE", "INTERNAL_MEASUREMENT",
-    "LEAF_MEASUREMENT", "INVALID_META_NODE_TYPE"};
+// static const char *meta_index_node_type_names[5] = {
+//     "INTERNAL_DEVICE", "LEAF_DEVICE", "INTERNAL_MEASUREMENT",
+//     "LEAF_MEASUREMENT", "INVALID_META_NODE_TYPE"};
 #endif
 
 struct MetaIndexNode {
@@ -853,11 +860,10 @@ struct MetaIndexNode {
     explicit MetaIndexNode(common::PageArena *pa)
         : children_(), end_offset_(0), node_type_(), pa_(pa) {}
 
-    std::shared_ptr<IMetaIndexEntry> peek() {
-        return children_[0];
-    }
+    std::shared_ptr<IMetaIndexEntry> peek() { return children_[0]; }
 
-    int binary_search_children(std::shared_ptr<IComparable> key, bool exact_search,
+    int binary_search_children(std::shared_ptr<IComparable> key,
+                               bool exact_search,
                                IMetaIndexEntry &ret_index_entry,
                                int64_t &ret_end_offset);
 
@@ -911,7 +917,8 @@ struct MetaIndexNode {
 
             if (RET_FAIL(entry->deserialize_from(in, pa_))) {
             } else {
-                children_.push_back(std::shared_ptr<IMetaIndexEntry>(entry, pa_->get_deleter()));
+                children_.push_back(std::shared_ptr<IMetaIndexEntry>(
+                    entry, pa_->get_deleter()));
             }
         }  // end for
         if (IS_SUCC(ret)) {
@@ -932,19 +939,19 @@ struct MetaIndexNode {
     }
 
 #ifndef NDEBUG
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const MetaIndexNode &node) {
-        os << "end_offset=" << node.end_offset_
-           << ", node_type=" << meta_index_node_type_names[node.node_type_];
-
-        os << ", MetaIndexEntry children={";
-        for (size_t i = 0; i < node.children_.size(); i++) {
-            os << (i == 0 ? "" : ", ") << "[" << i << "]={"
-               << *node.children_[i] << "}";
-        }
-        os << "}";
-        return os;
-    }
+//    friend std::ostream &operator<<(std::ostream &os,
+//                                    const MetaIndexNode &node) {
+//        os << "end_offset=" << node.end_offset_
+//           << ", node_type=" << meta_index_node_type_names[node.node_type_];
+//
+//        os << ", MetaIndexEntry children={";
+//        for (size_t i = 0; i < node.children_.size(); i++) {
+//            os << (i == 0 ? "" : ", ") << "[" << i << "]={"
+//               << *node.children_[i] << "}";
+//        }
+//        os << "}";
+//        return os;
+//    }
 #endif
 
     FORCE_INLINE bool is_full() const {
@@ -971,7 +978,8 @@ class TableSchema;
 
 struct TsFileMeta {
     std::shared_ptr<MetaIndexNode> index_node_;
-    typedef std::map<std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>, IDeviceIDComparator>
+    typedef std::map<std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>,
+                     IDeviceIDComparator>
         DeviceNodeMap;
     DeviceNodeMap table_metadata_index_node_map_;
     std::unordered_map<std::string, std::string> tsfile_properties_;
@@ -1011,7 +1019,14 @@ struct TsFileMeta {
         if (IS_NULL(index_node_buf) || IS_NULL(bloom_filter_buf)) {
             return common::E_OOM;
         }
-        index_node_ = new (index_node_buf) MetaIndexNode(page_arena_);
+        auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
+        new (index_node_buf) MetaIndexNode(page_arena_);
+        index_node_ = std::shared_ptr<MetaIndexNode>(
+            index_node_ptr, [](MetaIndexNode *ptr) {
+                if (ptr) {
+                    ptr->~MetaIndexNode();
+                }
+            });
         bloom_filter_ = new (bloom_filter_buf) BloomFilter();
 
         if (RET_FAIL(index_node_->deserialize_from(in))) {
@@ -1023,12 +1038,12 @@ struct TsFileMeta {
     }
 
 #ifndef NDEBUG
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const TsFileMeta &tsfile_meta) {
-        os << "meta_offset=" << tsfile_meta.meta_offset_ << ", index_node={"
-           << *tsfile_meta.index_node_ << "}";
-        return os;
-    }
+//    friend std::ostream &operator<<(std::ostream &os,
+//                                    const TsFileMeta &tsfile_meta) {
+//        os << "meta_offset=" << tsfile_meta.meta_offset_ << ", index_node={"
+//           << *tsfile_meta.index_node_ << "}";
+//        return os;
+//    }
 #endif
 };
 
