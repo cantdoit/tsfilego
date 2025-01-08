@@ -24,8 +24,7 @@
 using namespace common;
 
 namespace storage {
-
-int TsFileIOReader::init(const std::string &file_path) {
+int TsFileIOReader::init(const std::string& file_path) {
     int ret = E_OK;
     read_file_ = new ReadFile;
     read_file_created_ = true;
@@ -34,7 +33,7 @@ int TsFileIOReader::init(const std::string &file_path) {
     return ret;
 }
 
-int TsFileIOReader::init(ReadFile *read_file) {
+int TsFileIOReader::init(ReadFile* read_file) {
     if (IS_NULL(read_file)) {
         ASSERT(false);
         return E_INVALID_ARG;
@@ -56,17 +55,17 @@ void TsFileIOReader::reset() {
     }
 }
 
-int TsFileIOReader::alloc_ssi(const std::string &device_path,
-                              const std::string &measurement_name,
-                              TsFileSeriesScanIterator *&ssi,
-                              common::PageArena &pa, Filter *time_filter) {
+int TsFileIOReader::alloc_ssi(const std::string& device_path,
+                              const std::string& measurement_name,
+                              TsFileSeriesScanIterator*& ssi,
+                              common::PageArena& pa, Filter* time_filter) {
     int ret = E_OK;
     if (RET_FAIL(load_tsfile_meta_if_necessary())) {
     } else {
         ssi = new TsFileSeriesScanIterator;
         ssi->init(device_path, measurement_name, read_file_, time_filter, pa);
         if (RET_FAIL(load_timeseries_index_for_ssi(device_path,
-                                                   measurement_name, ssi))) {
+            measurement_name, ssi))) {
         } else if (time_filter != nullptr &&
                    !filter_stasify(ssi->itimeseries_index_, time_filter)) {
             ret = E_NO_MORE_DATA;
@@ -81,7 +80,7 @@ int TsFileIOReader::alloc_ssi(const std::string &device_path,
     return ret;
 }
 
-void TsFileIOReader::revert_ssi(TsFileSeriesScanIterator *ssi) {
+void TsFileIOReader::revert_ssi(TsFileSeriesScanIterator* ssi) {
     if (ssi != nullptr) {
         ssi->destroy();
         delete ssi;
@@ -89,26 +88,29 @@ void TsFileIOReader::revert_ssi(TsFileSeriesScanIterator *ssi) {
 }
 
 int TsFileIOReader::get_device_timeseries_meta_without_chunk_meta(
-    std::string device_id, std::vector<ITimeseriesIndex *> &timeseries_indexs,
-    PageArena &pa) {
+    std::shared_ptr<IDeviceID> device_id,
+    std::vector<ITimeseriesIndex*>& timeseries_indexs,
+    PageArena& pa) {
     int ret = E_OK;
     load_tsfile_meta_if_necessary();
     DeviceMetaIndexEntry meta_index_entry;
     int64_t end_offset;
-    std::vector<std::pair<IMetaIndexEntry *, int64_t>> meta_index_entry_list;
+    std::vector<std::pair<std::shared_ptr<IMetaIndexEntry>, int64_t> >
+        meta_index_entry_list;
     if (RET_FAIL(
-            load_device_index_entry(device_id, meta_index_entry, end_offset))) {
+        load_device_index_entry(std::make_shared<DeviceIDComparable>(device_id),
+            meta_index_entry, end_offset))) {
     } else if (RET_FAIL(load_all_measurement_index_entry(
-                   meta_index_entry.offset_, end_offset, pa,
-                   meta_index_entry_list))) {
+        meta_index_entry.offset_, end_offset, pa,
+        meta_index_entry_list))) {
     } else if (RET_FAIL(do_load_all_timeseries_index(meta_index_entry_list, pa,
-                                                     timeseries_indexs))) {
+        timeseries_indexs))) {
     }
     return ret;
 }
 
-bool TsFileIOReader::filter_stasify(ITimeseriesIndex *ts_index,
-                                    Filter *time_filter) {
+bool TsFileIOReader::filter_stasify(ITimeseriesIndex* ts_index,
+                                    Filter* time_filter) {
     ASSERT(ts_index->get_statistic() != nullptr);
     return time_filter->satisfy(ts_index->get_statistic());
 }
@@ -127,10 +129,10 @@ int TsFileIOReader::load_tsfile_meta_if_necessary() {
 }
 
 int TsFileIOReader::load_tsfile_meta() {
-    const int32_t TSFILE_READ_IO_SIZE = 1024;  // TODO make it configurable
+    const int32_t TSFILE_READ_IO_SIZE = 1024; // TODO make it configurable
     const int32_t TAIL_MAGIC_AND_META_SIZE_SIZE =
-        10;                                    // magic(6B) + meta_size(4B)
-    ASSERT(file_size() > 0);                   // > 13
+        10;                  // magic(6B) + meta_size(4B)
+    ASSERT(file_size() > 0); // > 13
 
     int ret = E_OK;
     uint32_t tsfile_meta_size = 0;
@@ -140,7 +142,7 @@ int TsFileIOReader::load_tsfile_meta() {
     // Step 1: reader the tsfile_meta_size
     // 1.1 prepare reader buffer
     int32_t alloc_size = UTIL_MIN(TSFILE_READ_IO_SIZE, file_size());
-    char *read_buf = (char *)mem_alloc(alloc_size, MOD_TSFILE_READER);
+    char* read_buf = (char*)mem_alloc(alloc_size, MOD_TSFILE_READER);
     if (IS_NULL(read_buf)) {
         return E_OOM;
     }
@@ -148,7 +150,7 @@ int TsFileIOReader::load_tsfile_meta() {
     read_offset = file_size() - alloc_size;
     ret_read_len = 0;
     if (RET_FAIL(read_file_->read(read_offset, read_buf, alloc_size,
-                                  ret_read_len))) {
+        ret_read_len))) {
     } else if (ret_read_len != alloc_size) {
         ret = E_FILE_READ_ERR;
         // log_err("do not reader enough data from tsfile, want-size=%d,
@@ -158,7 +160,7 @@ int TsFileIOReader::load_tsfile_meta() {
     // 1.3 deserialize tsfile_meta_size
     if (IS_SUCC(ret)) {
         // deserialize tsfile_meta_size
-        char *size_buf = read_buf + alloc_size - TAIL_MAGIC_AND_META_SIZE_SIZE;
+        char* size_buf = read_buf + alloc_size - TAIL_MAGIC_AND_META_SIZE_SIZE;
         tsfile_meta_size = SerializationUtil::read_ui32(size_buf);
         ASSERT(tsfile_meta_size > 0 && tsfile_meta_size <= (1ll << 20));
     }
@@ -166,19 +168,19 @@ int TsFileIOReader::load_tsfile_meta() {
     // Step 2: reader TsFileMeta
     if (IS_SUCC(ret)) {
         // 2.1 prepare enough buffer (use the previous buffer if can).
-        char *tsfile_meta_buf = nullptr;
+        char* tsfile_meta_buf = nullptr;
         if (tsfile_meta_size + TAIL_MAGIC_AND_META_SIZE_SIZE >
             (uint32_t)alloc_size) {
             // prepare buffer to re-reader from start of tsfile_meta
-            char *old_read_buf = read_buf;
-            read_buf = (char *)mem_realloc(read_buf, tsfile_meta_size);
+            char* old_read_buf = read_buf;
+            read_buf = (char*)mem_realloc(read_buf, tsfile_meta_size);
             if (IS_NULL(read_buf)) {
                 read_buf = old_read_buf;
                 ret = E_OOM;
             } else if (RET_FAIL(read_file_->read(
-                           file_size() - tsfile_meta_size -
-                               TAIL_MAGIC_AND_META_SIZE_SIZE,
-                           read_buf, tsfile_meta_size, ret_read_len))) {
+                file_size() - tsfile_meta_size -
+                TAIL_MAGIC_AND_META_SIZE_SIZE,
+                read_buf, tsfile_meta_size, ret_read_len))) {
             } else if (tsfile_meta_size != (uint32_t)ret_read_len) {
                 ret = E_FILE_READ_ERR;
                 // log_err("do not reader enough data from tsfile, want-size=%d,
@@ -187,7 +189,8 @@ int TsFileIOReader::load_tsfile_meta() {
             } else {
                 tsfile_meta_buf = read_buf;
             }
-        } else {  // the previous buffer has contained the TsFileMeta data
+        } else {
+            // the previous buffer has contained the TsFileMeta data
             tsfile_meta_buf = read_buf + alloc_size - tsfile_meta_size -
                               TAIL_MAGIC_AND_META_SIZE_SIZE;
             // DEBUG_hex_dump_buf("tsfile_meta_buf=", tsfile_meta_buf,
@@ -209,8 +212,8 @@ int TsFileIOReader::load_tsfile_meta() {
 }
 
 int TsFileIOReader::load_timeseries_index_for_ssi(
-    const std::string &device_path, const std::string &measurement_name,
-    TsFileSeriesScanIterator *&ssi) {
+    const std::string& device_path, const std::string& measurement_name,
+    TsFileSeriesScanIterator*& ssi) {
     int ret = E_OK;
     DeviceMetaIndexEntry device_index_entry;
     int64_t device_ie_end_offset = 0;
@@ -219,16 +222,16 @@ int TsFileIOReader::load_timeseries_index_for_ssi(
     // bool is_aligned = false;
     auto device_id = std::make_shared<StringArrayDeviceID>(device_path);
     if (RET_FAIL(load_device_index_entry(
-            std::make_shared<DeviceIDComparable>(device_id), device_index_entry,
-            device_ie_end_offset))) {
+        std::make_shared<DeviceIDComparable>(device_id), device_index_entry,
+        device_ie_end_offset))) {
     } else if (RET_FAIL(load_measurement_index_entry(
-                   measurement_name, device_index_entry.offset_,
-                   device_ie_end_offset, measurement_index_entry,
-                   measurement_ie_end_offset))) {
+        measurement_name, device_index_entry.offset_,
+        device_ie_end_offset, measurement_index_entry,
+        measurement_ie_end_offset))) {
     } else if (RET_FAIL(do_load_timeseries_index(
-                   measurement_name, measurement_index_entry.offset_,
-                   measurement_ie_end_offset, ssi->timeseries_index_pa_,
-                   ssi->itimeseries_index_))) {
+        measurement_name, measurement_index_entry.offset_,
+        measurement_ie_end_offset, ssi->timeseries_index_pa_,
+        ssi->itimeseries_index_))) {
     } else {
 #if DEBUG_SE
         if (measurement_index_entry.name_.len_) {
@@ -247,7 +250,7 @@ int TsFileIOReader::load_timeseries_index_for_ssi(
 
 int TsFileIOReader::load_device_index_entry(
     std::shared_ptr<IComparable> device_name,
-    IMetaIndexEntry &device_index_entry, int64_t &end_offset) {
+    IMetaIndexEntry& device_index_entry, int64_t& end_offset) {
     int ret = E_OK;
     auto index_node = tsfile_meta_.index_node_;
     if (index_node->node_type_ == LEAF_DEVICE) {
@@ -270,9 +273,9 @@ int TsFileIOReader::load_device_index_entry(
 }
 
 int TsFileIOReader::load_measurement_index_entry(
-    const std::string &measurement_name_str, int64_t start_offset,
-    int64_t end_offset, IMetaIndexEntry &ret_measurement_index_entry,
-    int64_t &ret_end_offset) {
+    const std::string& measurement_name_str, int64_t start_offset,
+    int64_t end_offset, IMetaIndexEntry& ret_measurement_index_entry,
+    int64_t& ret_end_offset) {
 #if DEBUG_SE
     std::cout << "load_measurement_index_entry: measurement_name_str="
               << measurement_name_str << ", start_offset=" << start_offset
@@ -286,21 +289,21 @@ int TsFileIOReader::load_measurement_index_entry(
     pa.init(512, MOD_TSFILE_READER);
     const int32_t read_size = (int32_t)(end_offset - start_offset);
     int32_t ret_read_len = 0;
-    char *data_buf = (char *)pa.alloc(read_size);
-    void *m_idx_node_buf = pa.alloc(sizeof(MetaIndexNode));
+    char* data_buf = (char*)pa.alloc(read_size);
+    void* m_idx_node_buf = pa.alloc(sizeof(MetaIndexNode));
     if (IS_NULL(data_buf) || IS_NULL(m_idx_node_buf)) {
         return E_OOM;
     }
-    auto* top_node_ptr = new (m_idx_node_buf) MetaIndexNode(&pa);
-    auto top_node = std::shared_ptr<MetaIndexNode>(top_node_ptr, [](MetaIndexNode *ptr) {
-        if (ptr) {
-            ptr->~MetaIndexNode();
-        }
-    });
-
+    auto* top_node_ptr = new(m_idx_node_buf) MetaIndexNode(&pa);
+    auto top_node = std::shared_ptr<MetaIndexNode>(
+        top_node_ptr, [](MetaIndexNode* ptr) {
+            if (ptr) {
+                ptr->~MetaIndexNode();
+            }
+        });
 
     if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
-                                  ret_read_len))) {
+        ret_read_len))) {
     } else if (RET_FAIL(top_node->deserialize_from(data_buf, read_size))) {
     }
 #if DEBUG_SE
@@ -331,9 +334,9 @@ int TsFileIOReader::load_measurement_index_entry(
 }
 
 int TsFileIOReader::load_all_measurement_index_entry(
-    int64_t start_offset, int64_t end_offset, common::PageArena &pa,
-    std::vector<std::pair<IMetaIndexEntry *, int64_t>>
-        &ret_measurement_index_entry) {
+    int64_t start_offset, int64_t end_offset, common::PageArena& pa,
+    std::vector<std::pair<std::shared_ptr<IMetaIndexEntry>, int64_t> >
+    & ret_measurement_index_entry) {
 #if DEBUG_SE
     std::cout << "load_measurement_index_entry: measurement_name_str="
               << measurement_name_str << ", start_offset=" << start_offset
@@ -344,14 +347,20 @@ int TsFileIOReader::load_all_measurement_index_entry(
     // 1. load top measuremnt_index_node
     const int32_t read_size = (int32_t)(end_offset - start_offset);
     int32_t ret_read_len = 0;
-    char *data_buf = (char *)pa.alloc(read_size);
-    void *m_idx_node_buf = pa.alloc(sizeof(MetaIndexNode));
+    char* data_buf = (char*)pa.alloc(read_size);
+    void* m_idx_node_buf = pa.alloc(sizeof(MetaIndexNode));
     if (IS_NULL(data_buf) || IS_NULL(m_idx_node_buf)) {
         return E_OOM;
     }
-    MetaIndexNode *top_node = new (m_idx_node_buf) MetaIndexNode(&pa);
+    auto* top_node_ptr = new(m_idx_node_buf) MetaIndexNode(&pa);
+    auto top_node = std::shared_ptr<MetaIndexNode>(
+        top_node_ptr, [](MetaIndexNode* ptr) {
+            if (ptr) {
+                ptr->~MetaIndexNode();
+            }
+        });
     if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
-                                  ret_read_len))) {
+        ret_read_len))) {
     } else if (RET_FAIL(top_node->deserialize_from(data_buf, read_size))) {
     }
 #if DEBUG_SE
@@ -376,8 +385,9 @@ int TsFileIOReader::load_all_measurement_index_entry(
  * @index_node  leaf device node or leaf measurement node
  */
 int TsFileIOReader::search_from_leaf_node(
-    std::shared_ptr<IComparable> target_name, MetaIndexNode *index_node,
-    IMetaIndexEntry &ret_index_entry, int64_t &ret_end_offset) {
+    std::shared_ptr<IComparable> target_name,
+    std::shared_ptr<MetaIndexNode> index_node,
+    IMetaIndexEntry& ret_index_entry, int64_t& ret_end_offset) {
     int ret = E_OK;
     ret = index_node->binary_search_children(target_name, true, ret_index_entry,
                                              ret_end_offset);
@@ -386,23 +396,23 @@ int TsFileIOReader::search_from_leaf_node(
 
 int TsFileIOReader::search_from_internal_node(
     std::shared_ptr<IComparable> target_name,
-    std::shared_ptr<MetaIndexNode> index_node, IMetaIndexEntry &ret_index_entry,
-    int64_t &ret_end_offset) {
+    std::shared_ptr<MetaIndexNode> index_node, IMetaIndexEntry& ret_index_entry,
+    int64_t& ret_end_offset) {
     int ret = E_OK;
     IMetaIndexEntry index_entry;
     int64_t end_offset = 0;
 
     ASSERT(index_node->node_type_ == INTERNAL_MEASUREMENT ||
-           index_node->node_type_ == INTERNAL_DEVICE);
+        index_node->node_type_ == INTERNAL_DEVICE);
 
     if (RET_FAIL(index_node->binary_search_children(
-            target_name, /*exact=*/false, index_entry, end_offset))) {
+        target_name, /*exact=*/false, index_entry, end_offset))) {
         return ret;
     }
 
     while (IS_SUCC(ret)) {
         // reader next level index node
-        const int read_size = end_offset - index_entry.offset_;
+        const int read_size = end_offset - index_entry.get_offset();
 #if DEBUG_SE
         std::cout << "search_from_internal_node, end_offset=" << end_offset
                   << ", index_entry.offset_=" << index_entry.offset_
@@ -410,33 +420,33 @@ int TsFileIOReader::search_from_internal_node(
 #endif
         ASSERT(read_size > 0 && read_size < (1 << 30));
         PageArena cur_level_index_node_pa;
-        void *buf = cur_level_index_node_pa.alloc(sizeof(MetaIndexNode));
-        char *data_buf = (char *)cur_level_index_node_pa.alloc(read_size);
+        void* buf = cur_level_index_node_pa.alloc(sizeof(MetaIndexNode));
+        char* data_buf = (char*)cur_level_index_node_pa.alloc(read_size);
         if (IS_NULL(buf) || IS_NULL(data_buf)) {
             return E_OOM;
         }
-        MetaIndexNode *cur_level_index_node =
-            new (buf) MetaIndexNode(&cur_level_index_node_pa);
+        MetaIndexNode* cur_level_index_node =
+            new(buf) MetaIndexNode(&cur_level_index_node_pa);
         int32_t ret_read_len = 0;
-        if (RET_FAIL(read_file_->read(index_entry.offset_, data_buf, read_size,
-                                      ret_read_len))) {
+        if (RET_FAIL(read_file_->read(index_entry.get_offset(), data_buf, read_size,
+            ret_read_len))) {
         } else if (read_size != ret_read_len) {
             ret = E_TSFILE_CORRUPTED;
         } else if (RET_FAIL(cur_level_index_node->deserialize_from(
-                       data_buf, read_size))) {
+            data_buf, read_size))) {
         } else {
             if (cur_level_index_node->node_type_ == LEAF_DEVICE) {
                 ret = cur_level_index_node->binary_search_children(
                     target_name, /*exact=*/true, ret_index_entry,
                     ret_end_offset);
                 cur_level_index_node->destroy();
-                return ret;  //// FIXME
+                return ret; //// FIXME
             } else if (cur_level_index_node->node_type_ == LEAF_MEASUREMENT) {
                 ret = cur_level_index_node->binary_search_children(
                     target_name, /*exact=*/false, ret_index_entry,
                     ret_end_offset);
                 cur_level_index_node->destroy();
-                return ret;  //// FIXME
+                return ret; //// FIXME
             } else {
                 ret = cur_level_index_node->binary_search_children(
                     target_name, /*exact=*/false, index_entry, end_offset);
@@ -448,24 +458,24 @@ int TsFileIOReader::search_from_internal_node(
 }
 
 int TsFileIOReader::do_load_timeseries_index(
-    const std::string &measurement_name_str, int64_t start_offset,
-    int64_t end_offset, PageArena &in_timeseries_index_pa,
-    ITimeseriesIndex *&ret_timeseries_index) {
+    const std::string& measurement_name_str, int64_t start_offset,
+    int64_t end_offset, PageArena& in_timeseries_index_pa,
+    ITimeseriesIndex*& ret_timeseries_index) {
     ASSERT(end_offset > start_offset);
     int ret = E_OK;
     int32_t read_size = (int32_t)(end_offset - start_offset);
     int32_t ret_read_len = 0;
-    char *ti_buf = (char *)mem_alloc(read_size, MOD_TSFILE_READER);
+    char* ti_buf = (char*)mem_alloc(read_size, MOD_TSFILE_READER);
     if (IS_NULL(ti_buf)) {
         return E_OOM;
     }
     if (RET_FAIL(
-            read_file_->read(start_offset, ti_buf, read_size, ret_read_len))) {
+        read_file_->read(start_offset, ti_buf, read_size, ret_read_len))) {
     } else {
         ByteStream bs;
         bs.wrap_from(ti_buf, read_size);
         const String target_measurement_name(
-            (char *)measurement_name_str.c_str(),
+            (char*)measurement_name_str.c_str(),
             strlen(measurement_name_str.c_str()));
         bool found = false;
 #if DEBUG_SE
@@ -473,30 +483,30 @@ int TsFileIOReader::do_load_timeseries_index(
                   << " to " << end_offset << std::endl;
 #endif
         bool is_aligned = false;
-        AlignedTimeseriesIndex *aligned_ts_idx = nullptr;
+        AlignedTimeseriesIndex* aligned_ts_idx = nullptr;
         while (IS_SUCC(ret)) {
             TimeseriesIndex cur_timeseries_index;
             PageArena cur_timeseries_index_pa;
-            cur_timeseries_index_pa.init(512, MOD_TSFILE_READER);  // TODO 512
+            cur_timeseries_index_pa.init(512, MOD_TSFILE_READER); // TODO 512
             if (RET_FAIL(cur_timeseries_index.deserialize_from(
-                    bs, &cur_timeseries_index_pa))) {
+                bs, &cur_timeseries_index_pa))) {
             } else if (is_aligned ||
                        cur_timeseries_index.get_data_type() == common::VECTOR) {
                 if (!is_aligned) {
                     is_aligned = true;
-                    void *buf = in_timeseries_index_pa.alloc(
+                    void* buf = in_timeseries_index_pa.alloc(
                         sizeof(AlignedTimeseriesIndex));
-                    aligned_ts_idx = new (buf) AlignedTimeseriesIndex;
+                    aligned_ts_idx = new(buf) AlignedTimeseriesIndex;
                     buf = in_timeseries_index_pa.alloc(sizeof(TimeseriesIndex));
-                    aligned_ts_idx->time_ts_idx_ = new (buf) TimeseriesIndex;
+                    aligned_ts_idx->time_ts_idx_ = new(buf) TimeseriesIndex;
                     aligned_ts_idx->time_ts_idx_->clone_from(
                         cur_timeseries_index, &in_timeseries_index_pa);
                     ret_timeseries_index = aligned_ts_idx;
                 } else if (cur_timeseries_index.get_measurement_name().equal_to(
-                               target_measurement_name)) {
-                    void *buf =
+                    target_measurement_name)) {
+                    void* buf =
                         in_timeseries_index_pa.alloc(sizeof(TimeseriesIndex));
-                    aligned_ts_idx->value_ts_idx_ = new (buf) TimeseriesIndex;
+                    aligned_ts_idx->value_ts_idx_ = new(buf) TimeseriesIndex;
                     aligned_ts_idx->value_ts_idx_->clone_from(
                         cur_timeseries_index, &in_timeseries_index_pa);
                     found = true;
@@ -505,16 +515,16 @@ int TsFileIOReader::do_load_timeseries_index(
             } else if (!is_aligned &&
                        cur_timeseries_index.get_measurement_name().equal_to(
                            target_measurement_name)) {
-                void *buf =
+                void* buf =
                     in_timeseries_index_pa.alloc(sizeof(TimeseriesIndex));
-                auto ts_idx = new (buf) TimeseriesIndex;
+                auto ts_idx = new(buf) TimeseriesIndex;
                 ts_idx->clone_from(cur_timeseries_index,
                                    &in_timeseries_index_pa);
                 ret_timeseries_index = ts_idx;
                 found = true;
                 break;
             }
-        }  // end while
+        } // end while
         if (!found) {
             ret = E_NOT_EXIST;
         }
@@ -524,16 +534,17 @@ int TsFileIOReader::do_load_timeseries_index(
 }
 
 int TsFileIOReader::do_load_all_timeseries_index(
-    std::vector<std::pair<IMetaIndexEntry *, int64_t>> &index_node_entry_list,
-    common::PageArena &in_timeseries_index_pa,
-    std::vector<ITimeseriesIndex *> &ts_indexs) {
+    std::vector<std::pair<std::shared_ptr<IMetaIndexEntry>, int64_t> >&
+    index_node_entry_list,
+    common::PageArena& in_timeseries_index_pa,
+    std::vector<ITimeseriesIndex*>& ts_indexs) {
     int ret = E_OK;
-    for (const auto &index_node_entry : index_node_entry_list) {
-        int64_t start_offset = index_node_entry.first->offset_,
-                end_offset = index_node_entry.second;
+    for (const auto& index_node_entry : index_node_entry_list) {
+        int64_t start_offset = index_node_entry.first->get_offset(),
+            end_offset = index_node_entry.second;
         const std::string target_measurement_name(
-            index_node_entry.first->name_.to_std_string());
-        ITimeseriesIndex *ts_idx;
+            index_node_entry.first->get_name().to_std_string());
+        ITimeseriesIndex* ts_idx;
         ret = do_load_timeseries_index(target_measurement_name, start_offset,
                                        end_offset, in_timeseries_index_pa,
                                        ts_idx);
@@ -545,8 +556,9 @@ int TsFileIOReader::do_load_all_timeseries_index(
 }
 
 int TsFileIOReader::get_all_leaf(
-    MetaIndexNode *index_node,
-    std::vector<std::pair<IMetaIndexEntry *, int64_t>> &index_node_entry_list) {
+    std::shared_ptr<MetaIndexNode> index_node,
+    std::vector<std::pair<std::shared_ptr<IMetaIndexEntry>, int64_t> >&
+    index_node_entry_list) {
     int ret = E_OK;
     if (index_node->node_type_ == LEAF_MEASUREMENT ||
         index_node->node_type_ == LEAF_DEVICE) {
@@ -554,7 +566,7 @@ int TsFileIOReader::get_all_leaf(
             if (i + 1 < index_node->children_.size()) {
                 index_node_entry_list.push_back(
                     std::make_pair(index_node->children_[i],
-                                   index_node->children_[i + 1]->offset_));
+                                   index_node->children_[i + 1]->get_offset()));
             } else {
                 index_node_entry_list.push_back(std::make_pair(
                     index_node->children_[i], index_node->end_offset_));
@@ -565,10 +577,10 @@ int TsFileIOReader::get_all_leaf(
         for (size_t i = 0; i < index_node->children_.size(); i++) {
             int64_t end_offset = index_node->end_offset_;
             if (i + 1 < index_node->children_.size()) {
-                end_offset = index_node->children_[i + 1]->offset_;
+                end_offset = index_node->children_[i + 1]->get_offset();
             }
             const int read_size =
-                end_offset - index_node->children_[i]->offset_;
+                end_offset - index_node->children_[i]->get_offset();
 #if DEBUG_SE
             std::cout << "search_from_internal_node, end_offset=" << end_offset
                       << ", index_entry.offset_=" << index_entry.offset_
@@ -576,20 +588,28 @@ int TsFileIOReader::get_all_leaf(
 #endif
             ASSERT(read_size > 0 && read_size < (1 << 30));
             PageArena cur_level_index_node_pa;
-            void *buf = cur_level_index_node_pa.alloc(sizeof(MetaIndexNode));
-            char *data_buf = (char *)cur_level_index_node_pa.alloc(read_size);
+            void* buf = cur_level_index_node_pa.alloc(sizeof(MetaIndexNode));
+            char* data_buf = (char*)cur_level_index_node_pa.alloc(read_size);
             if (IS_NULL(buf) || IS_NULL(data_buf)) {
                 return E_OOM;
             }
-            MetaIndexNode *cur_level_index_node =
-                new (buf) MetaIndexNode(&cur_level_index_node_pa);
+            auto* cur_level_index_node_ptr = new(buf) MetaIndexNode(
+                &cur_level_index_node_pa);
+            auto cur_level_index_node = std::shared_ptr<MetaIndexNode>(
+                cur_level_index_node_ptr, [](MetaIndexNode* ptr) {
+                    if (ptr) {
+                        ptr->~MetaIndexNode();
+                    }
+                });
+
             int32_t ret_read_len = 0;
-            if (RET_FAIL(read_file_->read(index_node->children_[i]->offset_,
-                                          data_buf, read_size, ret_read_len))) {
+            if (RET_FAIL(
+                read_file_->read(index_node->children_[i]->get_offset(),
+                    data_buf, read_size, ret_read_len))) {
             } else if (read_size != ret_read_len) {
                 ret = E_TSFILE_CORRUPTED;
             } else if (RET_FAIL(cur_level_index_node->deserialize_from(
-                           data_buf, read_size))) {
+                data_buf, read_size))) {
             } else {
                 ret = get_all_leaf(cur_level_index_node, index_node_entry_list);
             }
@@ -613,7 +633,7 @@ int TsFileIOReader::get_next(const std::string &device_path,
 int TsFileIOReader::get_next_page(TsBlock *ret_tsblock)
 {
   int ret = E_OK;
-  
+
   if (!chunk_reader_.has_more_data()) {
     // has finished reading current chunk
     if (has_next_chunk()) {
@@ -704,5 +724,4 @@ int TsFileIOReader::load_timeseries_index(const ColumnDesc &col_desc)
   return ret;
 }
 #endif
-
-}  // end namespace storage
+} // end namespace storage

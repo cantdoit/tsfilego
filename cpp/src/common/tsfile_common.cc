@@ -206,6 +206,37 @@ int TsFileMeta::serialize_to(common::ByteStream &out) {
     return out.total_size() - start_idx;
 }
 
+int TsFileMeta::deserialize_from(common::ByteStream &in) {
+    int ret = common::E_OK;
+    void *index_node_buf = page_arena_->alloc(sizeof(MetaIndexNode));
+    void *bloom_filter_buf = page_arena_->alloc(sizeof(BloomFilter));
+    if (IS_NULL(index_node_buf) || IS_NULL(bloom_filter_buf)) {
+        return common::E_OOM;
+    }
+    auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
+    new (index_node_buf) MetaIndexNode(page_arena_);
+    index_node_ = std::shared_ptr<MetaIndexNode>(
+        index_node_ptr, [](MetaIndexNode *ptr) {
+            if (ptr) {
+                ptr->~MetaIndexNode();
+            }
+        });
+    bloom_filter_ = new (bloom_filter_buf) BloomFilter();
+
+    uint32_t index_node_map_size = 0;
+    SerializationUtil::read_var_uint(index_node_map_size, in);
+    for (uint32_t i = 0; i < index_node_map_size; i++) {
+        std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>
+    }
+
+    if (RET_FAIL(index_node_->deserialize_from(in))) {
+    } else if (RET_FAIL(
+                   common::SerializationUtil::read_i64(meta_offset_, in))) {
+                   } else if (RET_FAIL(bloom_filter_->deserialize_from(in))) {
+                   }
+    return ret;
+}
+
 /* ================ MetaIndexNode ================ */
 int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool exact_search,
                                           IMetaIndexEntry &ret_index_entry,
@@ -232,7 +263,7 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
         bool found = false;
         while (l < h - 1) {
             int m = (l + h) / 2;
-            int cmp = children_[m]->name_.compare(name);
+            int cmp = children_[m]->get_compare_key()->compare(*key);
 #if DEBUG_SE
             std::cout
                 << "MetaIndexNode::binary_search_children doing, cmp: cur="
@@ -263,7 +294,7 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
     if (l == (int)children_.size() - 1) {
         ret_end_offset = this->end_offset_;
     } else {
-        ret_end_offset = children_[l + 1]->offset_;
+        ret_end_offset = children_[l + 1]->get_offset();
     }
 #if DEBUG_SE
     std::cout << "MetaIndexNode::binary_search_children end, ret_index_entry="

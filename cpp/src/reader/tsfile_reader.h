@@ -46,15 +46,15 @@ class TsFileReader {
     int query(std::vector<std::string> &path_list, int64_t start_time,
               int64_t end_time, ResultSet *&result_set);
     void destroy_query_data_set(ResultSet *qds);
-    ResultSet *read_timeseries(const std::string &device_name,
-                               std::vector<std::string> measurement_name);
-    std::vector<std::string> get_all_devices();
-    int get_timeseries_schema(const std::string &device_id,
+    ResultSet *read_timeseries(const std::shared_ptr<IDeviceID>& device_id,
+                               const std::vector<std::string>& measurement_name);
+    std::vector<std::shared_ptr<IDeviceID>> get_all_devices();
+    int get_timeseries_schema(std::shared_ptr<IDeviceID> device_id,
                               std::vector<MeasurementSchema> &result);
 
    private:
-    int get_all_devices(std::vector<std::string> &device_ids,
-                        MetaIndexNode *index_node, common::PageArena &pa);
+    int get_all_devices(std::vector<std::shared_ptr<IDeviceID>> &device_ids,
+                        std::shared_ptr<MetaIndexNode> index_node, common::PageArena &pa);
     storage::ReadFile *read_file_;
     storage::TsFileExecutor *tsfile_executor_;
 };
