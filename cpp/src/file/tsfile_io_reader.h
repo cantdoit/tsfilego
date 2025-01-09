@@ -69,6 +69,9 @@ class TsFileIOReader {
         std::vector<ITimeseriesIndex *> &timeseries_indexs,
         common::PageArena &pa);
 
+    int get_chunk_metadata_list(IDeviceID device_id, std::string measurement,
+                                std::vector<ChunkMeta *> &chunk_meta_list);
+
    private:
     FORCE_INLINE int32_t file_size() const { return read_file_->file_size(); }
     int load_tsfile_meta();

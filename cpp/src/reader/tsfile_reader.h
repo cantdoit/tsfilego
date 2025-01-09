@@ -21,9 +21,9 @@
 #define READER_TSFILE_READER_H
 
 #include "common/row_record.h"
+#include "common/tsfile_common.h"
 #include "expression.h"
 #include "file/read_file.h"
-#include "common/tsfile_common.h"
 namespace storage {
 class TsFileExecutor;
 class ReadFile;
@@ -45,6 +45,9 @@ class TsFileReader {
     int query(storage::QueryExpression *qe, ResultSet *&ret_qds);
     int query(std::vector<std::string> &path_list, int64_t start_time,
               int64_t end_time, ResultSet *&result_set);
+    int query(const std::string &table_name,
+              const std::vector<std::string> &columns_names, int64_t start_time,
+              int64_t end_time, ResultSet *&result_set);
     void destroy_query_data_set(ResultSet *qds);
     ResultSet *read_timeseries(const std::string &device_name,
                                std::vector<std::string> measurement_name);
@@ -53,7 +56,8 @@ class TsFileReader {
                               std::vector<MeasurementSchema> &result);
 
    private:
-    int get_all_devices(std::vector<std::string> &device_ids, MetaIndexNode *index_node, common::PageArena &pa);
+    int get_all_devices(std::vector<std::string> &device_ids,
+                        MetaIndexNode *index_node, common::PageArena &pa);
     storage::ReadFile *read_file_;
     storage::TsFileExecutor *tsfile_executor_;
 };

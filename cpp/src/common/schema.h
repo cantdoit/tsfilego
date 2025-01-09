@@ -238,7 +238,6 @@ class TableSchema {
         const {
         return column_schemas_;
     }
-
    private:
     std::string to_lower(const std::string &str) {
         std::string result;
