@@ -98,13 +98,11 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 5};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getLongs(), columnByGetPositions.getLongs());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals(3, columnByGetPositions.getLong(0));
     Assert.assertEquals(5, columnByGetPositions.getLong(1));
 
     Column columnByCopyPositions = originalColumn.copyPositions(selectedPositions, 1, 2);
-    Assert.assertNotSame(originalColumn.getLongs(), columnByCopyPositions.getLongs());
     Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
     Assert.assertEquals(3, columnByCopyPositions.getLong(0));
     Assert.assertEquals(5, columnByCopyPositions.getLong(1));
@@ -161,13 +159,11 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 5};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getBinaries(), columnByGetPositions.getBinaries());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals("3", columnByGetPositions.getBinary(0).toString());
     Assert.assertEquals("5", columnByGetPositions.getBinary(1).toString());
 
     Column columnByCopyPositions = originalColumn.copyPositions(selectedPositions, 1, 2);
-    Assert.assertNotSame(originalColumn.getBinaries(), columnByCopyPositions.getBinaries());
     Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
     Assert.assertEquals("3", columnByCopyPositions.getBinary(0).toString());
     Assert.assertEquals("5", columnByCopyPositions.getBinary(1).toString());
@@ -226,13 +222,11 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 6};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getBooleans(), columnByGetPositions.getBooleans());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertFalse(columnByGetPositions.getBoolean(0));
     Assert.assertTrue(columnByGetPositions.getBoolean(1));
 
     Column columnByCopyPositions = originalColumn.copyPositions(selectedPositions, 1, 2);
-    Assert.assertNotSame(originalColumn.getBooleans(), columnByCopyPositions.getBooleans());
     Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
     Assert.assertFalse(columnByCopyPositions.getBoolean(0));
     Assert.assertTrue(columnByCopyPositions.getBoolean(1));
@@ -289,13 +283,11 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 5};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getDoubles(), columnByGetPositions.getDoubles());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals(3, columnByGetPositions.getDouble(0), 0.01);
     Assert.assertEquals(5, columnByGetPositions.getDouble(1), 0.01);
 
     Column columnByCopyPositions = originalColumn.copyPositions(selectedPositions, 1, 2);
-    Assert.assertNotSame(originalColumn.getDoubles(), columnByCopyPositions.getDoubles());
     Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
     Assert.assertEquals(3, columnByCopyPositions.getDouble(0), 0.01);
     Assert.assertEquals(5, columnByCopyPositions.getDouble(1), 0.01);
@@ -352,7 +344,6 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 5};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getFloats(), columnByGetPositions.getFloats());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals(3, columnByGetPositions.getFloat(0), 0.01);
     Assert.assertEquals(5, columnByGetPositions.getFloat(1), 0.01);
@@ -415,13 +406,11 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 5};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getInts(), columnByGetPositions.getInts());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals(3, columnByGetPositions.getInt(0));
     Assert.assertEquals(5, columnByGetPositions.getInt(1));
 
     Column columnByCopyPositions = originalColumn.copyPositions(selectedPositions, 1, 2);
-    Assert.assertNotSame(originalColumn.getInts(), columnByCopyPositions.getInts());
     Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
     Assert.assertEquals(3, columnByCopyPositions.getInt(0));
     Assert.assertEquals(5, columnByCopyPositions.getInt(1));
@@ -478,13 +467,11 @@ public class ColumnTest {
     int[] selectedPositions = new int[] {1, 3, 5};
     Column columnByGetPositions = originalColumn.getPositions(selectedPositions, 1, 2);
     Assert.assertTrue(columnByGetPositions instanceof DictionaryColumn);
-    Assert.assertSame(originalColumn.getLongs(), columnByGetPositions.getLongs());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals(3, columnByGetPositions.getLong(0));
     Assert.assertEquals(5, columnByGetPositions.getLong(1));
 
     Column columnByCopyPositions = originalColumn.copyPositions(selectedPositions, 1, 2);
-    Assert.assertNotSame(originalColumn.getLongs(), columnByCopyPositions.getLongs());
     Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
     Assert.assertEquals(3, columnByCopyPositions.getLong(0));
     Assert.assertEquals(5, columnByCopyPositions.getLong(1));
@@ -579,25 +566,21 @@ public class ColumnTest {
 
     int[] selectedPositions = new int[] {0, 2};
     Column columnByGetPositions = dictionaryColumn.getPositions(selectedPositions, 0, 2);
-    Assert.assertSame(dictionaryColumn.getLongs(), columnByGetPositions.getLongs());
     Assert.assertEquals(2, columnByGetPositions.getPositionCount());
     Assert.assertEquals(3, columnByGetPositions.getLong(0));
     Assert.assertEquals(3, columnByGetPositions.getLong(1));
 
     Column columnByCopyPositions = dictionaryColumn.copyPositions(selectedPositions, 0, 2);
-    Assert.assertNotSame(dictionaryColumn.getLongs(), columnByCopyPositions.getLongs());
-    Assert.assertEquals(2, columnByGetPositions.getPositionCount());
-    Assert.assertEquals(3, columnByGetPositions.getLong(0));
-    Assert.assertEquals(3, columnByGetPositions.getLong(1));
+    Assert.assertEquals(2, columnByCopyPositions.getPositionCount());
+    Assert.assertEquals(3, columnByCopyPositions.getLong(0));
+    Assert.assertEquals(3, columnByCopyPositions.getLong(1));
 
     Column columnByGetRegion = dictionaryColumn.getRegion(1, 2);
-    Assert.assertSame(dictionaryColumn.getLongs(), columnByGetRegion.getLongs());
     Assert.assertEquals(2, columnByGetRegion.getPositionCount());
     Assert.assertEquals(0, columnByGetRegion.getLong(0));
     Assert.assertEquals(3, columnByGetRegion.getLong(1));
 
     Column columnByGetRegionCopy = dictionaryColumn.getRegionCopy(1, 2);
-    Assert.assertNotSame(dictionaryColumn.getLongs(), columnByGetRegionCopy.getLongs());
     Assert.assertEquals(2, columnByGetRegionCopy.getPositionCount());
     Assert.assertEquals(0, columnByGetRegionCopy.getLong(0));
     Assert.assertEquals(3, columnByGetRegionCopy.getLong(1));
@@ -610,6 +593,13 @@ public class ColumnTest {
 
     try {
       dictionaryColumn.setNull(0, 1);
+      Assert.fail();
+    } catch (Exception e) {
+      // Ignore
+    }
+
+    try {
+      dictionaryColumn.getLongs();
       Assert.fail();
     } catch (Exception e) {
       // Ignore

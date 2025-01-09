@@ -108,7 +108,7 @@ public final class DictionaryColumn implements Column {
         idsOffset, positionCount, dictionary, ids, false, false, dictionarySourceId);
   }
 
-  private DictionaryColumn(
+  DictionaryColumn(
       int idsOffset,
       int positionCount,
       Column dictionary,
@@ -243,7 +243,7 @@ public final class DictionaryColumn implements Column {
 
   @Override
   public ColumnEncoding getEncoding() {
-    return dictionary.getEncoding();
+    return ColumnEncoding.DICTIONARY;
   }
 
   @Override
@@ -279,8 +279,7 @@ public final class DictionaryColumn implements Column {
 
   @Override
   public void setNull(int start, int end) {
-    throw new UnsupportedOperationException(
-        String.format("set null of %s is not supported !", DictionaryColumn.class.getSimpleName()));
+    throw new UnsupportedOperationException(getClass().getSimpleName());
   }
 
   @Override
@@ -421,48 +420,13 @@ public final class DictionaryColumn implements Column {
   }
 
   @Override
-  public boolean[] getBooleans() {
-    return dictionary.getBooleans();
-  }
-
-  @Override
-  public int[] getInts() {
-    return dictionary.getInts();
-  }
-
-  @Override
-  public long[] getLongs() {
-    return dictionary.getLongs();
-  }
-
-  @Override
-  public float[] getFloats() {
-    return dictionary.getFloats();
-  }
-
-  @Override
-  public double[] getDoubles() {
-    return dictionary.getDoubles();
-  }
-
-  @Override
-  public Binary[] getBinaries() {
-    return dictionary.getBinaries();
-  }
-
-  @Override
-  public Object[] getObjects() {
-    return dictionary.getObjects();
-  }
-
-  @Override
   public TsPrimitiveType getTsPrimitiveType(int position) {
     return dictionary.getTsPrimitiveType(position);
   }
 
   @Override
   public void reset() {
-    dictionary.reset();
+    throw new UnsupportedOperationException(getClass().getSimpleName());
   }
 
   @Override
