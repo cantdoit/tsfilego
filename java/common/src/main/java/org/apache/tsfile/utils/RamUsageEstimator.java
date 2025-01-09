@@ -277,7 +277,7 @@ public final class RamUsageEstimator {
     } else {
       long size = shallowSizeOf(arr);
       for (Accountable obj : arr) {
-        size += obj.ramBytesUsed();
+        size += obj != null ? obj.ramBytesUsed() : 0;
       }
       return size;
     }
