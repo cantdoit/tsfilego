@@ -213,27 +213,48 @@ int TsFileMeta::deserialize_from(common::ByteStream &in) {
     if (IS_NULL(index_node_buf) || IS_NULL(bloom_filter_buf)) {
         return common::E_OOM;
     }
-    auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
-    new (index_node_buf) MetaIndexNode(page_arena_);
-    index_node_ = std::shared_ptr<MetaIndexNode>(
-        index_node_ptr, [](MetaIndexNode *ptr) {
-            if (ptr) {
-                ptr->~MetaIndexNode();
-            }
-        });
+
     bloom_filter_ = new (bloom_filter_buf) BloomFilter();
 
     uint32_t index_node_map_size = 0;
     SerializationUtil::read_var_uint(index_node_map_size, in);
     for (uint32_t i = 0; i < index_node_map_size; i++) {
-        std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>
+        auto key = std::make_shared<StringArrayDeviceID>("init");
+        key->deserialize(in);
+        auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
+        new (index_node_buf) MetaIndexNode(page_arena_);
+        auto value = std::shared_ptr<MetaIndexNode>(
+            index_node_ptr, [](MetaIndexNode *ptr) {
+                if (ptr) {
+                    ptr->~MetaIndexNode();
+                }
+            });
+        value->deserialize_from(in);
+        table_metadata_index_node_map_.emplace(key, std::move(value));
     }
 
-    if (RET_FAIL(index_node_->deserialize_from(in))) {
-    } else if (RET_FAIL(
-                   common::SerializationUtil::read_i64(meta_offset_, in))) {
-                   } else if (RET_FAIL(bloom_filter_->deserialize_from(in))) {
-                   }
+    uint32_t table_schemas_size = 0;
+    common::SerializationUtil::read_var_uint(table_schemas_size, in);
+    for (uint32_t i = 0; i < table_schemas_size; i++) {
+        std::string table_name;
+        common::SerializationUtil::read_str(table_name, in);
+        auto table_schema = std::shared_ptr<TableSchema>();
+        table_schema->deserialize(in);
+        table_schemas_.emplace(table_name, std::move(table_schema));
+    }
+
+    common::SerializationUtil::read_i64(meta_offset_, in);
+
+    bloom_filter_->deserialize_from(in);
+
+    int32_t tsfile_properties_size = 0;
+    common::SerializationUtil::read_var_int(tsfile_properties_size, in);
+    for (int i = 0; i < tsfile_properties_size; i++) {
+        std::string key, value;
+        common::SerializationUtil::read_str(key, in);
+        common::SerializationUtil::read_str(value, in);
+        tsfile_properties_.emplace(key, std::move(value));
+    }
     return ret;
 }
 

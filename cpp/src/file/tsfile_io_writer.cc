@@ -453,7 +453,6 @@ int TsFileIOWriter::write_file_index() {
             return ret;
         }
         tsfile_meta.bloom_filter_ = nullptr;
-        tsfile_meta.index_node_ = nullptr;
 #if DEBUG_SE
         std::cout << "writer tsfile_meta: " << tsfile_meta
                   << ", tsfile_meta_offset=" << tsfile_meta_offset
