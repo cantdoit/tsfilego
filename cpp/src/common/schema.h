@@ -223,7 +223,9 @@ namespace storage {
             return ret;
         }
 
-        ~TableSchema() = default;
+        ~TableSchema() {
+            column_schemas_.clear();
+        }
 
         const std::string &get_table_name() { return table_name_; }
 

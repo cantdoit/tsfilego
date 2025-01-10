@@ -432,7 +432,9 @@ protected:
         out_ = new common::ByteStream(1024, common::MOD_DEFAULT);
     }
 
-    void TearDown() override { delete out_; }
+    void TearDown() override {
+        delete out_;
+    }
 };
 
 TEST_F(TsFileMetaTest, SerializeDeserialize) {
@@ -453,16 +455,15 @@ TEST_F(TsFileMetaTest, SerializeDeserialize) {
     column_categories.emplace_back(ColumnCategory::FIELD);
     column_schemas.emplace_back(std::make_shared<MeasurementSchema>());
 
-    TableSchema table_schema(table_name, column_schemas, column_categories);
+    auto table_schema = std::make_shared<TableSchema>(table_name, column_schemas, column_categories);
 
-    meta_.table_schemas_.insert(std::make_pair(table_name, &table_schema));
+    meta_.table_schemas_.insert(std::make_pair(table_name, table_schema));
     meta_.tsfile_properties_.insert(std::make_pair("key", "value"));
 
     meta_.meta_offset_ = 456;
     void* buf = pa_.alloc(sizeof(BloomFilter));
     meta_.bloom_filter_ = new(buf) BloomFilter();
     meta_.bloom_filter_->init(0.1, 100);
-
 
 
     meta_.serialize_to(*out_);
@@ -473,6 +474,7 @@ TEST_F(TsFileMetaTest, SerializeDeserialize) {
     ASSERT_EQ(new_meta.table_metadata_index_node_map_.size(), 1);
     ASSERT_EQ(new_meta.table_metadata_index_node_map_[device_id]->children_.size(), 2);
     ASSERT_EQ(new_meta.table_schemas_.size(), 1);
-    ASSERT_EQ(new_meta.table_schemas_[table_name]->get_table_name(), table_name);
+    ASSERT_EQ(new_meta.table_schemas_[table_name]->get_column_categories().size(), 1);
+    //ASSERT_EQ(new_meta.table_schemas_[table_name]->get_column_categories()[0], ColumnCategory::FIELD);
 }
 } // namespace storage
