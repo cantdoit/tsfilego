@@ -445,10 +445,8 @@ TEST_F(TsFileMetaTest, SerializeDeserialize) {
     index_node->end_offset_ = 123456789;
     index_node->children_.emplace_back(entry);
     index_node->children_.emplace_back(entry);
-    auto device_id = std::make_shared<StringArrayDeviceID>("a.b.c.d");
-    meta_.table_metadata_index_node_map_.insert(std::make_pair(device_id, index_node));
-
     std::string table_name = "table_name";
+    meta_.table_metadata_index_node_map_.insert(std::make_pair(table_name, index_node));
 
     std::vector<std::shared_ptr<MeasurementSchema> > column_schemas;
     std::vector<ColumnCategory> column_categories;
@@ -472,7 +470,7 @@ TEST_F(TsFileMetaTest, SerializeDeserialize) {
     new_meta.deserialize_from(*out_);
     ASSERT_EQ(new_meta.meta_offset_, 456);
     ASSERT_EQ(new_meta.table_metadata_index_node_map_.size(), 1);
-    ASSERT_EQ(new_meta.table_metadata_index_node_map_[device_id]->children_.size(), 2);
+    ASSERT_EQ(new_meta.table_metadata_index_node_map_[table_name]->children_.size(), 2);
     ASSERT_EQ(new_meta.table_schemas_.size(), 1);
     ASSERT_EQ(new_meta.table_schemas_[table_name]->get_column_categories().size(), 1);
     //ASSERT_EQ(new_meta.table_schemas_[table_name]->get_column_categories()[0], ColumnCategory::FIELD);

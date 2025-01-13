@@ -1016,7 +1016,7 @@ struct TsFileMeta {
     typedef std::map<std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>,
                      IDeviceIDComparator>
         DeviceNodeMap;
-    DeviceNodeMap table_metadata_index_node_map_;
+    std::map<std::string, std::shared_ptr<MetaIndexNode>> table_metadata_index_node_map_;
     std::unordered_map<std::string, std::string> tsfile_properties_;
     typedef std::unordered_map<std::string, std::shared_ptr<TableSchema>>
         TableSchemasMap;

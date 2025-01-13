@@ -179,7 +179,7 @@ int TsFileMeta::serialize_to(common::ByteStream &out) {
     common::SerializationUtil::write_var_uint(
         table_metadata_index_node_map_.size(), out);
     for (auto &idx_nodes_iter : table_metadata_index_node_map_) {
-        idx_nodes_iter.first->serialize(out);
+        common::SerializationUtil::write_str(idx_nodes_iter.first, out);
         idx_nodes_iter.second->serialize_to(out);
     }
 
@@ -219,8 +219,8 @@ int TsFileMeta::deserialize_from(common::ByteStream &in) {
     uint32_t index_node_map_size = 0;
     SerializationUtil::read_var_uint(index_node_map_size, in);
     for (uint32_t i = 0; i < index_node_map_size; i++) {
-        auto key = std::make_shared<StringArrayDeviceID>("init");
-        key->deserialize(in);
+        std::string key;
+        common::SerializationUtil::read_str(key, in);
         auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
         new (index_node_buf) MetaIndexNode(page_arena_);
         auto value = std::shared_ptr<MetaIndexNode>(

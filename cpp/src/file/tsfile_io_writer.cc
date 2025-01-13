@@ -442,11 +442,13 @@ int TsFileIOWriter::write_file_index() {
                 table_map[entry.first] = entry.second;
             }
         }
-        DeviceNodeMap table_nodes_map;
-        for (auto &device_map_iter : device_map) {
-            tsfile_meta.table_metadata_index_node_map_.insert(
-                std::make_pair(device_map_iter.first, device_map_iter.second));
+        std::map<std::string, std::shared_ptr<MetaIndexNode>> table_nodes_map;
+        for (auto &entry : table_device_nodes_map) {
+            auto meta_index_node = std::make_shared<MetaIndexNode>(&meta_allocator_);
+            build_device_level(entry.second, meta_index_node, writing_mm);
+            table_nodes_map[entry.first] = meta_index_node;
         }
+        tsfile_meta.table_metadata_index_node_map_ = table_nodes_map;
         tsfile_meta.table_schemas_ = schema_->table_schema_map_;
         tsfile_meta.tsfile_properties_.insert(
             std::make_pair("encryptLevel", encrypt_level_));
@@ -488,9 +490,8 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
     for (device_map_iter = device_map.begin();
          device_map_iter != device_map.end() && IS_SUCC(ret);
          device_map_iter++) {
-        String device_name;
-        device_name.shallow_copy_from(device_map_iter->first);
-        MetaIndexEntry *entry = nullptr;
+        auto device_id = device_map_iter->first;
+        std::shared_ptr<IMetaIndexEntry> entry = nullptr;
         if (cur_index_node->is_full()) {
             cur_index_node->end_offset_ = cur_file_position();
 #if DEBUG_SE
@@ -503,7 +504,7 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
             }
         }
         if (RET_FAIL(
-                alloc_and_init_meta_index_entry(wmm, entry, device_name))) {
+                alloc_and_init_meta_index_entry(wmm, entry, device_id))) {
         } else if (RET_FAIL(
                        device_map_iter->second->serialize_to(write_stream_))) {
         } else if (RET_FAIL(cur_index_node->push_entry(entry))) {
@@ -571,65 +572,6 @@ int TsFileIOWriter::write_file_footer() {
     int ret = E_OK;
     if (RET_FAIL(write_buf(MAGIC_STRING_TSFILE, MAGIC_STRING_TSFILE_LEN))) {
     } else if (RET_FAIL(flush_stream_to_file())) {
-    }
-    return ret;
-}
-
-int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
-                                       std::shared_ptr<MetaIndexNode> &ret_root,
-                                       FileIndexWritingMemManager &wmm) {
-    int ret = E_OK;
-
-    SimpleList<std::shared_ptr<MetaIndexNode>> node_queue(
-        1024,
-        MOD_TSFILE_WRITER_META);  // FIXME
-    DeviceNodeMapIterator device_map_iter;
-
-    std::shared_ptr<MetaIndexNode> cur_index_node = nullptr;
-    if (RET_FAIL(
-            alloc_and_init_meta_index_node(wmm, cur_index_node, LEAF_DEVICE))) {
-        return ret;
-    }
-
-    for (device_map_iter = device_map.begin();
-         device_map_iter != device_map.end() && IS_SUCC(ret);
-         device_map_iter++) {
-        auto device_id = device_map_iter->first;
-        std::shared_ptr<IMetaIndexEntry> entry;
-        if (cur_index_node->is_full()) {
-            cur_index_node->end_offset_ = cur_file_position();
-#if DEBUG_SE
-            std::cout << "TsFileIOWriter::build_device_level, cur_index_node="
-                      << *cur_index_node << std::endl;
-#endif
-            if (RET_FAIL(node_queue.push_back(cur_index_node))) {
-            } else if (RET_FAIL(alloc_and_init_meta_index_node(
-                           wmm, cur_index_node, LEAF_DEVICE))) {
-            }
-        }
-        if (RET_FAIL(alloc_and_init_meta_index_entry(wmm, entry, device_id))) {
-        } else if (RET_FAIL(
-                       device_map_iter->second->serialize_to(write_stream_))) {
-        } else if (RET_FAIL(cur_index_node->push_entry(entry))) {
-        }
-    }  // end for
-    if (IS_SUCC(ret)) {
-        if (!cur_index_node->is_empty()) {
-            cur_index_node->end_offset_ = cur_file_position();
-            ret = node_queue.push_back(cur_index_node);
-        }
-    }
-
-    if (IS_SUCC(ret)) {
-        if (node_queue.size() > 0) {
-            if (RET_FAIL(generate_root(&node_queue, ret_root, INTERNAL_DEVICE,
-                                       wmm))) {
-            }
-        } else {
-            ret_root = cur_index_node;
-            ret_root->end_offset_ = cur_file_position();
-            ret_root->node_type_ = LEAF_DEVICE;
-        }
     }
     return ret;
 }
