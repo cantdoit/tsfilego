@@ -432,11 +432,20 @@ int TsFileIOWriter::write_file_index() {
         TsFileMeta tsfile_meta;
         tsfile_meta.meta_offset_ = meta_offset;
         tsfile_meta.bloom_filter_ = &filter;
-        for (auto device_map_iter = device_map.begin();
-             device_map_iter != device_map.end(); device_map_iter++) {
+        // split device by table
+        std::map<std::string, DeviceNodeMap> table_device_nodes_map;
+        for (const auto &entry : device_map) {
+            std::string table_name = entry.first->get_table_name();
+            auto &table_map = table_device_nodes_map[table_name];
+            if (table_map.empty() ||
+                table_map.find(entry.first) == table_map.end()) {
+                table_map[entry.first] = entry.second;
+            }
+        }
+        DeviceNodeMap table_nodes_map;
+        for (auto &device_map_iter : device_map) {
             tsfile_meta.table_metadata_index_node_map_.insert(
-                std::make_pair(device_map_iter->first,
-                               device_map_iter->second));
+                std::make_pair(device_map_iter.first, device_map_iter.second));
         }
         tsfile_meta.table_schemas_ = schema_->table_schema_map_;
         tsfile_meta.tsfile_properties_.insert(
@@ -446,8 +455,7 @@ int TsFileIOWriter::write_file_index() {
         tsfile_meta.tsfile_properties_.insert(
             std::make_pair("encryptKey", encrypt_key_));
 
-        auto total_write_size =
-            tsfile_meta.serialize_to(write_stream_);
+        auto total_write_size = tsfile_meta.serialize_to(write_stream_);
         if (RET_FAIL(common::SerializationUtil::write_i32(total_write_size,
                                                           write_stream_))) {
             return ret;
@@ -458,6 +466,66 @@ int TsFileIOWriter::write_file_index() {
                   << ", tsfile_meta_offset=" << tsfile_meta_offset
                   << ", size=" << size << std::endl;
 #endif
+    }
+    return ret;
+}
+
+int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
+                                       std::shared_ptr<MetaIndexNode> &ret_root,
+                                       FileIndexWritingMemManager &wmm) {
+    int ret = E_OK;
+
+    SimpleList<std::shared_ptr<MetaIndexNode>> node_queue(1024,
+                                           MOD_TSFILE_WRITER_META);  // FIXME
+    DeviceNodeMapIterator device_map_iter;
+
+    std::shared_ptr<MetaIndexNode> cur_index_node = nullptr;
+    if (RET_FAIL(
+            alloc_and_init_meta_index_node(wmm, cur_index_node, LEAF_DEVICE))) {
+        return ret;
+    }
+
+    for (device_map_iter = device_map.begin();
+         device_map_iter != device_map.end() && IS_SUCC(ret);
+         device_map_iter++) {
+        String device_name;
+        device_name.shallow_copy_from(device_map_iter->first);
+        MetaIndexEntry *entry = nullptr;
+        if (cur_index_node->is_full()) {
+            cur_index_node->end_offset_ = cur_file_position();
+#if DEBUG_SE
+            std::cout << "TsFileIOWriter::build_device_level, cur_index_node="
+                      << *cur_index_node << std::endl;
+#endif
+            if (RET_FAIL(node_queue.push_back(cur_index_node))) {
+            } else if (RET_FAIL(alloc_and_init_meta_index_node(
+                           wmm, cur_index_node, LEAF_DEVICE))) {
+            }
+        }
+        if (RET_FAIL(
+                alloc_and_init_meta_index_entry(wmm, entry, device_name))) {
+        } else if (RET_FAIL(
+                       device_map_iter->second->serialize_to(write_stream_))) {
+        } else if (RET_FAIL(cur_index_node->push_entry(entry))) {
+        }
+    }  // end for
+    if (IS_SUCC(ret)) {
+        if (!cur_index_node->is_empty()) {
+            cur_index_node->end_offset_ = cur_file_position();
+            ret = node_queue.push_back(cur_index_node);
+        }
+    }
+
+    if (IS_SUCC(ret)) {
+        if (node_queue.size() > 0) {
+            if (RET_FAIL(generate_root(&node_queue, ret_root, INTERNAL_DEVICE,
+                                       wmm))) {
+            }
+        } else {
+            ret_root = cur_index_node;
+            ret_root->end_offset_ = cur_file_position();
+            ret_root->node_type_ = LEAF_DEVICE;
+        }
     }
     return ret;
 }
@@ -507,12 +575,14 @@ int TsFileIOWriter::write_file_footer() {
     return ret;
 }
 
-int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map, std::shared_ptr<MetaIndexNode> &ret_root,
-                           FileIndexWritingMemManager &wmm) {
+int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
+                                       std::shared_ptr<MetaIndexNode> &ret_root,
+                                       FileIndexWritingMemManager &wmm) {
     int ret = E_OK;
 
-    SimpleList<std::shared_ptr<MetaIndexNode>> node_queue(1024,
-                                           MOD_TSFILE_WRITER_META);  // FIXME
+    SimpleList<std::shared_ptr<MetaIndexNode>> node_queue(
+        1024,
+        MOD_TSFILE_WRITER_META);  // FIXME
     DeviceNodeMapIterator device_map_iter;
 
     std::shared_ptr<MetaIndexNode> cur_index_node = nullptr;
@@ -567,19 +637,19 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map, std::shared_pt
 int TsFileIOWriter::alloc_and_init_meta_index_entry(
     FileIndexWritingMemManager &wmm,
     std::shared_ptr<IMetaIndexEntry> &ret_entry,
-    const std::shared_ptr<IDeviceID>& device_id) {
+    const std::shared_ptr<IDeviceID> &device_id) {
     void *buf = wmm.pa_.alloc(sizeof(DeviceMetaIndexEntry));
     if (IS_NULL(buf)) {
         return E_OOM;
     }
-    auto entry_ptr = static_cast<DeviceMetaIndexEntry*>(buf);
+    auto entry_ptr = static_cast<DeviceMetaIndexEntry *>(buf);
     new (entry_ptr) DeviceMetaIndexEntry(device_id, cur_file_position());
-    ret_entry = std::shared_ptr<IMetaIndexEntry>(entry_ptr,
-            [](IMetaIndexEntry* ptr) {
-                if (ptr) {
-                    ptr->~IMetaIndexEntry(); // 显式调用析构函数
-                }
-            });
+    ret_entry =
+        std::shared_ptr<IMetaIndexEntry>(entry_ptr, [](IMetaIndexEntry *ptr) {
+            if (ptr) {
+                ptr->~IMetaIndexEntry();  // 显式调用析构函数
+            }
+        });
 #if DEBUG_SE
     std::cout << "alloc_and_init_meta_index_entry, MetaIndexEntry="
               << *ret_entry << std::endl;
@@ -589,20 +659,20 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
 
 int TsFileIOWriter::alloc_and_init_meta_index_entry(
     FileIndexWritingMemManager &wmm,
-    std::shared_ptr<IMetaIndexEntry> &ret_entry,
-    common::String &name) {
+    std::shared_ptr<IMetaIndexEntry> &ret_entry, common::String &name) {
     void *buf = wmm.pa_.alloc(sizeof(MeasurementMetaIndexEntry));
     if (IS_NULL(buf)) {
         return E_OOM;
     }
-    auto entry_ptr = static_cast<MeasurementMetaIndexEntry*>(buf);
-    new (entry_ptr) MeasurementMetaIndexEntry(name, cur_file_position(), wmm.pa_);
-    ret_entry = std::shared_ptr<IMetaIndexEntry>(entry_ptr,
-            [](IMetaIndexEntry* ptr) {
-                if (ptr) {
-                    ptr->~IMetaIndexEntry(); // 显式调用析构函数
-                }
-            });
+    auto entry_ptr = static_cast<MeasurementMetaIndexEntry *>(buf);
+    new (entry_ptr)
+        MeasurementMetaIndexEntry(name, cur_file_position(), wmm.pa_);
+    ret_entry =
+        std::shared_ptr<IMetaIndexEntry>(entry_ptr, [](IMetaIndexEntry *ptr) {
+            if (ptr) {
+                ptr->~IMetaIndexEntry();
+            }
+        });
 #if DEBUG_SE
     std::cout << "alloc_and_init_meta_index_entry, MetaIndexEntry="
               << *ret_entry << std::endl;
@@ -611,14 +681,13 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
 }
 
 int TsFileIOWriter::alloc_and_init_meta_index_node(
-    FileIndexWritingMemManager &wmm,
-                                   std::shared_ptr<MetaIndexNode> &ret_node,
-                                   MetaIndexNodeType node_type) {
-    void* buf = wmm.pa_.alloc(sizeof(MetaIndexNode));
+    FileIndexWritingMemManager &wmm, std::shared_ptr<MetaIndexNode> &ret_node,
+    MetaIndexNodeType node_type) {
+    void *buf = wmm.pa_.alloc(sizeof(MetaIndexNode));
     if (IS_NULL(buf)) {
         return E_OOM;
     }
-    auto* node_ptr = new (buf) MetaIndexNode(&wmm.pa_);
+    auto *node_ptr = new (buf) MetaIndexNode(&wmm.pa_);
     node_ptr->node_type_ = node_type;
     ret_node = std::shared_ptr<MetaIndexNode>(node_ptr, [](MetaIndexNode *ptr) {
         if (ptr) {
@@ -630,7 +699,8 @@ int TsFileIOWriter::alloc_and_init_meta_index_node(
 }
 
 int TsFileIOWriter::add_cur_index_node_to_queue(
-    std::shared_ptr<MetaIndexNode> node, SimpleList<std::shared_ptr<MetaIndexNode>> *queue) const {
+    std::shared_ptr<MetaIndexNode> node,
+    SimpleList<std::shared_ptr<MetaIndexNode>> *queue) const {
     node->end_offset_ = cur_file_position();
 #if DEBUG_SE
     std::cout << "add_cur_index_node_to_queue, node=" << (void *)node << " = "
@@ -640,7 +710,8 @@ int TsFileIOWriter::add_cur_index_node_to_queue(
 }
 
 int TsFileIOWriter::alloc_meta_index_node_queue(
-    FileIndexWritingMemManager &wmm, SimpleList<std::shared_ptr<MetaIndexNode>> *&queue) {
+    FileIndexWritingMemManager &wmm,
+    SimpleList<std::shared_ptr<MetaIndexNode>> *&queue) {
     void *buf = wmm.pa_.alloc(sizeof(*queue));
     if (IS_NULL(buf)) {
         return E_OOM;
@@ -651,7 +722,8 @@ int TsFileIOWriter::alloc_meta_index_node_queue(
 
 int TsFileIOWriter::add_device_node(
     DeviceNodeMap &device_map, std::shared_ptr<IDeviceID> device_id,
-    common::SimpleList<std::shared_ptr<MetaIndexNode>> *measurement_index_node_queue,
+    common::SimpleList<std::shared_ptr<MetaIndexNode>>
+        *measurement_index_node_queue,
     FileIndexWritingMemManager &wmm) {
     ASSERT(measurement_index_node_queue->size() > 0);
     int ret = E_OK;
@@ -677,10 +749,10 @@ void TsFileIOWriter::set_generate_table_schema(bool generate_table_schema) {
     generate_table_schema_ = generate_table_schema;
 }
 
-int TsFileIOWriter::generate_root(SimpleList<std::shared_ptr<MetaIndexNode>> *node_queue,
-                      std::shared_ptr<MetaIndexNode> &root_node,
-                                  MetaIndexNodeType node_type,
-                                  FileIndexWritingMemManager &wmm) {
+int TsFileIOWriter::generate_root(
+    SimpleList<std::shared_ptr<MetaIndexNode>> *node_queue,
+    std::shared_ptr<MetaIndexNode> &root_node, MetaIndexNodeType node_type,
+    FileIndexWritingMemManager &wmm) {
     int ret = E_OK;
 
     ASSERT(node_queue->size() > 0);
@@ -713,10 +785,16 @@ int TsFileIOWriter::generate_root(SimpleList<std::shared_ptr<MetaIndexNode>> *no
             auto iter_node = from_iter.get();
             std::shared_ptr<IMetaIndexEntry> entry = nullptr;
             auto first_child = iter_node->peek();
-            if (const auto derived_entry = std::dynamic_pointer_cast<DeviceMetaIndexEntry>(first_child)) {
-                ret = alloc_and_init_meta_index_entry(wmm, entry, derived_entry->device_id_);
-            } else if (const auto measurement_entry = std::dynamic_pointer_cast<MeasurementMetaIndexEntry>(first_child)) {
-                ret = alloc_and_init_meta_index_entry(wmm, entry, measurement_entry->name_);
+            if (const auto derived_entry =
+                    std::dynamic_pointer_cast<DeviceMetaIndexEntry>(
+                        first_child)) {
+                ret = alloc_and_init_meta_index_entry(
+                    wmm, entry, derived_entry->device_id_);
+            } else if (const auto measurement_entry =
+                           std::dynamic_pointer_cast<MeasurementMetaIndexEntry>(
+                               first_child)) {
+                ret = alloc_and_init_meta_index_entry(wmm, entry,
+                                                      measurement_entry->name_);
             } else {
                 ret = E_INVALID_DATA_POINT;
             }
@@ -776,8 +854,9 @@ int TsFileIOWriter::generate_root(SimpleList<std::shared_ptr<MetaIndexNode>> *no
     return ret;
 }
 
-int TsFileIOWriter::clone_node_list(SimpleList<std::shared_ptr<MetaIndexNode>> *src,
-                                    SimpleList<std::shared_ptr<MetaIndexNode>> *dest) {
+int TsFileIOWriter::clone_node_list(
+    SimpleList<std::shared_ptr<MetaIndexNode>> *src,
+    SimpleList<std::shared_ptr<MetaIndexNode>> *dest) {
     int ret = E_OK;
     SimpleList<std::shared_ptr<MetaIndexNode>>::Iterator it;
     for (it = src->begin(); IS_SUCC(ret) && it != src->end(); it++) {

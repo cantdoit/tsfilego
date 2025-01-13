@@ -819,7 +819,7 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
 
     MeasurementMetaIndexEntry() = default;
     MeasurementMetaIndexEntry(const common::String &name, const int64_t offset,
-                              common::PageArena pa) {
+                              common::PageArena &pa) {
         offset_ = offset;
         name_.dup_from(name, pa);
     }

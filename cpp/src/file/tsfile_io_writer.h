@@ -177,6 +177,8 @@ class TsFileIOWriter {
         l2 = tmp;
     }
 
+    std::shared_ptr<MetaIndexNode> check_and_build_level_index(DeviceNodeMap &device_metadata_index_map);
+
     int write_separator_marker(int64_t &meta_offset);
 
     // for bloom filter
