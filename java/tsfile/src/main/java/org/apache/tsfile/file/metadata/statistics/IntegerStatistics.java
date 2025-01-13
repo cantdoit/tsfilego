@@ -20,7 +20,6 @@
 package org.apache.tsfile.file.metadata.statistics;
 
 import org.apache.tsfile.enums.TSDataType;
-import org.apache.tsfile.exception.filter.StatisticsClassException;
 import org.apache.tsfile.utils.RamUsageEstimator;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
@@ -142,8 +141,7 @@ public class IntegerStatistics extends Statistics<Integer> {
 
   @Override
   public double getSumDoubleValue() {
-    throw new StatisticsClassException(
-        String.format(STATS_UNSUPPORTED_MSG, TSDataType.INT32, "double sum"));
+    return sumValue;
   }
 
   @Override
@@ -151,8 +149,9 @@ public class IntegerStatistics extends Statistics<Integer> {
     return sumValue;
   }
 
+  @SuppressWarnings("rawtypes")
   @Override
-  protected void mergeStatisticsValue(Statistics<Integer> stats) {
+  protected void mergeStatisticsValue(Statistics stats) {
     IntegerStatistics intStats = (IntegerStatistics) stats;
     if (isEmpty) {
       initializeStats(
