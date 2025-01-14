@@ -81,9 +81,8 @@ void config_set_max_degree_of_index_node(uint32_t max_degree_of_index_node) {
 }
 
 void set_config_value() {}
-
-const char* s_data_type_names[7] = {"BOOLEAN", "INT32", "INT64", "FLOAT",
-                                    "DOUBLE",  "TEXT",  "VECTOR"};
+const char* s_data_type_names[8] = {"BOOLEAN", "INT32", "INT64", "FLOAT",
+                                    "DOUBLE",  "TEXT",  "VECTOR", "STRING"};
 
 const char* s_encoding_names[12] = {
     "PLAIN",      "DICTIONARY", "RLE",     "DIFF",   "TS_2DIFF", "BITMAP",

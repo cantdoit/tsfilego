@@ -185,7 +185,7 @@ TEST_F(TsFileWriterTest, WriteSimpleTest) {
 
     int64_t cur_record_num = 0;
     do {
-        if (!qds->next()) {
+        if (!qds || !qds->next()) {
             break;
         }
         cur_record_num++;
@@ -391,7 +391,7 @@ TEST_F(TsFileWriterTest, WriteMultipleTabletsMultiFlush) {
     storage::RowRecord *record;
     int max_rows = max_tablet_num * 1;
     for (int cur_row = 0; cur_row < max_rows; cur_row++) {
-        if (!qds->next()) {
+        if (!qds || !qds->next()) {
             break;
         }
         record = qds->get_row_record();

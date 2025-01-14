@@ -175,7 +175,7 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
     storage::TsFileReader reader;
     int ret = reader.open(file_name_);
     ASSERT_EQ(ret, common::E_OK);
-    auto devices = reader.get_all_devices();
+    auto devices = reader.get_all_devices("device");
     ASSERT_EQ(devices.size(), 1024);
     std::vector<std::shared_ptr<IDeviceID> > devices_name_expected;
     for (size_t i = 0; i < 1024; i++) {

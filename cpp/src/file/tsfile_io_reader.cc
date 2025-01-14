@@ -252,7 +252,12 @@ int TsFileIOReader::load_device_index_entry(
     std::shared_ptr<IComparable> device_name,
     IMetaIndexEntry& device_index_entry, int64_t& end_offset) {
     int ret = E_OK;
-    auto index_node = tsfile_meta_.index_node_;
+    std::shared_ptr<DeviceIDComparable> device_id_comparable =
+            std::dynamic_pointer_cast<DeviceIDComparable>(device_name);
+    if (device_id_comparable == nullptr) {
+        return E_INVALID_DATA_POINT;
+    }
+    auto index_node = tsfile_meta_.table_metadata_index_node_map_[device_id_comparable->device_id_->get_table_name()];
     if (index_node->node_type_ == LEAF_DEVICE) {
         // FIXME
         ret = index_node->binary_search_children(
@@ -329,7 +334,6 @@ int TsFileIOReader::load_measurement_index_entry(
     if (ret == E_NOT_EXIST) {
         ret = E_MEASUREMENT_NOT_EXIST;
     }
-    top_node->children_.~vector();
     return ret;
 }
 

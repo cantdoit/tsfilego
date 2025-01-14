@@ -66,12 +66,12 @@ enum CompressionType : uint8_t {
     INVALID_COMPRESSION = 255
 };
 
-extern const char* s_data_type_names[7];
+extern const char* s_data_type_names[8];
 extern const char* s_encoding_names[12];
 extern const char* s_compression_names[8];
 
 FORCE_INLINE const char* get_data_type_name(TSDataType type) {
-    ASSERT(type >= BOOLEAN && type <= VECTOR);
+    ASSERT(type >= BOOLEAN && type <= STRING);
     return s_data_type_names[type];
 }
 

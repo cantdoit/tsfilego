@@ -82,13 +82,14 @@ void TsFileReader::destroy_query_data_set(storage::ResultSet* qds) {
     tsfile_executor_->destroy_query_data_set(qds);
 }
 
-std::vector<std::shared_ptr<IDeviceID>> TsFileReader::get_all_devices() {
+std::vector<std::shared_ptr<IDeviceID>> TsFileReader::get_all_devices(std::string table_name) {
     TsFileMeta* tsfile_meta = tsfile_executor_->get_tsfile_meta();
     std::vector<std::shared_ptr<IDeviceID>> device_ids;
     if (tsfile_meta != nullptr) {
         PageArena pa;
         pa.init(512, MOD_TSFILE_READER);
-        get_all_devices(device_ids, tsfile_meta->index_node_, pa);
+        auto index_node = tsfile_meta->table_metadata_index_node_map_[table_name];
+        get_all_devices(device_ids, index_node, pa);
     }
     return device_ids;
 }

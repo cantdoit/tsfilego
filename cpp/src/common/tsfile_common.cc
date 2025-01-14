@@ -315,7 +315,7 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
             return E_NOT_EXIST;
         }
     }
-    ret_index_entry = *children_[l];
+    ret_index_entry.clone(children_[l], pa_);
     if (l == (int)children_.size() - 1) {
         ret_end_offset = this->end_offset_;
     } else {

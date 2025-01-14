@@ -766,6 +766,7 @@ struct IMetaIndexEntry {
     }
     virtual common::String get_name() const { return {}; }
     virtual std::shared_ptr<IDeviceID> get_device_id() const { return nullptr; }
+    virtual void clone(std::shared_ptr<IMetaIndexEntry> entry, common::PageArena * pa) {}
 #ifndef NDEBUG
     virtual void print(std::ostream& os) const {}
     friend std::ostream &operator<<(std::ostream &os,
@@ -818,7 +819,10 @@ struct DeviceMetaIndexEntry : IMetaIndexEntry {
     bool is_device_level() const override { return true; }
     common::String get_name() const override { return {}; }
     std::shared_ptr<IDeviceID> get_device_id() const override { return device_id_; }
-
+    void clone(std::shared_ptr<IMetaIndexEntry> entry, common::PageArena * pa) override {
+        offset_ = entry->get_offset();
+        device_id_ = entry->get_device_id();
+    }
 #ifndef NDEBUG
     void print(std::ostream& os) const override {
         os << "name=" << device_id_ << ", offset=" << offset_;
@@ -873,7 +877,10 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
 
     common::String get_name() const override { return name_; }
     std::shared_ptr<IDeviceID> get_device_id() const override { return nullptr; }
-
+    void clone(std::shared_ptr<IMetaIndexEntry> entry, common::PageArena * pa) override {
+        offset_ = entry->get_offset();
+        name_.dup_from(entry->get_name(), *pa);
+    }
 #ifndef NDEBUG
     void print(std::ostream& os) const override {
         os << "name=" << name_ << ", offset=" << offset_;
@@ -908,6 +915,11 @@ struct MetaIndexNode {
     std::shared_ptr<IMetaIndexEntry> peek() {
         if (children_.empty()) {return nullptr;}
         return children_[0];
+    }
+
+    ~MetaIndexNode() {
+        pa_ = nullptr;
+        children_.clear();
     }
 
     int binary_search_children(std::shared_ptr<IComparable> key,
