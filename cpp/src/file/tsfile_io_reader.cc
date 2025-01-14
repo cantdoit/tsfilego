@@ -338,8 +338,8 @@ int TsFileIOReader::load_all_measurement_index_entry(
     std::vector<std::pair<std::shared_ptr<IMetaIndexEntry>, int64_t> >
     & ret_measurement_index_entry) {
 #if DEBUG_SE
-    std::cout << "load_measurement_index_entry: measurement_name_str="
-              << measurement_name_str << ", start_offset=" << start_offset
+    std::cout << "load_measurement_index_entry: measurement_name_str= "
+              << ", start_offset=" << start_offset
               << ", end_offset=" << end_offset << std::endl;
 #endif
     ASSERT(start_offset < end_offset);
@@ -415,7 +415,7 @@ int TsFileIOReader::search_from_internal_node(
         const int read_size = end_offset - index_entry.get_offset();
 #if DEBUG_SE
         std::cout << "search_from_internal_node, end_offset=" << end_offset
-                  << ", index_entry.offset_=" << index_entry.offset_
+                  << ", index_entry.offset_=" << index_entry.get_offset()
                   << std::endl;
 #endif
         ASSERT(read_size > 0 && read_size < (1 << 30));
@@ -583,7 +583,7 @@ int TsFileIOReader::get_all_leaf(
                 end_offset - index_node->children_[i]->get_offset();
 #if DEBUG_SE
             std::cout << "search_from_internal_node, end_offset=" << end_offset
-                      << ", index_entry.offset_=" << index_entry.offset_
+                      << ", index_entry.offset_=" << index_node->children_[i]->get_offset()
                       << std::endl;
 #endif
             ASSERT(read_size > 0 && read_size < (1 << 30));

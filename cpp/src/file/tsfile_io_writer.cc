@@ -283,7 +283,7 @@ int TsFileIOWriter::write_log_index_range() {
 #if DEBUG_SE
 void debug_print_chunk_group_meta(ChunkGroupMeta *cgm) {
     std::cout << "ChunkGroupMeta = {insert_target_name_="
-              << cgm->insert_target_name_ << ", chunk_meta_list_={";
+              << cgm->device_id_ << ", chunk_meta_list_={";
     SimpleList<ChunkMeta *>::Iterator cm_it = cgm->chunk_meta_list_.begin();
     for (; cm_it != cgm->chunk_meta_list_.end(); cm_it++) {
         ChunkMeta *cm = cm_it.get();
@@ -345,7 +345,7 @@ int TsFileIOWriter::write_file_index() {
             break;
         }
 #if DEBUG_SE
-        std::cout << "tsm_iter get next = {device_name=" << device_name
+        std::cout << "tsm_iter get next = {device_name=" << device_id
                   << ", measurement_name=" << measurement_name
                   << ", ts_index=" << ts_index << std::endl;
 #endif
@@ -457,6 +457,7 @@ int TsFileIOWriter::write_file_index() {
         tsfile_meta.tsfile_properties_.insert(
             std::make_pair("encryptKey", encrypt_key_));
 
+        auto tsfile_meta_offset = write_stream_.total_size();
         auto total_write_size = tsfile_meta.serialize_to(write_stream_);
         if (RET_FAIL(common::SerializationUtil::write_i32(total_write_size,
                                                           write_stream_))) {
@@ -466,7 +467,8 @@ int TsFileIOWriter::write_file_index() {
 #if DEBUG_SE
         std::cout << "writer tsfile_meta: " << tsfile_meta
                   << ", tsfile_meta_offset=" << tsfile_meta_offset
-                  << ", size=" << size << std::endl;
+                  << ", size=" << total_write_size << std::endl;
+        DEBUG_print_byte_stream("byte_stream", write_stream_);
 #endif
     }
     return ret;
@@ -645,8 +647,7 @@ int TsFileIOWriter::add_cur_index_node_to_queue(
     SimpleList<std::shared_ptr<MetaIndexNode>> *queue) const {
     node->end_offset_ = cur_file_position();
 #if DEBUG_SE
-    std::cout << "add_cur_index_node_to_queue, node=" << (void *)node << " = "
-              << *node << ", set offset=" << cur_file_position() << std::endl;
+    std::cout << "add_cur_index_node_to_queue, node=" << *node << ", set offset=" << cur_file_position() << std::endl;
 #endif
     return queue->push_back(node);
 }

@@ -216,6 +216,10 @@ int TsFileMeta::deserialize_from(common::ByteStream &in) {
 
     bloom_filter_ = new (bloom_filter_buf) BloomFilter();
 
+#ifdef DEBUG_SE
+    DEBUG_print_byte_stream("tsfile_meta = ", in);
+#endif
+
     uint32_t index_node_map_size = 0;
     SerializationUtil::read_var_uint(index_node_map_size, in);
     for (uint32_t i = 0; i < index_node_map_size; i++) {
@@ -229,7 +233,7 @@ int TsFileMeta::deserialize_from(common::ByteStream &in) {
                     ptr->~MetaIndexNode();
                 }
             });
-        value->deserialize_from(in);
+        value->device_deserialize_from(in);
         table_metadata_index_node_map_.emplace(key, std::move(value));
     }
 
@@ -263,11 +267,11 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
                                           IMetaIndexEntry &ret_index_entry,
                                           int64_t &ret_end_offset) {
 #if DEBUG_SE
-    std::cout << "MetaIndexNode::binary_search_children start, name=" << name
+    std::cout << "MetaIndexNode::binary_search_children start, name=" << key
               << ", exact_search=" << exact_search
               << ", children_.size=" << children_.size() << std::endl;
     for (int i = 0; i < (int)children_.size(); i++) {
-        std::cout << "Iterating children: " << children_[i]->name_ << std::endl;
+        std::cout << "Iterating children: " << children_[i]->get_name() << std::endl;
     }
 #endif
     bool is_aligned = false;
@@ -288,7 +292,7 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
 #if DEBUG_SE
             std::cout
                 << "MetaIndexNode::binary_search_children doing, cmp: cur="
-                << children_[m]->name_ << ", name=" << name
+                << children_[m]->get_name() << ", name=" << key
                 << ", exact_search=" << exact_search
                 << ", children_.size=" << children_.size() << std::endl;
 #endif
@@ -306,7 +310,7 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
 #if DEBUG_SE
             std::cout << "MetaIndexNode::binary_search_children end, "
                          "ret=E_NOT_EXIST, name="
-                      << name << ", exact_search=" << exact_search << std::endl;
+                      << key << ", exact_search=" << exact_search << std::endl;
 #endif
             return E_NOT_EXIST;
         }
@@ -320,7 +324,7 @@ int MetaIndexNode::binary_search_children(std::shared_ptr<IComparable> key, bool
 #if DEBUG_SE
     std::cout << "MetaIndexNode::binary_search_children end, ret_index_entry="
               << ret_index_entry << ", ret_end_offset=" << ret_end_offset
-              << ", name=" << name << ", exact_search=" << exact_search
+              << ", name=" << key << ", exact_search=" << exact_search
               << std::endl;
 #endif
     return E_OK;

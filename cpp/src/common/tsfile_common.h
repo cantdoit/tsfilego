@@ -766,6 +766,14 @@ struct IMetaIndexEntry {
     }
     virtual common::String get_name() const { return {}; }
     virtual std::shared_ptr<IDeviceID> get_device_id() const { return nullptr; }
+#ifndef NDEBUG
+    virtual void print(std::ostream& os) const {}
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const IMetaIndexEntry &entry) {
+        entry.print(os);
+        return os;
+    }
+#endif
 };
 
 struct DeviceMetaIndexEntry : IMetaIndexEntry {
@@ -794,6 +802,7 @@ struct DeviceMetaIndexEntry : IMetaIndexEntry {
     int deserialize_from(common::ByteStream &in,
                          common::PageArena *pa) override {
         int ret = common::E_OK;
+        device_id_ = std::make_shared<StringArrayDeviceID>("init");
         if (RET_FAIL(device_id_->deserialize(in))) {
         } else if (RET_FAIL(common::SerializationUtil::read_i64(offset_, in))) {
         }
@@ -809,6 +818,12 @@ struct DeviceMetaIndexEntry : IMetaIndexEntry {
     bool is_device_level() const override { return true; }
     common::String get_name() const override { return {}; }
     std::shared_ptr<IDeviceID> get_device_id() const override { return device_id_; }
+
+#ifndef NDEBUG
+    void print(std::ostream& os) const override {
+        os << "name=" << device_id_ << ", offset=" << offset_;
+    }
+#endif
 };
 
 struct MeasurementMetaIndexEntry : IMetaIndexEntry {
@@ -860,10 +875,8 @@ struct MeasurementMetaIndexEntry : IMetaIndexEntry {
     std::shared_ptr<IDeviceID> get_device_id() const override { return nullptr; }
 
 #ifndef NDEBUG
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const MeasurementMetaIndexEntry &entry) {
-        os << "name=" << entry.name_ << ", offset=" << entry.offset_;
-        return os;
+    void print(std::ostream& os) const override {
+        os << "name=" << name_ << ", offset=" << offset_;
     }
 #endif
 };
@@ -876,9 +889,9 @@ enum MetaIndexNodeType {
     INVALID_META_NODE_TYPE = 4,
 };
 #ifndef NDEBUG
-// static const char *meta_index_node_type_names[5] = {
-//     "INTERNAL_DEVICE", "LEAF_DEVICE", "INTERNAL_MEASUREMENT",
-//     "LEAF_MEASUREMENT", "INVALID_META_NODE_TYPE"};
+static const char *meta_index_node_type_names[5] = {
+    "INTERNAL_DEVICE", "LEAF_DEVICE", "INTERNAL_MEASUREMENT",
+    "LEAF_MEASUREMENT", "INVALID_META_NODE_TYPE"};
 #endif
 
 struct MetaIndexNode {
@@ -973,20 +986,57 @@ struct MetaIndexNode {
         return ret;
     }
 
+    int device_deserialize_from(common::ByteStream &in) {
+        int ret = common::E_OK;
+        uint32_t children_size = 0;
+        if (RET_FAIL(
+                common::SerializationUtil::read_var_uint(children_size, in))) {
+            return ret;
+                }
+        for (uint32_t i = 0; i < children_size && IS_SUCC(ret); i++) {
+            void *entry_buf = pa_->alloc(sizeof(DeviceMetaIndexEntry));
+            if (IS_NULL(entry_buf)) {
+                return common::E_OOM;
+            }
+            auto entry = new (entry_buf) DeviceMetaIndexEntry;
+
+            if (RET_FAIL(entry->deserialize_from(in, pa_))) {
+            } else {
+                children_.push_back(std::shared_ptr<IMetaIndexEntry>(
+                    entry, pa_->get_deleter()));
+            }
+        }  // end for
+        if (IS_SUCC(ret)) {
+            char node_type_ch = 0;
+            if (RET_FAIL(
+                    common::SerializationUtil::read_i64(end_offset_, in))) {
+                    } else if (RET_FAIL(common::SerializationUtil::read_char(
+                                   node_type_ch, in))) {
+                                   } else {
+                                       node_type_ = (MetaIndexNodeType)node_type_ch;
+                                   }
+        }
+#if DEBUG_SE
+        std::cout << "MetaIndexNode deserialize_from. this=" << *this
+                  << std::endl;
+#endif
+        return ret;
+    }
+
 #ifndef NDEBUG
-//    friend std::ostream &operator<<(std::ostream &os,
-//                                    const MetaIndexNode &node) {
-//        os << "end_offset=" << node.end_offset_
-//           << ", node_type=" << meta_index_node_type_names[node.node_type_];
-//
-//        os << ", MetaIndexEntry children={";
-//        for (size_t i = 0; i < node.children_.size(); i++) {
-//            os << (i == 0 ? "" : ", ") << "[" << i << "]={"
-//               << *node.children_[i] << "}";
-//        }
-//        os << "}";
-//        return os;
-//    }
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const MetaIndexNode &node) {
+        os << "end_offset=" << node.end_offset_
+           << ", node_type=" << meta_index_node_type_names[node.node_type_];
+
+        os << ", MetaIndexEntry children={";
+        for (size_t i = 0; i < node.children_.size(); i++) {
+            os << (i == 0 ? "" : ", ") << "[" << i << "]={"
+               << *node.children_[i] << "}";
+        }
+        os << "}";
+        return os;
+    }
 #endif
 
     FORCE_INLINE bool is_full() const {
@@ -1012,7 +1062,6 @@ struct MetaIndexNode {
 class TableSchema;
 
 struct TsFileMeta {
-    std::shared_ptr<MetaIndexNode> index_node_;
     typedef std::map<std::shared_ptr<IDeviceID>, std::shared_ptr<MetaIndexNode>,
                      IDeviceIDComparator>
         DeviceNodeMap;
@@ -1026,20 +1075,15 @@ struct TsFileMeta {
     common::PageArena *page_arena_;
 
     TsFileMeta()
-        : index_node_(nullptr),
-          meta_offset_(0),
+        : meta_offset_(0),
           bloom_filter_(nullptr),
           page_arena_(nullptr) {}
 
     explicit TsFileMeta(common::PageArena *pa)
-        : index_node_(nullptr),
-          meta_offset_(0),
+        : meta_offset_(0),
           bloom_filter_(nullptr),
           page_arena_(pa) {}
     ~TsFileMeta() {
-        if (index_node_ != nullptr) {
-            index_node_->children_.~vector();
-        }
         if (bloom_filter_ != nullptr) {
             bloom_filter_->destroy();
         }
@@ -1050,12 +1094,11 @@ struct TsFileMeta {
     int deserialize_from(common::ByteStream &in);
 
 #ifndef NDEBUG
-//    friend std::ostream &operator<<(std::ostream &os,
-//                                    const TsFileMeta &tsfile_meta) {
-//        os << "meta_offset=" << tsfile_meta.meta_offset_ << ", index_node={"
-//           << *tsfile_meta.index_node_ << "}";
-//        return os;
-//    }
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const TsFileMeta &tsfile_meta) {
+        os << "meta_offset=" << tsfile_meta.meta_offset_;
+        return os;
+    }
 #endif
 };
 
