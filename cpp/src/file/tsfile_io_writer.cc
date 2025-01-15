@@ -456,8 +456,9 @@ int TsFileIOWriter::write_file_index() {
             std::make_pair("encryptType", encrypt_type_));
         tsfile_meta.tsfile_properties_.insert(
             std::make_pair("encryptKey", encrypt_key_));
-
+#if DEBUG_SE
         auto tsfile_meta_offset = write_stream_.total_size();
+#endif
         auto total_write_size = tsfile_meta.serialize_to(write_stream_);
         if (RET_FAIL(common::SerializationUtil::write_i32(total_write_size,
                                                           write_stream_))) {

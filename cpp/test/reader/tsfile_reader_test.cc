@@ -185,11 +185,11 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
     }
     std::sort(devices_name_expected.begin(), devices_name_expected.end(),
               [](const std::shared_ptr<IDeviceID>& left_str, const std::shared_ptr<IDeviceID>& right_str) {
-                  return left_str < right_str;
+                  return left_str->operator<(*right_str);
               });
 
     for (size_t i = 0; i < devices.size(); i++) {
-        ASSERT_EQ(devices[i], devices_name_expected[i]);
+        ASSERT_TRUE(devices[i]->operator==(*devices_name_expected[i]));
     }
 }
 

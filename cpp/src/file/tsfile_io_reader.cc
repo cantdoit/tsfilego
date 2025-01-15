@@ -380,7 +380,6 @@ int TsFileIOReader::load_all_measurement_index_entry(
     if (ret == E_NOT_EXIST) {
         ret = E_MEASUREMENT_NOT_EXIST;
     }
-    top_node->children_.~vector();
     return ret;
 }
 

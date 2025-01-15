@@ -127,15 +127,13 @@ int TsFileReader::get_all_devices(std::vector<std::shared_ptr<IDeviceID>>& devic
                         }
                     });
 
-
                 if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
                     ret_read_len))) {
-                } else if (RET_FAIL(top_node->deserialize_from(data_buf,
+                } else if (RET_FAIL(top_node->device_deserialize_from(data_buf,
                     read_size))) {
                 } else {
                     ret = get_all_devices(device_ids, top_node, pa);
                 }
-                top_node->destroy();
             }
         }
     }

@@ -225,14 +225,15 @@ int TsFileMeta::deserialize_from(common::ByteStream &in) {
     for (uint32_t i = 0; i < index_node_map_size; i++) {
         std::string key;
         common::SerializationUtil::read_str(key, in);
-        auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
-        new (index_node_buf) MetaIndexNode(page_arena_);
-        auto value = std::shared_ptr<MetaIndexNode>(
-            index_node_ptr, [](MetaIndexNode *ptr) {
-                if (ptr) {
-                    ptr->~MetaIndexNode();
-                }
-            });
+//        auto index_node_ptr = static_cast<MetaIndexNode *>(index_node_buf);
+//        new (index_node_buf) MetaIndexNode(page_arena_);
+//        auto value = std::shared_ptr<MetaIndexNode>(
+//            index_node_ptr, [](MetaIndexNode *ptr) {
+//                if (ptr) {
+//                    ptr->~MetaIndexNode();
+//                }
+//            });
+        auto value = std::make_shared<MetaIndexNode>(page_arena_);
         value->device_deserialize_from(in);
         table_metadata_index_node_map_.emplace(key, std::move(value));
     }

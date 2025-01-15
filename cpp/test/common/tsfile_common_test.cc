@@ -337,11 +337,11 @@ TEST_F(MetaIndexNodeTest, DeviceSerializeDeserialize) {
     ASSERT_EQ(node_.serialize_to(*out_), common::E_OK);
 
     MetaIndexNode new_node(&pa_);
-    ASSERT_EQ(new_node.deserialize_from(*out_), common::E_OK);
+    ASSERT_EQ(new_node.device_deserialize_from(*out_), common::E_OK);
     ASSERT_EQ(new_node.end_offset_, 456);
     ASSERT_EQ(new_node.node_type_, LEAF_DEVICE);
 
-    ASSERT_EQ(new_node.peek()->get_device_id(), entry->get_device_id());
+    ASSERT_TRUE(new_node.peek()->get_device_id()->operator==(*entry->get_device_id()));
     ASSERT_EQ(new_node.peek()->get_offset(), entry->get_offset());
 }
 
@@ -438,9 +438,8 @@ protected:
 };
 
 TEST_F(TsFileMetaTest, SerializeDeserialize) {
-    std::shared_ptr<MeasurementMetaIndexEntry> entry = std::make_shared<
-        MeasurementMetaIndexEntry>();
-    entry->init("child_name", 123, pa_);
+    std::shared_ptr<IDeviceID> device_id = std::make_shared<StringArrayDeviceID>("device");
+    auto entry = std::make_shared<DeviceMetaIndexEntry>(device_id, 123);
     auto index_node = std::make_shared<MetaIndexNode>(&pa_);
     index_node->end_offset_ = 123456789;
     index_node->children_.emplace_back(entry);
@@ -473,6 +472,5 @@ TEST_F(TsFileMetaTest, SerializeDeserialize) {
     ASSERT_EQ(new_meta.table_metadata_index_node_map_[table_name]->children_.size(), 2);
     ASSERT_EQ(new_meta.table_schemas_.size(), 1);
     ASSERT_EQ(new_meta.table_schemas_[table_name]->get_column_categories().size(), 1);
-    //ASSERT_EQ(new_meta.table_schemas_[table_name]->get_column_categories()[0], ColumnCategory::FIELD);
 }
 } // namespace storage

@@ -37,7 +37,7 @@ if(DEFINED ENV{CC})
   message("cmake using: CC=${CMAKE_C_COMPILER}")
 endif()
 
-set(DEBUG_SE 1)
+#set(DEBUG_SE 1)
 message("cmake using: DEBUG_SE=${DEBUG_SE}")
 if (${DEBUG_SE})
   add_definitions(-DDEBUG_SE=1)

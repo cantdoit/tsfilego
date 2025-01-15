@@ -917,10 +917,7 @@ struct MetaIndexNode {
         return children_[0];
     }
 
-    ~MetaIndexNode() {
-        pa_ = nullptr;
-        children_.clear();
-    }
+    ~MetaIndexNode() = default;
 
     int binary_search_children(std::shared_ptr<IComparable> key,
                                bool exact_search,
@@ -997,7 +994,11 @@ struct MetaIndexNode {
 #endif
         return ret;
     }
-
+    int device_deserialize_from(const char *buf, int len) {
+        common::ByteStream bs;
+        bs.wrap_from(buf, len);
+        return device_deserialize_from(bs);
+    }
     int device_deserialize_from(common::ByteStream &in) {
         int ret = common::E_OK;
         uint32_t children_size = 0;
@@ -1099,6 +1100,8 @@ struct TsFileMeta {
         if (bloom_filter_ != nullptr) {
             bloom_filter_->destroy();
         }
+        table_metadata_index_node_map_.clear();
+        table_schemas_.clear();
     }
 
     int serialize_to(common::ByteStream &out);
