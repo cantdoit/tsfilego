@@ -110,7 +110,9 @@ int TSMIterator::init() {
 
         chunk_group_meta_iter_++;
     }
-    tsm_measurement_iter_ = tsm_chunk_meta_info_.begin()->second.begin();
+    if (!tsm_chunk_meta_info_.empty() && !tsm_chunk_meta_info_.begin()->second.empty()) {
+        tsm_measurement_iter_ = tsm_chunk_meta_info_.begin()->second.begin();
+    }
     tsm_device_iter_ = tsm_chunk_meta_info_.begin();
     return E_OK;
 }

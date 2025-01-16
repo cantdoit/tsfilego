@@ -628,17 +628,19 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
 int TsFileIOWriter::alloc_and_init_meta_index_node(
     FileIndexWritingMemManager &wmm, std::shared_ptr<MetaIndexNode> &ret_node,
     MetaIndexNodeType node_type) {
-    void *buf = wmm.pa_.alloc(sizeof(MetaIndexNode));
-    if (IS_NULL(buf)) {
-        return E_OOM;
-    }
-    auto *node_ptr = new (buf) MetaIndexNode(&wmm.pa_);
-    node_ptr->node_type_ = node_type;
-    ret_node = std::shared_ptr<MetaIndexNode>(node_ptr, [](MetaIndexNode *ptr) {
-        if (ptr) {
-            ptr->~MetaIndexNode();
-        }
-    });
+//    void *buf = wmm.pa_.alloc(sizeof(MetaIndexNode));
+//    if (IS_NULL(buf)) {
+//        return E_OOM;
+//    }
+//    auto *node_ptr = new (buf) MetaIndexNode(&wmm.pa_);
+//    node_ptr->node_type_ = node_type;
+//    ret_node = std::shared_ptr<MetaIndexNode>(node_ptr, [](MetaIndexNode *ptr) {
+//        if (ptr) {
+//            ptr->~MetaIndexNode();
+//        }
+//    });
+    ret_node = std::make_shared<MetaIndexNode>(&wmm.pa_);
+    ret_node->node_type_ = node_type;
     wmm.all_index_nodes_.push_back(ret_node);
     return E_OK;
 }

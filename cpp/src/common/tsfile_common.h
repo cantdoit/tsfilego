@@ -917,7 +917,9 @@ struct MetaIndexNode {
         return children_[0];
     }
 
-    ~MetaIndexNode() = default;
+    ~MetaIndexNode() {
+
+    }
 
     int binary_search_children(std::shared_ptr<IComparable> key,
                                bool exact_search,
@@ -1011,12 +1013,12 @@ struct MetaIndexNode {
             if (IS_NULL(entry_buf)) {
                 return common::E_OOM;
             }
-            auto entry = new (entry_buf) DeviceMetaIndexEntry;
+            // auto entry = new (entry_buf) DeviceMetaIndexEntry;
+            auto entry = std::make_shared<DeviceMetaIndexEntry>();
 
             if (RET_FAIL(entry->deserialize_from(in, pa_))) {
             } else {
-                children_.push_back(std::shared_ptr<IMetaIndexEntry>(
-                    entry, pa_->get_deleter()));
+                children_.push_back(entry);
             }
         }  // end for
         if (IS_SUCC(ret)) {
