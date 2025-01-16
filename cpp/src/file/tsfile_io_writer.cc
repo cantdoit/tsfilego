@@ -361,6 +361,13 @@ int TsFileIOWriter::write_file_index() {
                 }
             }
             if (IS_SUCC(ret)) {
+                if (cur_index_node_queue) {
+                    for (auto iter = cur_index_node_queue->begin(); iter != cur_index_node_queue->end(); iter++) {
+                        if (iter.get()) {
+                            iter.get().reset();
+                        }
+                    }
+                }
                 if (RET_FAIL(alloc_meta_index_node_queue(
                         writing_mm, cur_index_node_queue))) {
                 } else if (RET_FAIL(alloc_and_init_meta_index_node(
