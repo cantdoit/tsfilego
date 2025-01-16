@@ -18,14 +18,38 @@
  */
 #ifndef READER_DEVICE_ORDERED_TSBLOCK_READER_H
 #define READER_DEVICE_ORDERED_TSBLOCK_READER_H
+#include "meta_data_querier.h"
+#include "reader/task/device_task_iterator.h"
+#include "single_device_tsblock_reader.h"
 #include "tsblock_reader.h"
-
 namespace storage {
 class DeviceOrderedTsBlockReader : public TsBlockReader {
    public:
+    explicit DeviceOrderedTsBlockReader(DeviceTaskIterator *device_task_iterator,
+                                        MetadataQuerier *meta_querier,
+                                        ChunkReader *chunk_reader, int32_t block_size,
+                                        Filter time_filter, Filter field_filter)
+        : device_task_iterator_(device_task_iterator),
+          meta_querier_(meta_querier),
+          chunk_reader_(chunk_reader),
+          block_size_(block_size),
+          time_filter_(time_filter),
+          field_filter_(field_filter) {
+            pa_.init(512, common::MOD_DEVICE_ORDER_TSBLOCK_READER);
+          }
+
     bool has_next() override;
-    common::TsBlock next() override;
+    int next(common::TsBlock &ret_block) override;
     void close() override;
+   private:
+    DeviceTaskIterator* device_task_iterator_;
+    MetadataQuerier* meta_querier_;
+    ChunkReader* chunk_reader_;
+    int32_t block_size_;
+    SingleDeviceTsBlockReader* current_reader_ = nullptr;
+    Filter time_filter_;
+    Filter field_filter_;
+    common::PageArena pa_;
 };
 }  // namespace storage
 

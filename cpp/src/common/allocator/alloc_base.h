@@ -66,7 +66,9 @@ enum AllocModID {
     MOD_DICENCODE_OBJ = 31,
     MOD_ZIGZAG_OBJ = 32,
     MOD_DEVICE_META_ITER = 33,
-    __LAST_MOD_ID = 34,  // prev + 1,
+    MOD_DEVICE_TASK_ITER = 34,
+    MOD_DEVICE_ORDER_TSBLOCK_READER = 35,
+    __LAST_MOD_ID = 36,  // prev + 1,
     __MAX_MOD_ID = 127,  // leave 1 bit to detect header size
 };
 

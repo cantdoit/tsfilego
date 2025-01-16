@@ -20,36 +20,47 @@
 #define READER_TASK_DEVICE_TASK_ITERATOR_H
 
 #include "common/device_id.h"
-#include "table_query_executor.h"
+#include "device_query_task.h"
 #include "imeta_data_querier.h"
+#include "table_query_executor.h"
+
 namespace storage {
 class DeviceTaskIterator {
    public:
     explicit DeviceTaskIterator(std::vector<std::string> column_names,
-                                MetaIndexNode index_root,
+                                MetaIndexNode *index_root,
                                 ColumnMapping column_mapping,
                                 IMetadataQuerier &metadata_querier,
-                                Filter id_filter, TableSchema table_schema)
+                                Filter *id_filter, TableSchema table_schema)
         : column_names_(column_names),
           column_mapping_(column_mapping),
           device_meta_iterator_(
-              metadata_querier.deviceIterator(index_root, id_filter)),
-          table_schema_(table_schema) {}
+              metadata_querier.device_iterator(index_root, id_filter)),
+          table_schema_(table_schema) {
+        pa_.init(512, common::MOD_DEVICE_TASK_ITER);
+    }
     ~DeviceTaskIterator();
-    
+
     bool has_next() const { return device_meta_iterator_->has_next(); }
 
-    DeviceQueryTask next() {
-        auto &pair = device_meta_iterator_->next();
-        return DeviceQueryTask(pair.first, column_names_, column_mapping_,
-                               pair.second, table_schema_);
+    int next(DeviceQueryTask *task) {
+        int ret = common::E_OK;
+        std::pair<IDeviceID, MetaIndexNode *> ret_pair;
+        if (RET_FAIL(device_meta_iterator_->next(ret_pair))) {
+        } else {
+            task = DeviceQueryTask::create_device_query_task(
+                ret_pair.first, column_names_, column_mapping_,
+                *ret_pair.second, table_schema_, pa_);
+        }
+        return ret;
     }
+
    private:
     std::vector<std::string> column_names_;
     ColumnMapping column_mapping_;
-    std::unique_ptr<std::vector<std::pair<IDeviceID, MetaIndexNode>>::iterator>
-        device_meta_iterator_;
+    std::unique_ptr<DeviceMetaIterator> device_meta_iterator_;
     TableSchema table_schema_;
+    common::PageArena pa_;
 };
 
 }  // namespace storage

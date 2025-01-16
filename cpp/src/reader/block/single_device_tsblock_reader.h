@@ -20,14 +20,24 @@
 #define READER_SINGLE_DEVICE_TSBLOCK_READER_H
 
 #include "tsblock_reader.h"
-
+#include "reader/task/device_query_task.h"
 namespace storage {
 class SingleDeviceTsBlockReader : public TsBlockReader {
    public:
     bool has_next() override;
-    common::TsBlock next() override;
+    int next(common::TsBlock &ret_block) override;
     void close() override;
+    private:
+    DeviceQueryTask* device_query_task_;
+    Filter measurement_filter_;
+    int32_t block_size_;
+    common::TsBlock current_block_;
+    bool last_block_returned_ = true;
+    
+    
 };
+
+class
 }  // namespace storage
 
 #endif  // READER_SINGLE_DEVICE_TSBLOCK_READER_H

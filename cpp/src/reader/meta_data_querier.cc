@@ -17,15 +17,16 @@
  * under the License.
  */
 
-#ifndef READER_META_DATA_QUERIER_H
-#define READER_META_DATA_QUERIER_H
+#include "reader/meta_data_querier.h"
 
-#include "imeta_data_querier.h"
-#include "file/tsfile_io_reader.h"
-#include "common/cache/lru_cache.h"
-#include "common/device_id.h"
+#include "common/tsfile_common.h"
+#include "device_meta_iterator.h"
 
 namespace storage {
 
+std::unique_ptr<DeviceMetaIterator> MetadataQuerier::device_iterator(
+    MetaIndexNode*& root, Filter*& id_filter) {
+    return std::unique_ptr<DeviceMetaIterator>(new DeviceMetaIterator(io_reader_, root, id_filter));
+}
+
 }  // end namespace storage
-#endif  // READER_META_DATA_QUERIER_H

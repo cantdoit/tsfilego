@@ -22,6 +22,9 @@
 
 #include <unordered_map>   
 #include <list>
+#include <mutex>
+#include <algorithm>
+
 #include "utils/errno_define.h"
 
 namespace common {

@@ -95,6 +95,7 @@ int TsFileReader::query(const std::string &table_name,
 
     std::vector<TSDataType> data_types = table_schema->get_data_types();
 
+    
     return ret;
 }
 

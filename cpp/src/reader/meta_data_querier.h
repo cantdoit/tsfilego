@@ -22,6 +22,7 @@
 
 #include "common/cache/lru_cache.h"
 #include "common/device_id.h"
+#include "device_meta_iterator.h"
 #include "file/tsfile_io_reader.h"
 #include "imeta_data_querier.h"
 
@@ -33,49 +34,54 @@ class MetadataQuerier : IMetadataQuerier {
 
     enum class LocateStatus { BEFORE, IN, AFTER };
 
-    explicit MetadataQuerier(std::shared_ptr<TsFileIOReader> tsfile_io_reader)
-        : tsfile_io_reader_(std::move(tsfile_io_reader)) {
-        file_metadata_ = tsfile_io_reader_->get_tsfile_meta();
-        device_chunk_meta_cache_ = std::make_unique<
-            common::Cache<std::pair<IDeviceID, std::string>,
-                          std::vector<std::shared_ptr<ChunkMeta>>, std::mutex>>(
-            CACHED_ENTRY_NUMBER, CACHED_ENTRY_NUMBER / 10);
+    explicit MetadataQuerier(TsFileIOReader* tsfile_io_reader)
+        : io_reader_(tsfile_io_reader) {
+        file_metadata_ = io_reader_->get_tsfile_meta();
+        device_chunk_meta_cache_ = std::unique_ptr<common::Cache<
+            std::string, std::vector<std::shared_ptr<ChunkMeta>>, std::mutex>>(
+            new common::Cache<std::string,
+                              std::vector<std::shared_ptr<ChunkMeta>>,
+                              std::mutex>(CACHED_ENTRY_NUMBER,
+                                          CACHED_ENTRY_NUMBER / 10));
     }
 
     std::vector<std::shared_ptr<ChunkMeta>> get_chunk_metadata_list(
-        const Path& timeseriesPath);
+        const Path& path) const;
 
-    std::vector<std::vector<std::shared_ptr<ChunkMeta>>> get_chunk_meta_lists(
-        const IDeviceID& device_id,
-        const std::set<std::string>& measurement_names,
-        const MetaIndexNode& measurement_node);
+    std::vector<std::vector<std::shared_ptr<ChunkMeta>>> get_chunk_metadata_lists(
+        const IDeviceID& device_id, const std::set<std::string>& field_names,
+        const MetaIndexNode* field_node = nullptr) const;
 
-    TsFileMeta get_whole_file_meta_data() const;
+    std::map<Path, std::vector<std::shared_ptr<ChunkMeta>>> get_chunk_metadata_map(
+        const std::vector<Path>& paths) const;
+        
+    int get_whole_file_metadata(TsFileMeta* tsfile_meta) const;
 
-    void load_chunk_meta_datas(const std::vector<Path>& paths);
+    void load_chunk_metadatas(const std::vector<Path>& paths);
 
     common::TSDataType get_data_type(const Path& path) const;
 
     std::vector<TimeRange> convert_space_to_time_partition(
-        const std::vector<Path>& paths, long spacePartitionStartPos,
-        long spacePartitionEndPos);
+        const std::vector<Path>& paths, int64_t spacePartitionStartPos,
+        int64_t spacePartitionEndPos) const;
 
-    std::unique_ptr<
+    std::unique_ptr<DeviceMetaIterator> device_iterator(MetaIndexNode*& root,
+                                                        Filter*& id_filter);
 
     void clear();
 
    private:
-    std::shared_ptr<TsFileIOReader> tsfile_io_reader_;
+    TsFileIOReader* io_reader_;
     TsFileMeta* file_metadata_;
     std::unique_ptr<
-        common::Cache<std::pair<IDeviceID, std::string>,
+        common::Cache<std::string, /*Todo std::pair<IDeviceID, std::string>*/
                       std::vector<std::shared_ptr<ChunkMeta>>, std::mutex>>
         device_chunk_meta_cache_;
 
     int load_chunk_meta(const std::pair<IDeviceID, std::string>& key,
                         std::vector<ChunkMeta*>& chunk_meta_list);
 
-    static LocateStatus checkLocateStatus(
+    static LocateStatus check_locate_status(
         const std::shared_ptr<ChunkMeta>& chunk_meta, long start, long end);
 };
 

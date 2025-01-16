@@ -24,25 +24,27 @@
 #include "common/device_id.h"
 #include "common/path.h"
 #include "common/tsfile_common.h"
+#include "reader/device_meta_iterator.h"
 #include "reader/ichunk_reader.h"
+
 namespace storage {
 
 class IMetadataQuerier {
    public:
     virtual ~IMetadataQuerier() = default;
 
-    virtual std::vector<std::shared_ptr<ChunkMeta>> get_chunk_metadata_lists(
+    virtual std::vector<std::shared_ptr<ChunkMeta>> get_chunk_metadata_list(
         const Path& path) const = 0;
 
     virtual std::vector<std::vector<std::shared_ptr<ChunkMeta>>>
-    get_chunk_metadata_list(
+    get_chunk_metadata_lists(
         const IDeviceID& device_id, const std::set<std::string>& field_names,
         const MetaIndexNode* field_node = nullptr) const = 0;
 
     virtual std::map<Path, std::vector<std::shared_ptr<ChunkMeta>>>
     get_chunk_metadata_map(const std::vector<Path>& paths) const = 0;
 
-    virtual TsFileMeta get_whole_file_metadata() const = 0;
+    virtual int get_whole_file_metadata(TsFileMeta* tsfile_meta) const = 0;
 
     virtual void load_chunk_metadatas(const std::vector<Path>& paths) = 0;
 
@@ -54,10 +56,9 @@ class IMetadataQuerier {
 
     virtual void clear() = 0;
 
-    virtual std::unique_ptr<
-        std::vector<std::pair<IDeviceID, MetaIndexNode>>::iterator>
-    deviceIterator(const MetaIndexNode& root,
-                   const Filter& id_filter) const = 0;
+    virtual std::unique_ptr <DeviceMetaIterator>
+        device_iterator(MetaIndexNode*& root,
+                       Filter*& id_filter) = 0;
 };
 
 }  // end namespace storage

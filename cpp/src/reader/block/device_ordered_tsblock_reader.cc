@@ -16,23 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-#ifndef READER_BLOCK_TSBLOCK_READER_H
-#define READER_BLOCK_TSBLOCK_READER_H
 
-#include "common/tsblock/tsblock.h"
+#include "device_ordered_tsblock_reader.h"
 
 namespace storage {
-class TsBlockReader {
-    virtual bool has_next() = 0;
-    virtual int next(common::TsBlock &ret_block) = 0;
-    virtual void close() {}
-};
 
-class EmptyTsBlockReader : public TsBlockReader {
-    bool has_next() override { return false; }
+bool DeviceOrderedTsBlockReader::has_next() { 
+    if (current_reader_ != nullptr && !current_reader_->has_next()) {
+        return false;
+    }
+}
 
-    int next(common::TsBlock &ret_block) override { return common::E_OK; }
-};
+common::TsBlock DeviceOrderedTsBlockReader::next() {
+    int ret = common::E_OK;
+    if (!has_next()) {
+    }
+}
+
 }  // namespace storage
-
-#endif  // READER_BLOCK_TSBLOCK_READER_H

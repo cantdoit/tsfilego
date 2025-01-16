@@ -35,7 +35,18 @@ class DeviceQueryTask {
           index_root_(index_root),
           table_schema_(table_schema) {}
     ~DeviceQueryTask();
-
+    
+    static DeviceQueryTask *create_device_query_task(
+        IDeviceID device_id, std::vector<std::string> column_names,
+        ColumnMapping column_mapping, MetaIndexNode index_root,
+        TableSchema table_schema, common::PageArena &pa) {
+        void* buf = pa.alloc(sizeof(DeviceQueryTask));
+        DeviceQueryTask *task = new (buf) DeviceQueryTask(device_id, column_names,
+                                                          column_mapping, index_root,
+                                                          table_schema);
+        return task;
+    }
+    
    private:
     IDeviceID device_id_;
     std::vector<std::string> column_names_;

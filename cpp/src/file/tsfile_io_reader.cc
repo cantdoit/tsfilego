@@ -364,6 +364,28 @@ int TsFileIOReader::load_all_measurement_index_entry(
     return ret;
 }
 
+int TsFileIOReader::read_device_meta_index(int32_t start_offset,
+                                           int32_t end_offset,
+                                           common::PageArena &pa,
+                                           MetaIndexNode *&device_meta_index) {
+    int ret = E_OK;
+    ASSERT(start_offset < end_offset);
+    const int32_t read_size = (int32_t)(end_offset - start_offset);
+    int32_t ret_read_len = 0;
+    char *data_buf = (char *)pa.alloc(read_size);
+    void *m_idx_node_buf = pa.alloc(sizeof(MetaIndexNode));
+    if (IS_NULL(data_buf) || IS_NULL(m_idx_node_buf)) {
+        return E_OOM;
+    }
+    device_meta_index = new (m_idx_node_buf) MetaIndexNode(&pa);
+    if (RET_FAIL(read_file_->read(start_offset, data_buf, read_size,
+                                  ret_read_len))) {
+    } else if (RET_FAIL(
+                   device_meta_index->deserialize_from(data_buf, read_size))) {
+    }
+    return ret;
+}
+
 /*
  * @target_name device_name or measurement_name
  * @index_node  leaf device node or leaf measurement node
