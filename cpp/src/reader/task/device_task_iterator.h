@@ -21,8 +21,8 @@
 
 #include "common/device_id.h"
 #include "device_query_task.h"
-#include "imeta_data_querier.h"
-#include "table_query_executor.h"
+#include "reader/imeta_data_querier.h"
+#include "reader/table_query_executor.h"
 
 namespace storage {
 class DeviceTaskIterator {

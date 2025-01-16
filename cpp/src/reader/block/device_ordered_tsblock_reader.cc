@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "device_ordered_tsblock_reader.h"
+#include "reader/block/device_ordered_tsblock_reader.h"
 
 namespace storage {
 
@@ -27,10 +27,11 @@ bool DeviceOrderedTsBlockReader::has_next() {
     }
 }
 
-common::TsBlock DeviceOrderedTsBlockReader::next() {
+int DeviceOrderedTsBlockReader::next(common::TsBlock &ret_block) {
     int ret = common::E_OK;
     if (!has_next()) {
     }
+    return ret;
 }
 
 }  // namespace storage

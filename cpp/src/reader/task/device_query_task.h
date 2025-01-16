@@ -20,7 +20,7 @@
 #define READER_TASK_DEVICE_QUERY_TASK_H
 
 #include "common/device_id.h"
-#include "table_query_executor.h"
+#include "reader/table_query_executor.h"
 
 namespace storage {
 class DeviceQueryTask {

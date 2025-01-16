@@ -47,6 +47,8 @@ class ColumnMapping {
         } else {
             field_columns_.insert(column_name);
         }
+
+        return common::E_OK;
     }
 
     int add(const Expression &measurementFilter) {
@@ -102,8 +104,10 @@ class TableQueryExecutor {
               const Expression &measurement_filter,
               std::unique_ptr<TsBlockReader> &ret_reader) {
         int ret = common::E_OK;
-        TsFileMeta file_metadata =
-            meta_data_querier_->get_whole_file_metadata();
+        TsFileMeta* file_metadata;
+        if (RET_FAIL(meta_data_querier_->get_whole_file_metadata(file_metadata))) {
+            return ret;
+        }
         common::PageArena pa;  // TODO: Optimize the memory allocation, use pa
                                // only to alloc String is not good
         pa.init(512, common::MOD_TSFILE_READER);
@@ -111,14 +115,14 @@ class TableQueryExecutor {
         table_name_str.dup_from(table_name, pa);
         MetaIndexNode *table_root = nullptr;
         std::shared_ptr<TableSchema> table_schema;
-        if (RET_FAIL(file_metadata.get_table_metaindex_node(table_name_str,
+        if (RET_FAIL(file_metadata->get_table_metaindex_node(table_name_str,
                                                             table_root))) {
-        } else if (RET_FAIL(file_metadata.get_table_schema(table_name,
+        } else if (RET_FAIL(file_metadata->get_table_schema(table_name,
                                                            table_schema))) {
         }
 
         if (IS_FAIL(ret)) {
-            ret_reader = std::make_unique<EmptyTsBlockReader>();
+            ret_reader = std::unique_ptr<EmptyTsBlockReader>();
             return ret;
         }
 
@@ -128,9 +132,9 @@ class TableQueryExecutor {
         }
         columnMapping.add(measurement_filter);
 
-        auto deviceTaskIterator = std::make_unique<DeviceTaskIterator>(
+        auto deviceTaskIterator = std::unique_ptr<DeviceTaskIterator>(new DeviceTaskIterator(
             columns, *table_root, columnMapping, *meta_data_querier_, id_filter,
-            *table_schema);
+            *table_schema));
 
         switch (table_query_ordering_) {
             case TableQueryOrdering::DEVICE:
