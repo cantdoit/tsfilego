@@ -472,6 +472,13 @@ int TsFileIOWriter::write_file_index() {
         DEBUG_print_byte_stream("byte_stream", write_stream_);
 #endif
     }
+    if (cur_index_node_queue) {
+        for (auto iter = cur_index_node_queue->begin(); iter != cur_index_node_queue->end(); iter++) {
+            if (iter.get()) {
+                iter.get().reset();
+            }
+        }
+    }
     return ret;
 }
 
@@ -529,6 +536,11 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
             ret_root = cur_index_node;
             ret_root->end_offset_ = cur_file_position();
             ret_root->node_type_ = LEAF_DEVICE;
+        }
+    }
+    for (auto iter = node_queue.begin(); iter != node_queue.end(); iter++) {
+        if (iter.get()) {
+            iter.get().reset();
         }
     }
     return ret;
@@ -797,6 +809,16 @@ int TsFileIOWriter::generate_root(
             }
         }
     }  // end while
+    for (auto iter = list_x.begin(); iter != list_x.end(); iter++) {
+        if (iter.get()) {
+            iter.get().reset();
+        }
+    }
+    for (auto iter = list_y.begin(); iter != list_y.end(); iter++) {
+        if (iter.get()) {
+            iter.get().reset();
+        }
+    }
     return ret;
 }
 

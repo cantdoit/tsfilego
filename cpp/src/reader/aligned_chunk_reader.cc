@@ -99,6 +99,7 @@ void AlignedChunkReader::destroy() {
         value_in_stream_.clear_wrapped_buf();
     }
     cur_value_page_header_.reset();
+    chunk_header_.~ChunkHeader();
 }
 
 int AlignedChunkReader::load_by_aligned_meta(ChunkMeta *time_chunk_meta,

@@ -76,6 +76,7 @@ void ChunkReader::destroy() {
         in_stream_.clear_wrapped_buf();
     }
     cur_page_header_.reset();
+    chunk_header_.~ChunkHeader();
 }
 
 int ChunkReader::load_by_meta(ChunkMeta *meta) {

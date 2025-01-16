@@ -134,6 +134,8 @@ struct ChunkHeader {
         chunk_type_ = 0;
     }
 
+    ~ChunkHeader() = default;
+
     int serialize_to(common::ByteStream &out) {
         int ret = common::E_OK;
         if (RET_FAIL(common::SerializationUtil::write_char(chunk_type_, out))) {
@@ -917,9 +919,7 @@ struct MetaIndexNode {
         return children_[0];
     }
 
-    ~MetaIndexNode() {
-
-    }
+    ~MetaIndexNode() {}
 
     int binary_search_children(std::shared_ptr<IComparable> key,
                                bool exact_search,

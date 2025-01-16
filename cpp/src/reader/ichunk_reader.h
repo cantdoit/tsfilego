@@ -36,6 +36,7 @@ class IChunkReader {
                      common::TSDataType data_type, Filter *time_filter) {
         return common::E_OK;
     }
+    virtual ~IChunkReader() = default;
     virtual void reset() {}
     virtual void destroy() {}
 

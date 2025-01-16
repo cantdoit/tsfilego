@@ -43,7 +43,7 @@ struct FileIndexWritingMemManager {
     ~FileIndexWritingMemManager() {
         for (size_t i = 0; i < all_index_nodes_.size(); i++) {
             all_index_nodes_[i]->children_.clear();
-            all_index_nodes_[i]->children_.~vector();
+            std::cout << all_index_nodes_[i].use_count() << std::endl;
         }
         all_index_nodes_.clear();
     }
