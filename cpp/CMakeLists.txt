@@ -24,9 +24,6 @@ set(TsFile_CPP_VERSION 1.2.0.dev)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -Wall -Werror")
 message("cmake using: USE_CPP11=${USE_CPP11}")
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=leak")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fsanitize=address -fsanitize=leak")
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 if(DEFINED ENV{CXX})
