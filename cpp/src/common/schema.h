@@ -214,7 +214,7 @@ namespace storage {
                 for (size_t i = 0; IS_SUCC(ret) && i < num_columns;
                      i++) {
                     auto column_schema = std::make_shared<MeasurementSchema>();
-                    int8_t column_category;
+                    int8_t column_category = 0;
                     if (RET_FAIL(column_schema->deserialize_from(in))) {
                     } else if (RET_FAIL(common::SerializationUtil::read_i8(
                         column_category, in))) {
