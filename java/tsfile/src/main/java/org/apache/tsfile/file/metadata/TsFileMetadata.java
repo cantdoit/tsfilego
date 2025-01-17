@@ -46,6 +46,7 @@ public class TsFileMetadata {
   // List of <name, offset, childMetadataIndexType>
   private Map<String, MetadataIndexNode> tableMetadataIndexNodeMap;
   private Map<String, TableSchema> tableSchemaMap;
+  private boolean hasTableSchemaMapCache;
   private Map<String, String> tsFileProperties;
 
   // offset of MetaMarker.SEPARATOR
@@ -57,13 +58,24 @@ public class TsFileMetadata {
 
   private String encryptType;
 
+  public static TsFileMetadata deserializeAndCacheTableSchemaMap(
+      ByteBuffer buffer, DeserializeConfig context) {
+    return deserializeFrom(buffer, context, true);
+  }
+
+  public static TsFileMetadata deserializeWithoutCacheTableSchemaMap(
+      ByteBuffer buffer, DeserializeConfig context) {
+    return deserializeFrom(buffer, context, false);
+  }
+
   /**
    * deserialize data from the buffer.
    *
    * @param buffer -buffer use to deserialize
    * @return -an instance of TsFileMetaData
    */
-  public static TsFileMetadata deserializeFrom(ByteBuffer buffer, DeserializeConfig context) {
+  public static TsFileMetadata deserializeFrom(
+      ByteBuffer buffer, DeserializeConfig context, boolean needTableSchemaMap) {
     TsFileMetadata fileMetaData = new TsFileMetadata();
 
     int startPos = buffer.position();
@@ -84,10 +96,13 @@ public class TsFileMetadata {
     for (int i = 0; i < tableSchemaNum; i++) {
       String tableName = ReadWriteIOUtils.readVarIntString(buffer);
       TableSchema tableSchema = context.tableSchemaBufferDeserializer.deserialize(buffer, context);
-      tableSchema.setTableName(tableName);
-      tableSchemaMap.put(tableName, tableSchema);
+      if (needTableSchemaMap) {
+        tableSchema.setTableName(tableName);
+        tableSchemaMap.put(tableName, tableSchema);
+      }
     }
     fileMetaData.setTableSchemaMap(tableSchemaMap);
+    fileMetaData.hasTableSchemaMapCache = needTableSchemaMap;
 
     // metaOffset
     long metaOffset = ReadWriteIOUtils.readLong(buffer);
@@ -107,7 +122,7 @@ public class TsFileMetadata {
     fileMetaData.propertiesOffset = buffer.position() - startPos;
 
     if (buffer.hasRemaining()) {
-      int propertiesSize = ReadWriteForEncodingUtils.readUnsignedVarInt(buffer);
+      int propertiesSize = ReadWriteForEncodingUtils.readVarInt(buffer);
       Map<String, String> propertiesMap = new HashMap<>();
       for (int i = 0; i < propertiesSize; i++) {
         String key = ReadWriteIOUtils.readVarIntString(buffer);
@@ -221,7 +236,7 @@ public class TsFileMetadata {
     if (bloomFilter != null) {
       byteLen += serializeBloomFilter(outputStream, bloomFilter);
     } else {
-      byteLen += ReadWriteIOUtils.write(0, outputStream);
+      byteLen += ReadWriteForEncodingUtils.writeUnsignedVarInt(0, outputStream);
     }
 
     byteLen +=
@@ -267,6 +282,7 @@ public class TsFileMetadata {
 
   public void setTableSchemaMap(Map<String, TableSchema> tableSchemaMap) {
     this.tableSchemaMap = tableSchemaMap;
+    this.hasTableSchemaMapCache = true;
   }
 
   public Map<String, MetadataIndexNode> getTableMetadataIndexNodeMap() {
@@ -281,7 +297,15 @@ public class TsFileMetadata {
     return metadataIndexNode;
   }
 
+  public boolean hasTableSchemaMapCache() {
+    return hasTableSchemaMapCache;
+  }
+
   public Map<String, TableSchema> getTableSchemaMap() {
     return tableSchemaMap;
+  }
+
+  public Map<String, String> getTsFileProperties() {
+    return tsFileProperties;
   }
 }
