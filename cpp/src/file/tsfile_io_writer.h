@@ -77,10 +77,11 @@ public:
       // TODO: support encrypt
       encrypt_level_ = "2";
       encrypt_type_ = "";
-      encrypt_type_ = "";
+      encrypt_key_ = "";
     } else {
       encrypt_level_ = "0";
       encrypt_type_ = "org.apache.tsfile.encrypt.UNENCRYPTED";
+      encrypt_key_ = "";
     }
   }
   ~TsFileIOWriter() { destroy(); }

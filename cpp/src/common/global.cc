@@ -60,6 +60,8 @@ extern TSEncoding get_value_encoder(TSDataType data_type) {
             return TSEncoding::GORILLA;
         case TEXT:
             return TSEncoding::PLAIN;
+        case STRING:
+            return TSEncoding::PLAIN;
         case VECTOR:
             break;
         case NULL_TYPE:
@@ -69,7 +71,11 @@ extern TSEncoding get_value_encoder(TSDataType data_type) {
         default:
             break;
     }
-    return TSEncoding::PLAIN;
+    return TSEncoding::INVALID_ENCODING;
+}
+
+extern CompressionType get_default_compressor() {
+    return LZ4;
 }
 
 void config_set_page_max_point_count(uint32_t page_max_ponint_count) {

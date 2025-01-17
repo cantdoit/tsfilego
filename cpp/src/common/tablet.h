@@ -105,7 +105,7 @@ class Tablet {
         for (size_t i = 0; i < column_names.size(); i++) {
             schema_vec_->emplace_back(
                 MeasurementSchema(column_names[i], data_types[i], common::PLAIN,
-                                  common::UNCOMPRESSED));
+                                  common::get_default_compressor()));
         }
         set_column_categories(column_categories);
     }
