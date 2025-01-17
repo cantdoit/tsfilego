@@ -270,7 +270,7 @@ TEST_F(TsFileWriterTest, WriteMultipleTabletsMultiFlush) {
     for (int tablet_num = 0; tablet_num < max_tablet_num; tablet_num++) {
         for (int i = 0; i < device_num; i++) {
             std::string device_name = "test_device" + std::to_string(i);
-            Tablet tablet(device_name,
+            storage::Tablet tablet(device_name,
                           std::make_shared<std::vector<MeasurementSchema>>(
                               schema_vecs[i]),
                           1);
@@ -345,7 +345,7 @@ TEST_F(TsFileWriterTest, WriteMultipleTabletsInt64) {
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
         int max_rows = 100;
-        Tablet tablet(
+        storage::Tablet tablet(
             device_name,
             std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]),
             max_rows);
@@ -389,7 +389,7 @@ TEST_F(TsFileWriterTest, WriteMultipleTabletsDouble) {
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
         int max_rows = 200;
-        Tablet tablet(
+        storage::Tablet tablet(
             device_name,
             std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]),
             max_rows);
@@ -432,7 +432,7 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
 
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
-        Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
+        storage::Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
         tablet.init();
         for (int j = 0; j < measurement_num; j++) {
             for (int row = 0; row < max_rows; row++) {
@@ -509,7 +509,7 @@ TEST_F(TsFileWriterTest, AnalyzeTsfileForload) {
 
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
-        Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
+        storage::Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
         tablet.init();
         for (int j = 0; j < measurement_num; j++) {
             for (int row = 0; row < max_rows; row++) {

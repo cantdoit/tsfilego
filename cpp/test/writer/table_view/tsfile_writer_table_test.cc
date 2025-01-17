@@ -72,7 +72,7 @@ class TsFileWriterTableTest : public ::testing::Test {
         return random_string;
     }
 
-    static std::shared_ptr<TableSchema> gen_table_schema(int table_num) {
+    static std::shared_ptr<storage::TableSchema> gen_table_schema(int table_num) {
         std::vector<std::shared_ptr<MeasurementSchema>> measurement_schemas;
         std::vector<ColumnCategory> column_categories;
         int id_schema_num = 5;
@@ -92,14 +92,14 @@ class TsFileWriterTableTest : public ::testing::Test {
                     CompressionType::UNCOMPRESSED));
             column_categories.emplace_back(ColumnCategory::FIELD);
         }
-        return std::make_shared<TableSchema>("testTable" + to_string(table_num),
+        return std::make_shared<storage::TableSchema>("testTable" + to_string(table_num),
                                              measurement_schemas,
                                              column_categories);
     }
 
-    static Tablet gen_tablet(const std::shared_ptr<TableSchema>& table_schema,
+    static storage::Tablet gen_tablet(const std::shared_ptr<storage::TableSchema>& table_schema,
                              int offset, int device_num) {
-        Tablet tablet(table_schema->get_table_name(),
+        storage::Tablet tablet(table_schema->get_table_name(),
                       table_schema->get_measurement_names(),
                       table_schema->get_data_types(),
                       table_schema->get_column_categories());
