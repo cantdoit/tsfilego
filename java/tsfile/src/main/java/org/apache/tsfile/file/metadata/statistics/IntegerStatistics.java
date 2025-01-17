@@ -20,6 +20,7 @@
 package org.apache.tsfile.file.metadata.statistics;
 
 import org.apache.tsfile.enums.TSDataType;
+import org.apache.tsfile.exception.filter.StatisticsClassException;
 import org.apache.tsfile.utils.RamUsageEstimator;
 import org.apache.tsfile.utils.ReadWriteIOUtils;
 
@@ -152,24 +153,28 @@ public class IntegerStatistics extends Statistics<Integer> {
   @SuppressWarnings("rawtypes")
   @Override
   protected void mergeStatisticsValue(Statistics stats) {
-    IntegerStatistics intStats = (IntegerStatistics) stats;
-    if (isEmpty) {
-      initializeStats(
-          intStats.getMinValue(),
-          intStats.getMaxValue(),
-          intStats.getFirstValue(),
-          intStats.getLastValue(),
-          intStats.sumValue);
-      isEmpty = false;
+    if (stats instanceof IntegerStatistics) {
+      IntegerStatistics intStats = (IntegerStatistics) stats;
+      if (isEmpty) {
+        initializeStats(
+            intStats.getMinValue(),
+            intStats.getMaxValue(),
+            intStats.getFirstValue(),
+            intStats.getLastValue(),
+            intStats.sumValue);
+        isEmpty = false;
+      } else {
+        updateStats(
+            intStats.getMinValue(),
+            intStats.getMaxValue(),
+            intStats.getFirstValue(),
+            intStats.getLastValue(),
+            intStats.sumValue,
+            stats.getStartTime(),
+            stats.getEndTime());
+      }
     } else {
-      updateStats(
-          intStats.getMinValue(),
-          intStats.getMaxValue(),
-          intStats.getFirstValue(),
-          intStats.getLastValue(),
-          intStats.sumValue,
-          stats.getStartTime(),
-          stats.getEndTime());
+      throw new StatisticsClassException(this.getClass(), stats.getClass());
     }
   }
 
