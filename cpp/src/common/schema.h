@@ -23,6 +23,7 @@
 #include <map>  // use unordered_map instead
 #include <memory>
 #include <string>
+#include <cwrapper/TsFile-cwrapper.h>
 
 #include "common/db_common.h"
 #include "writer/time_chunk_writer.h"
@@ -102,7 +103,9 @@ namespace storage {
 
         int deserialize_from(common::ByteStream &in) {
             int ret = common::E_OK;
-            uint8_t data_type, encoding, compression_type;
+            uint8_t data_type = common::TSDataType::INVALID_DATATYPE,
+                encoding = common::TSEncoding::INVALID_ENCODING,
+                compression_type = common::CompressionType::INVALID_COMPRESSION;
             if (RET_FAIL(
                 common::SerializationUtil::read_str(measurement_name_, in))) {
             } else if (RET_FAIL(
