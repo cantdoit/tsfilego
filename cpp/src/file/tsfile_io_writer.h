@@ -165,6 +165,7 @@ private:
       DeviceNodeMap &device_map, std::shared_ptr<IDeviceID> device_id,
       common::SimpleList<std::shared_ptr<MetaIndexNode>> *measurement_index_node_queue,
       FileIndexWritingMemManager &wmm);
+  void destroy_node_list(common::SimpleList<std::shared_ptr<MetaIndexNode>> *list);
   int clone_node_list(common::SimpleList<std::shared_ptr<MetaIndexNode>> *src,
                       common::SimpleList<std::shared_ptr<MetaIndexNode>> *dest);
   int generate_root(common::SimpleList<std::shared_ptr<MetaIndexNode>> *node_queue,

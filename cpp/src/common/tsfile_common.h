@@ -759,6 +759,11 @@ struct StringComparable : IComparable {
 };
 
 struct IMetaIndexEntry {
+  static void self_destructor(IMetaIndexEntry *ptr) {
+    if (ptr) {
+      ptr->~IMetaIndexEntry();
+    }
+  }
   IMetaIndexEntry() = default;
   virtual ~IMetaIndexEntry() = default;
 

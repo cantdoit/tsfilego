@@ -361,13 +361,7 @@ int TsFileIOWriter::write_file_index() {
                 }
             }
             if (IS_SUCC(ret)) {
-                if (cur_index_node_queue) {
-                    for (auto iter = cur_index_node_queue->begin(); iter != cur_index_node_queue->end(); iter++) {
-                        if (iter.get()) {
-                            iter.get().reset();
-                        }
-                    }
-                }
+                destroy_node_list(cur_index_node_queue);
                 if (RET_FAIL(alloc_meta_index_node_queue(
                         writing_mm, cur_index_node_queue))) {
                 } else if (RET_FAIL(alloc_and_init_meta_index_node(
@@ -479,13 +473,7 @@ int TsFileIOWriter::write_file_index() {
         DEBUG_print_byte_stream("byte_stream", write_stream_);
 #endif
     }
-    if (cur_index_node_queue) {
-        for (auto iter = cur_index_node_queue->begin(); iter != cur_index_node_queue->end(); iter++) {
-            if (iter.get()) {
-                iter.get().reset();
-            }
-        }
-    }
+    destroy_node_list(cur_index_node_queue);
     return ret;
 }
 
@@ -545,11 +533,7 @@ int TsFileIOWriter::build_device_level(DeviceNodeMap &device_map,
             ret_root->node_type_ = LEAF_DEVICE;
         }
     }
-    for (auto iter = node_queue.begin(); iter != node_queue.end(); iter++) {
-        if (iter.get()) {
-            iter.get().reset();
-        }
-    }
+    destroy_node_list(&node_queue);
     return ret;
 }
 
@@ -609,11 +593,7 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
     auto entry_ptr = static_cast<DeviceMetaIndexEntry *>(buf);
     new (entry_ptr) DeviceMetaIndexEntry(device_id, cur_file_position());
     ret_entry =
-        std::shared_ptr<IMetaIndexEntry>(entry_ptr, [](IMetaIndexEntry *ptr) {
-            if (ptr) {
-                ptr->~IMetaIndexEntry();  // 显式调用析构函数
-            }
-        });
+        std::shared_ptr<IMetaIndexEntry>(entry_ptr, IMetaIndexEntry::self_destructor);
 #if DEBUG_SE
     std::cout << "alloc_and_init_meta_index_entry, MetaIndexEntry="
               << *ret_entry << std::endl;
@@ -632,11 +612,7 @@ int TsFileIOWriter::alloc_and_init_meta_index_entry(
     new (entry_ptr)
         MeasurementMetaIndexEntry(name, cur_file_position(), wmm.pa_);
     ret_entry =
-        std::shared_ptr<IMetaIndexEntry>(entry_ptr, [](IMetaIndexEntry *ptr) {
-            if (ptr) {
-                ptr->~IMetaIndexEntry();
-            }
-        });
+        std::shared_ptr<IMetaIndexEntry>(entry_ptr, IMetaIndexEntry::self_destructor);
 #if DEBUG_SE
     std::cout << "alloc_and_init_meta_index_entry, MetaIndexEntry="
               << *ret_entry << std::endl;
@@ -816,17 +792,20 @@ int TsFileIOWriter::generate_root(
             }
         }
     }  // end while
-    for (auto iter = list_x.begin(); iter != list_x.end(); iter++) {
-        if (iter.get()) {
-            iter.get().reset();
-        }
-    }
-    for (auto iter = list_y.begin(); iter != list_y.end(); iter++) {
-        if (iter.get()) {
-            iter.get().reset();
-        }
-    }
+    destroy_node_list(&list_x);
+    destroy_node_list(&list_y);
     return ret;
+}
+
+void TsFileIOWriter::destroy_node_list(common::SimpleList<std::shared_ptr<MetaIndexNode>> *list) {
+    if (list) {
+        for (auto iter = list->begin(); iter != list->end(); iter++) {
+            if (iter.get()) {
+                iter.get().reset();
+            }
+        }
+    }
+
 }
 
 int TsFileIOWriter::clone_node_list(
