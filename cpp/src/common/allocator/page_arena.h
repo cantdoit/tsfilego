@@ -24,13 +24,6 @@
 
 namespace common {
 
-class PageArenaDeleter {
-   public:
-    explicit PageArenaDeleter() = default;
-
-    void operator()(void *ptr) const {}
-};
-
 /*
  * Not Thread Safe
  */
@@ -50,9 +43,6 @@ class PageArena {
     char *alloc(uint32_t size);
     FORCE_INLINE void destroy() { reset(); }
     void reset();
-    PageArenaDeleter get_deleter() const {
-        return deleter_;
-    }
 
 #ifdef ENABLE_TEST
     int TEST_get_page_count() const {
@@ -105,8 +95,6 @@ class PageArena {
     AllocModID mid_;
     BaseAllocator &base_allocator_;
     Page dummy_head_;
-
-    PageArenaDeleter deleter_;
 };
 
 }  // end namespace common

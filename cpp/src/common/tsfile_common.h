@@ -996,7 +996,7 @@ struct MetaIndexNode {
       if (RET_FAIL(entry->deserialize_from(in, pa_))) {
       } else {
         children_.push_back(std::shared_ptr<IMetaIndexEntry>(
-            entry, pa_->get_deleter()));
+            entry, IMetaIndexEntry::self_destructor));
       }
     }  // end for
     if (IS_SUCC(ret)) {

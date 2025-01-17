@@ -23,7 +23,6 @@
 #include <map>  // use unordered_map instead
 #include <memory>
 #include <string>
-#include <cwrapper/TsFile-cwrapper.h>
 
 #include "common/db_common.h"
 #include "writer/time_chunk_writer.h"
