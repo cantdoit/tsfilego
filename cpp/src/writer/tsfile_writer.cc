@@ -638,26 +638,29 @@ int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,
 
     TSDataType data_type = tablet.schema_vec_->at(col_idx).data_type_;
     int64_t *timestamps = tablet.timestamps_;
-    void *col_values = tablet.value_matrix_[col_idx];
+    Tablet::ValueMatrixEntry col_values = tablet.value_matrix_[col_idx];
     BitMap &col_notnull_bitmap = tablet.bitmaps_[col_idx];
     end_idx = std::min(end_idx, tablet.max_row_num_);
 
     if (data_type == common::BOOLEAN) {
-        ret = write_typed_column(chunk_writer, timestamps, (bool *)col_values,
+        ret = write_typed_column(chunk_writer, timestamps, col_values.bool_data,
                                  col_notnull_bitmap, start_idx, end_idx);
     } else if (data_type == common::INT32) {
         ret =
-            write_typed_column(chunk_writer, timestamps, (int32_t *)col_values,
+            write_typed_column(chunk_writer, timestamps, col_values.int32_data,
                                col_notnull_bitmap, start_idx, end_idx);
     } else if (data_type == common::INT64) {
         ret =
-            write_typed_column(chunk_writer, timestamps, (int64_t *)col_values,
+            write_typed_column(chunk_writer, timestamps, col_values.int64_data,
                                col_notnull_bitmap, start_idx, end_idx);
     } else if (data_type == common::FLOAT) {
-        ret = write_typed_column(chunk_writer, timestamps, (float *)col_values,
+        ret = write_typed_column(chunk_writer, timestamps, col_values.float_data,
                                  col_notnull_bitmap, start_idx, end_idx);
     } else if (data_type == common::DOUBLE) {
-        ret = write_typed_column(chunk_writer, timestamps, (double *)col_values,
+        ret = write_typed_column(chunk_writer, timestamps, col_values.double_data,
+                                 col_notnull_bitmap, start_idx, end_idx);
+    } else if (data_type == common::STRING) {
+        ret = write_typed_column(chunk_writer, timestamps, col_values.string_data,
                                  col_notnull_bitmap, start_idx, end_idx);
     } else {
         ASSERT(false);
@@ -671,29 +674,29 @@ int TsFileWriter::value_write_column(ValueChunkWriter *value_chunk_writer,
 
     TSDataType data_type = tablet.schema_vec_->at(col_idx).data_type_;
     int64_t *timestamps = tablet.timestamps_;
-    void *col_values = tablet.value_matrix_[col_idx];
+    Tablet::ValueMatrixEntry col_values = tablet.value_matrix_[col_idx];
     BitMap &col_notnull_bitmap = tablet.bitmaps_[col_idx];
     int32_t row_count = tablet.max_row_num_;
 
     if (data_type == common::BOOLEAN) {
         ret = write_typed_column(value_chunk_writer, timestamps,
-                                 (bool *)col_values, col_notnull_bitmap,
+                                 (bool *)col_values.bool_data, col_notnull_bitmap,
                                  row_count);
     } else if (data_type == common::INT32) {
         ret = write_typed_column(value_chunk_writer, timestamps,
-                                 (int32_t *)col_values, col_notnull_bitmap,
+                                 (int32_t *)col_values.int32_data, col_notnull_bitmap,
                                  row_count);
     } else if (data_type == common::INT64) {
         ret = write_typed_column(value_chunk_writer, timestamps,
-                                 (int64_t *)col_values, col_notnull_bitmap,
+                                 (int64_t *)col_values.int64_data, col_notnull_bitmap,
                                  row_count);
     } else if (data_type == common::FLOAT) {
         ret = write_typed_column(value_chunk_writer, timestamps,
-                                 (float *)col_values, col_notnull_bitmap,
+                                 (float *)col_values.float_data, col_notnull_bitmap,
                                  row_count);
     } else if (data_type == common::DOUBLE) {
         ret = write_typed_column(value_chunk_writer, timestamps,
-                                 (double *)col_values, col_notnull_bitmap,
+                                 (double *)col_values.double_data, col_notnull_bitmap,
                                  row_count);
     } else {
         return E_NOT_SUPPORT;
@@ -757,6 +760,13 @@ int TsFileWriter::write_typed_column(ChunkWriter *chunk_writer,
 
 int TsFileWriter::write_typed_column(ChunkWriter *chunk_writer,
                                      int64_t *timestamps, double *col_values,
+                                     BitMap &col_notnull_bitmap, int start_idx,
+                                     int end_idx) {
+    DO_WRITE_TYPED_COLUMN();
+}
+
+int TsFileWriter::write_typed_column(ChunkWriter *chunk_writer,
+                                     int64_t *timestamps, common::String *col_values,
                                      BitMap &col_notnull_bitmap, int start_idx,
                                      int end_idx) {
     DO_WRITE_TYPED_COLUMN();

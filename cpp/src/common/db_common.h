@@ -23,6 +23,7 @@
 #include <iostream>
 
 #include "utils/util_define.h"
+#include "common/allocator/my_string.h"
 
 namespace common {
 
@@ -148,6 +149,10 @@ FORCE_INLINE common::TSDataType GetDataTypeFromTemplateType<float>() {
 template <>
 FORCE_INLINE common::TSDataType GetDataTypeFromTemplateType<double>() {
     return common::DOUBLE;
+}
+template <>
+FORCE_INLINE common::TSDataType GetDataTypeFromTemplateType<common::String>() {
+    return common::STRING;
 }
 
 FORCE_INLINE size_t get_data_type_size(TSDataType data_type) {

@@ -127,7 +127,7 @@ class TsFileWriter {
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, double *col_values,
                            common::BitMap &col_notnull_bitmap, int start_idx,
-                           int end_idx);
+                           int end_idx);int write_typed_column(ChunkWriter*chunk_writer, int64_t*timestamps, common::String*col_values, common::BitMap&col_notnull_bitmap, int start_idx, int end_idx);
 
     template <typename MeasurementNamesGetter>
     int do_check_schema(
@@ -173,7 +173,7 @@ class TsFileWriter {
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, double *col_values,
                            common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           int32_t row_count);int write_typed_column(ValueChunkWriter*value_chunk_writer, int64_t*timestamps, common::String*col_values, common::BitMap&col_notnull_bitmap, int32_t row_count);
 
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, float *col_values,

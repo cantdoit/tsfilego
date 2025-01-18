@@ -38,6 +38,17 @@ class TabletRowIterator;
 class TabletColIterator;
 
 class Tablet {
+    struct ValueMatrixEntry {
+        union {
+            int32_t *int32_data;
+            int64_t *int64_data;
+            float *float_data;
+            double *double_data;
+            bool *bool_data;
+            common::String *string_data;
+        };
+    };
+
    public:
     static const uint32_t DEFAULT_MAX_ROWS = 1024;
 
@@ -146,7 +157,7 @@ class Tablet {
     std::shared_ptr<std::vector<MeasurementSchema>> schema_vec_;
     std::map<std::string, int> schema_map_;
     int64_t *timestamps_;
-    void **value_matrix_;
+    ValueMatrixEntry *value_matrix_;
     common::BitMap *bitmaps_;
     std::vector<ColumnCategory> column_categories_;
     std::vector<int> id_column_indexes_;
