@@ -131,7 +131,7 @@ class TsFileWriterTableTest : public ::testing::Test {
                 }
             }
         }
-        delete literal;
+        delete[] literal;
         return tablet;
     }
 };
