@@ -273,8 +273,6 @@ template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
                                float val);
 template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
                                double val);
-template int Tablet::add_value(uint32_t row_index, uint32_t schema_index,
-                               String val);
 
 template int Tablet::add_value(uint32_t row_index,
                                const std::string &measurement_name, bool val);
