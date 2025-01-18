@@ -99,12 +99,11 @@ class Tablet {
           insert_target_name_(insert_target_name),
           timestamps_(nullptr),
           value_matrix_(nullptr),
-          bitmaps_(nullptr),
-          owned_schemas_(false) {
+          bitmaps_(nullptr) {
         schema_vec_ = std::make_shared<std::vector<MeasurementSchema>>();
         for (size_t i = 0; i < column_names.size(); i++) {
             schema_vec_->emplace_back(
-                MeasurementSchema(column_names[i], data_types[i], common::PLAIN,
+                MeasurementSchema(column_names[i], data_types[i], common::get_value_encoder(data_types[i]),
                                   common::get_default_compressor()));
         }
         set_column_categories(column_categories);
@@ -151,7 +150,6 @@ class Tablet {
     common::BitMap *bitmaps_;
     std::vector<ColumnCategory> column_categories_;
     std::vector<int> id_column_indexes_;
-    bool owned_schemas_;
 };
 
 }  // end namespace storage

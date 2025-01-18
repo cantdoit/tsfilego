@@ -57,7 +57,7 @@ namespace storage {
             : measurement_name_(measurement_name),
               data_type_(data_type),
               encoding_(get_default_encoding_for_type(data_type)),
-              compression_type_(common::LZ4),
+              compression_type_(common::UNCOMPRESSED),
               chunk_writer_(nullptr),
               value_chunk_writer_(nullptr) {
         }
