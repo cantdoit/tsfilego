@@ -305,12 +305,13 @@ std::shared_ptr<IDeviceID> Tablet::get_device_id(int i) const {
     std::vector<std::string> id_array;
     id_array.push_back(insert_target_name_);
     for (auto id_column_idx : id_column_indexes_) {
-        // TODO: support TEXT
         common::TSDataType data_type = INVALID_DATATYPE;
         void* value_ptr = get_value(i, id_column_idx, data_type);
+        common::String str;
         switch (data_type) {
-            case INT64:
-                id_array.push_back(to_string(*static_cast<int64_t*>(value_ptr)));
+            case STRING:
+                str = *static_cast<common::String*>(value_ptr);
+                id_array.push_back(str.to_std_string());
                 break;
             default:
                 break ;
