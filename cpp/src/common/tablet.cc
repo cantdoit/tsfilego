@@ -184,7 +184,7 @@ void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType
 
 template <>
 void Tablet::process_val(uint32_t row_index, uint32_t schema_index, common::String val) {
-    value_matrix_[schema_index].string_data[row_index] = val;
+    value_matrix_[schema_index].string_data[row_index].dup_from(val, page_arena_);
     bitmaps_[schema_index].set(row_index); /* mark as non-null */
 }
 
