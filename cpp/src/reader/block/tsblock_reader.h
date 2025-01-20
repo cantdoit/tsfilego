@@ -23,12 +23,16 @@
 
 namespace storage {
 class TsBlockReader {
+   public:
+    virtual ~TsBlockReader() = default;
     virtual bool has_next() = 0;
     virtual int next(common::TsBlock &ret_block) = 0;
     virtual void close() {}
 };
 
 class EmptyTsBlockReader : public TsBlockReader {
+   public:
+    EmptyTsBlockReader() = default;
     bool has_next() override { return false; }
 
     int next(common::TsBlock &ret_block) override { return common::E_OK; }

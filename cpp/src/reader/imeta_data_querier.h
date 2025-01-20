@@ -56,9 +56,8 @@ class IMetadataQuerier {
 
     virtual void clear() = 0;
 
-    virtual std::unique_ptr <DeviceMetaIterator>
-        device_iterator(MetaIndexNode*& root,
-                       Filter*& id_filter) = 0;
+    virtual std::unique_ptr<DeviceMetaIterator> device_iterator(
+        MetaIndexNode* root, const Filter* id_filter) = 0;
 };
 
 }  // end namespace storage

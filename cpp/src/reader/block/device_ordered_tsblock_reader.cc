@@ -25,12 +25,13 @@ bool DeviceOrderedTsBlockReader::has_next() {
     if (current_reader_ != nullptr && !current_reader_->has_next()) {
         return false;
     }
+    return true;
 }
 
 int DeviceOrderedTsBlockReader::next(common::TsBlock &ret_block) {
     int ret = common::E_OK;
-    if (!has_next()) {
-    }
+    // if (!has_next()) {
+    // }
     return ret;
 }
 

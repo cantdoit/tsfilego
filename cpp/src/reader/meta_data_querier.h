@@ -48,13 +48,14 @@ class MetadataQuerier : IMetadataQuerier {
     std::vector<std::shared_ptr<ChunkMeta>> get_chunk_metadata_list(
         const Path& path) const;
 
-    std::vector<std::vector<std::shared_ptr<ChunkMeta>>> get_chunk_metadata_lists(
-        const IDeviceID& device_id, const std::set<std::string>& field_names,
-        const MetaIndexNode* field_node = nullptr) const;
+    std::vector<std::vector<std::shared_ptr<ChunkMeta>>>
+    get_chunk_metadata_lists(const IDeviceID& device_id,
+                             const std::set<std::string>& field_names,
+                             const MetaIndexNode* field_node = nullptr) const;
 
-    std::map<Path, std::vector<std::shared_ptr<ChunkMeta>>> get_chunk_metadata_map(
-        const std::vector<Path>& paths) const;
-        
+    std::map<Path, std::vector<std::shared_ptr<ChunkMeta>>>
+    get_chunk_metadata_map(const std::vector<Path>& paths) const;
+
     int get_whole_file_metadata(TsFileMeta* tsfile_meta) const;
 
     void load_chunk_metadatas(const std::vector<Path>& paths);
@@ -65,8 +66,8 @@ class MetadataQuerier : IMetadataQuerier {
         const std::vector<Path>& paths, int64_t spacePartitionStartPos,
         int64_t spacePartitionEndPos) const;
 
-    std::unique_ptr<DeviceMetaIterator> device_iterator(MetaIndexNode*& root,
-                                                        Filter*& id_filter);
+    std::unique_ptr<DeviceMetaIterator> device_iterator(MetaIndexNode* root,
+                                                        const Filter* id_filter);
 
     void clear();
 

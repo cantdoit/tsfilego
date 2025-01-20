@@ -20,13 +20,12 @@
 #define READER_TASK_DEVICE_QUERY_TASK_H
 
 #include "common/device_id.h"
-#include "reader/table_query_executor.h"
+#include "reader/column_mapping.h"
 
 namespace storage {
 class DeviceQueryTask {
    public:
-    DeviceQueryTask(IDeviceID device_id,
-                    std::vector<std::string> column_names,
+    DeviceQueryTask(IDeviceID device_id, std::vector<std::string> column_names,
                     ColumnMapping column_mapping, MetaIndexNode index_root,
                     TableSchema table_schema)
         : device_id_(device_id),
@@ -35,18 +34,24 @@ class DeviceQueryTask {
           index_root_(index_root),
           table_schema_(table_schema) {}
     ~DeviceQueryTask();
-    
+
     static DeviceQueryTask *create_device_query_task(
         IDeviceID device_id, std::vector<std::string> column_names,
         ColumnMapping column_mapping, MetaIndexNode index_root,
-        TableSchema table_schema, common::PageArena &pa) {
-        void* buf = pa.alloc(sizeof(DeviceQueryTask));
-        DeviceQueryTask *task = new (buf) DeviceQueryTask(device_id, column_names,
-                                                          column_mapping, index_root,
-                                                          table_schema);
-        return task;
+        TableSchema table_schema, common::PageArena &pa);
+
+    const std::vector<std::string> &get_column_names() const {
+        return column_names_;
     }
-    
+
+    const TableSchema &get_table_schema() const { return table_schema_; }
+
+    const MetaIndexNode &get_index_root() const { return index_root_; }
+
+    const ColumnMapping &get_column_mapping() const { return column_mapping_; }
+
+    IDeviceID get_device_id() const { return device_id_; }
+
    private:
     IDeviceID device_id_;
     std::vector<std::string> column_names_;

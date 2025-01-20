@@ -20,40 +20,33 @@
 #define READER_TASK_DEVICE_TASK_ITERATOR_H
 
 #include "common/device_id.h"
-#include "device_query_task.h"
 #include "reader/imeta_data_querier.h"
-#include "reader/table_query_executor.h"
+#include "reader/task/device_query_task.h"
 
 namespace storage {
+
+class ColumnMapping;
+class DeviceQueryTask;
+
 class DeviceTaskIterator {
    public:
-    explicit DeviceTaskIterator(std::vector<std::string> column_names,
-                                MetaIndexNode *index_root,
-                                ColumnMapping column_mapping,
-                                IMetadataQuerier &metadata_querier,
-                                Filter *id_filter, TableSchema table_schema)
+    explicit DeviceTaskIterator(
+        std::vector<std::string> column_names, MetaIndexNode *index_root,
+        ColumnMapping column_mapping,
+        std::shared_ptr<IMetadataQuerier> metadata_querier,
+        const Filter *id_filter, TableSchema table_schema)
         : column_names_(column_names),
           column_mapping_(column_mapping),
           device_meta_iterator_(
-              metadata_querier.device_iterator(index_root, id_filter)),
+              metadata_querier->device_iterator(index_root, id_filter)),
           table_schema_(table_schema) {
         pa_.init(512, common::MOD_DEVICE_TASK_ITER);
     }
     ~DeviceTaskIterator();
 
-    bool has_next() const { return device_meta_iterator_->has_next(); }
+    bool has_next() const;
 
-    int next(DeviceQueryTask *task) {
-        int ret = common::E_OK;
-        std::pair<IDeviceID, MetaIndexNode *> ret_pair;
-        if (RET_FAIL(device_meta_iterator_->next(ret_pair))) {
-        } else {
-            task = DeviceQueryTask::create_device_query_task(
-                ret_pair.first, column_names_, column_mapping_,
-                *ret_pair.second, table_schema_, pa_);
-        }
-        return ret;
-    }
+    int next(DeviceQueryTask *task);
 
    private:
     std::vector<std::string> column_names_;

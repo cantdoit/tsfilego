@@ -17,17 +17,16 @@
  * under the License.
  */
 
-#include "reader/meta_data_querier.h"
-
-#include "common/tsfile_common.h"
-#include "device_meta_iterator.h"
+#include "reader/task/device_query_task.h"
 
 namespace storage {
-
-std::unique_ptr<DeviceMetaIterator> MetadataQuerier::device_iterator(
-    MetaIndexNode* root, const Filter* id_filter) {
-    return std::unique_ptr<DeviceMetaIterator>(
-        new DeviceMetaIterator(io_reader_, root, id_filter));
+DeviceQueryTask *DeviceQueryTask::create_device_query_task(
+    IDeviceID device_id, std::vector<std::string> column_names,
+    ColumnMapping column_mapping, MetaIndexNode index_root,
+    TableSchema table_schema, common::PageArena &pa) {
+    void *buf = pa.alloc(sizeof(DeviceQueryTask));
+    DeviceQueryTask *task = new (buf) DeviceQueryTask(
+        device_id, column_names, column_mapping, index_root, table_schema);
+    return task;
 }
-
-}  // end namespace storage
+}  // namespace storage

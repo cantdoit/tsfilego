@@ -30,9 +30,9 @@ namespace storage {
 
 class DeviceMetaIterator {
    public:
-    explicit DeviceMetaIterator(TsFileIOReader *&io_reader,
+    explicit DeviceMetaIterator(TsFileIOReader *io_reader,
                                 MetaIndexNode *meat_index_node,
-                                Filter *id_filter)
+                                const Filter *id_filter)
         : io_reader_(io_reader), id_filter_(id_filter) {
         meta_index_nodes_.push(meat_index_node);
         pa.init(512, common::MOD_DEVICE_META_ITER);
@@ -49,7 +49,7 @@ class DeviceMetaIterator {
     TsFileIOReader* io_reader_;
     std::queue<MetaIndexNode *> meta_index_nodes_;
     std::queue<std::pair<IDeviceID, MetaIndexNode *>> result_cache_;
-    Filter *id_filter_;
+    const Filter *id_filter_;
     common::PageArena pa;
 };
 
