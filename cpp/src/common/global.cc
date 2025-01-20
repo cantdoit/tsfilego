@@ -24,6 +24,7 @@
 #endif
 #include <stdlib.h>
 
+#include "mutex/mutex.h"
 #include "utils/injection.h"
 
 namespace common {
@@ -46,8 +47,8 @@ void init_config_value() {
     g_config_value_.time_compress_type_ = LZ4;
 }
 
-void config_set_page_max_point_count(uint32_t page_max_ponint_count) {
-    g_config_value_.page_writer_max_point_num_ = page_max_ponint_count;
+void config_set_page_max_point_count(uint32_t page_max_point_count) {
+    g_config_value_.page_writer_max_point_num_ = page_max_point_count;
 }
 
 void config_set_max_degree_of_index_node(uint32_t max_degree_of_index_node) {
@@ -174,7 +175,6 @@ void print_backtrace() {
 }
 #endif
 
-Mutex g_all_inject_points_mutex;
 std::map<std::string, InjectPoint> g_all_inject_points;
 
 }  // namespace common

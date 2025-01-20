@@ -23,7 +23,6 @@
 #include <random>
 #include <vector>
 
-#include "common/path.h"
 #include "common/record.h"
 #include "common/schema.h"
 #include "common/tablet.h"
@@ -60,8 +59,8 @@ class TsFileReaderTest : public ::testing::Test {
 
    public:
     static std::string generate_random_string(int length) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        std::mt19937 gen(static_cast<unsigned int>(
+            std::chrono::system_clock::now().time_since_epoch().count()));
         std::uniform_int_distribution<> dis(0, 61);
 
         const std::string chars =
@@ -160,7 +159,7 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
         tsfile_writer_->register_timeseries(
             "device.ln" + to_string(i),
             storage::MeasurementSchema(measurement_name, data_type, encoding,
-                                    compression_type));
+                                       compression_type));
     }
 
     for (size_t i = 0; i < 1024; i++) {
@@ -180,9 +179,10 @@ TEST_F(TsFileReaderTest, GetAllDevice) {
     for (size_t i = 0; i < 1024; i++) {
         devices_name_expected.push_back("device.ln" + std::to_string(i));
     }
-    std::sort(devices_name_expected.begin(), devices_name_expected.end(), [](const std::string& left_str, const std::string& right_str) {
-        return left_str < right_str;
-    });
+    std::sort(devices_name_expected.begin(), devices_name_expected.end(),
+              [](const std::string &left_str, const std::string &right_str) {
+                  return left_str < right_str;
+              });
 
     for (size_t i = 0; i < devices.size(); i++) {
         ASSERT_EQ(devices[i], devices_name_expected[i]);

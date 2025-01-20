@@ -47,11 +47,13 @@ class TsFileWriterTest : public ::testing::Test {
         flags |= O_BINARY;
 #endif
         mode_t mode = 0666;
-        EXPECT_EQ(tsfile_writer_->open(file_name_, flags, mode), common::E_OK);
+        ASSERT_EQ(tsfile_writer_->open(file_name_, flags, mode), common::E_OK);
     }
     void TearDown() override {
+        tsfile_writer_->close();
         delete tsfile_writer_;
-        remove(file_name_.c_str());
+        int ret = remove(file_name_.c_str());
+        ASSERT_EQ(0, ret);
     }
 
     std::string file_name_;
@@ -59,8 +61,8 @@ class TsFileWriterTest : public ::testing::Test {
 
    public:
     static std::string generate_random_string(int length) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
+        std::mt19937 gen(static_cast<unsigned int>(
+            std::chrono::system_clock::now().time_since_epoch().count()));
         std::uniform_int_distribution<> dis(0, 61);
 
         const std::string chars =
@@ -73,7 +75,6 @@ class TsFileWriterTest : public ::testing::Test {
         for (int i = 0; i < length; ++i) {
             random_string += chars[dis(gen)];
         }
-
         return random_string;
     }
 
@@ -399,7 +400,6 @@ TEST_F(TsFileWriterTest, WriteMultipleTabletsDouble) {
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
 }
 
-
 TEST_F(TsFileWriterTest, FlushMultipleDevice) {
     const int device_num = 50;
     const int measurement_num = 50;
@@ -415,15 +415,19 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
                                   common::TSEncoding::PLAIN,
                                   common::CompressionType::UNCOMPRESSED));
             tsfile_writer_->register_timeseries(
-                device_name, MeasurementSchema(measure_name, common::TSDataType::INT64,
-                common::TSEncoding::PLAIN,
-                common::CompressionType::UNCOMPRESSED));
+                device_name,
+                MeasurementSchema(measure_name, common::TSDataType::INT64,
+                                  common::TSEncoding::PLAIN,
+                                  common::CompressionType::UNCOMPRESSED));
         }
     }
 
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
-        Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
+        Tablet tablet(
+            device_name,
+            std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]),
+            max_rows);
         tablet.init();
         for (int j = 0; j < measurement_num; j++) {
             for (int row = 0; row < max_rows; row++) {
@@ -438,9 +442,9 @@ TEST_F(TsFileWriterTest, FlushMultipleDevice) {
         ASSERT_EQ(tsfile_writer_->flush(), E_OK);
     }
     ASSERT_EQ(tsfile_writer_->close(), E_OK);
-    
+
     std::vector<storage::Path> select_list;
-        for (int i = 0; i < device_num; i++) {
+    for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
         for (int j = 0; j < measurement_num; j++) {
             std::string measurement_name = "measurement" + std::to_string(j);
@@ -492,15 +496,19 @@ TEST_F(TsFileWriterTest, AnalyzeTsfileForload) {
                                   common::TSEncoding::PLAIN,
                                   common::CompressionType::UNCOMPRESSED));
             tsfile_writer_->register_timeseries(
-                device_name, MeasurementSchema(measure_name, common::TSDataType::INT64,
-                common::TSEncoding::PLAIN,
-                common::CompressionType::UNCOMPRESSED));
+                device_name,
+                MeasurementSchema(measure_name, common::TSDataType::INT64,
+                                  common::TSEncoding::PLAIN,
+                                  common::CompressionType::UNCOMPRESSED));
         }
     }
 
     for (int i = 0; i < device_num; i++) {
         std::string device_name = "test_device" + std::to_string(i);
-        Tablet tablet(device_name, std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]), max_rows);
+        Tablet tablet(
+            device_name,
+            std::make_shared<std::vector<MeasurementSchema>>(schema_vec[i]),
+            max_rows);
         tablet.init();
         for (int j = 0; j < measurement_num; j++) {
             for (int row = 0; row < max_rows; row++) {
@@ -514,14 +522,15 @@ TEST_F(TsFileWriterTest, AnalyzeTsfileForload) {
     }
     auto schemas = tsfile_writer_->get_schema_group_map();
     ASSERT_EQ(schemas->size(), 50);
-    for (const auto& device_iter : *schemas) {
-        for (const auto& chunk_iter : device_iter.second->measurement_schema_map_) {
+    for (const auto &device_iter : *schemas) {
+        for (const auto &chunk_iter :
+             device_iter.second->measurement_schema_map_) {
             ASSERT_NE(chunk_iter.second->chunk_writer_, nullptr);
             ASSERT_TRUE(chunk_iter.second->chunk_writer_->hasData());
         }
     }
     ASSERT_EQ(tsfile_writer_->flush(), E_OK);
-    ASSERT_EQ(tsfile_writer_->close(), E_OK);    
+    ASSERT_EQ(tsfile_writer_->close(), E_OK);
 }
 TEST_F(TsFileWriterTest, FlushWithoutWriteAfterRegisterTS) {
     std::string device_path = "device1";
