@@ -44,6 +44,10 @@ uint32_t TupleDesc::get_single_row_len(int *erro_code) {
                 totol_len += sizeof(double);
                 break;
             }
+            case common::STRING: {
+                totol_len += DEFAULT_RESERVED_SIZE_OF_STRING + STRING_LEN;
+                break;
+            }
             case common::TEXT: {
                 totol_len += DEFAULT_RESERVED_SIZE_OF_TEXT + TEXT_LEN;
                 break;

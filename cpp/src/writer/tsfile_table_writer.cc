@@ -18,10 +18,9 @@
  */
 
 #include "tsfile_table_writer.h"
-namespace storage{
 
-TsFileTableWriter::TsFileTableWriter(
-    WriteFile *writer_file,
+storage::TsFileTableWriter::TsFileTableWriter(
+    storage::WriteFile *writer_file,
     const std::shared_ptr<TableSchema> &table_schema,
     uint64_t memory_threshold) {
     tsfile_writer_ = std::make_shared<TsFileWriter>();
@@ -30,14 +29,12 @@ TsFileTableWriter::TsFileTableWriter(
     tsfile_writer_->register_table(table_schema);
 }
 
-TsFileTableWriter::~TsFileTableWriter() = default;
+storage::TsFileTableWriter::~TsFileTableWriter() = default;
 
-int TsFileTableWriter::write_table(const Tablet &tablet) {
+int storage::TsFileTableWriter::write_table(const storage::Tablet &tablet) {
     return tsfile_writer_->write_table(tablet);
 }
 
-int TsFileTableWriter::flush() { return tsfile_writer_->flush(); }
+int storage::TsFileTableWriter::flush() { return tsfile_writer_->flush(); }
 
-int TsFileTableWriter::close() { return tsfile_writer_->close(); }
-
-}
+int storage::TsFileTableWriter::close() { return tsfile_writer_->close(); }

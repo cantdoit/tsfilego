@@ -72,16 +72,15 @@ class TsFileWriterTableTest : public ::testing::Test {
         return random_string;
     }
 
-    static std::shared_ptr<TableSchema> gen_table_schema(int table_num) {
+    static std::shared_ptr<storage::TableSchema> gen_table_schema(int table_num) {
         std::vector<std::shared_ptr<MeasurementSchema>> measurement_schemas;
         std::vector<ColumnCategory> column_categories;
         int id_schema_num = 5;
         int measurement_schema_num = 5;
         for (int i = 0; i < id_schema_num; i++) {
-            // TODO: support TEXT
             measurement_schemas.emplace_back(
                 std::make_shared<MeasurementSchema>(
-                    "id" + to_string(i), TSDataType::INT64, TSEncoding::PLAIN,
+                    "id" + to_string(i), TSDataType::STRING, TSEncoding::PLAIN,
                     CompressionType::UNCOMPRESSED));
             column_categories.emplace_back(ColumnCategory::TAG);
         }
@@ -92,20 +91,23 @@ class TsFileWriterTableTest : public ::testing::Test {
                     CompressionType::UNCOMPRESSED));
             column_categories.emplace_back(ColumnCategory::FIELD);
         }
-        return std::make_shared<TableSchema>("testTable" + to_string(table_num),
+        return std::make_shared<storage::TableSchema>("testTable" + to_string(table_num),
                                              measurement_schemas,
                                              column_categories);
     }
 
-    static Tablet gen_tablet(const std::shared_ptr<TableSchema>& table_schema,
+    static storage::Tablet gen_tablet(const std::shared_ptr<storage::TableSchema>& table_schema,
                              int offset, int device_num) {
-        Tablet tablet(table_schema->get_table_name(),
+        storage::Tablet tablet(table_schema->get_table_name(),
                       table_schema->get_measurement_names(),
                       table_schema->get_data_types(),
                       table_schema->get_column_categories());
         tablet.init();
 
         int num_timestamp_per_device = 10;
+        char* literal = new char[std::strlen("device_id") + 1];
+        std::strcpy(literal, "device_id");
+        String literal_str(literal, std::strlen("device_id"));
         for (int i = 0; i < device_num; i++) {
             for (int l = 0; l < num_timestamp_per_device; l++) {
                 int row_index = i * num_timestamp_per_device + l;
@@ -118,11 +120,10 @@ class TsFileWriterTableTest : public ::testing::Test {
                                              column_schema->measurement_name_,
                                              static_cast<int64_t>(i));
                             break;
-                        case TSDataType::TEXT:
-                            // TODO: support TEXT
+                        case TSDataType::STRING:
                             tablet.add_value(row_index,
                                              column_schema->measurement_name_,
-                                             static_cast<int64_t>(i));
+                                             literal_str);
                             break;
                         default:
                             break;
@@ -130,6 +131,7 @@ class TsFileWriterTableTest : public ::testing::Test {
                 }
             }
         }
+        delete[] literal;
         return tablet;
     }
 };

@@ -38,6 +38,17 @@ class TabletRowIterator;
 class TabletColIterator;
 
 class Tablet {
+    struct ValueMatrixEntry {
+        union {
+            int32_t *int32_data;
+            int64_t *int64_data;
+            float *float_data;
+            double *double_data;
+            bool *bool_data;
+            common::String *string_data;
+        };
+    };
+
    public:
     static const uint32_t DEFAULT_MAX_ROWS = 1024;
 
@@ -99,13 +110,12 @@ class Tablet {
           insert_target_name_(insert_target_name),
           timestamps_(nullptr),
           value_matrix_(nullptr),
-          bitmaps_(nullptr),
-          owned_schemas_(false) {
+          bitmaps_(nullptr) {
         schema_vec_ = std::make_shared<std::vector<MeasurementSchema>>();
         for (size_t i = 0; i < column_names.size(); i++) {
             schema_vec_->emplace_back(
-                MeasurementSchema(column_names[i], data_types[i], common::PLAIN,
-                                  common::UNCOMPRESSED));
+                MeasurementSchema(column_names[i], data_types[i], common::get_value_encoder(data_types[i]),
+                                  common::get_default_compressor()));
         }
         set_column_categories(column_categories);
     }
@@ -139,17 +149,19 @@ class Tablet {
     typedef std::map<std::string, int>::iterator SchemaMapIterator;
 
    private:
+    template <typename T>
+    void process_val(uint32_t row_index, uint32_t schema_index, T val);
+    common::PageArena page_arena_;
     int max_row_num_;
     uint32_t cur_row_size_;
     std::string insert_target_name_;
     std::shared_ptr<std::vector<MeasurementSchema>> schema_vec_;
     std::map<std::string, int> schema_map_;
     int64_t *timestamps_;
-    void **value_matrix_;
+    ValueMatrixEntry *value_matrix_;
     common::BitMap *bitmaps_;
     std::vector<ColumnCategory> column_categories_;
     std::vector<int> id_column_indexes_;
-    bool owned_schemas_;
 };
 
 }  // end namespace storage

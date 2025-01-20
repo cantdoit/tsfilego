@@ -51,7 +51,7 @@ typedef struct ConfigValue {
 
 extern void init_config_value();
 extern TSEncoding get_value_encoder(TSDataType data_type);
-
+extern CompressionType get_default_compressor();
 // In the future, configuration items need to be dynamically adjusted according
 // to the level
 extern void set_config_value();

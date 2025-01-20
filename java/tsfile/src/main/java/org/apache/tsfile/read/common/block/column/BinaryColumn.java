@@ -29,9 +29,11 @@ import org.apache.tsfile.utils.TsPrimitiveType;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkArrayRange;
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkReadablePosition;
 import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkValidRegion;
+import static org.apache.tsfile.utils.RamUsageEstimator.sizeOf;
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfBooleanArray;
-import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfObjectArray;
 
 public class BinaryColumn implements Column {
 
@@ -73,9 +75,7 @@ public class BinaryColumn implements Column {
     }
     this.valueIsNull = valueIsNull;
 
-    // TODO we need to sum up all the Binary's retainedSize here
-    retainedSizeInBytes =
-        INSTANCE_SIZE + sizeOfBooleanArray(positionCount) + sizeOfObjectArray(positionCount);
+    retainedSizeInBytes = INSTANCE_SIZE + sizeOfBooleanArray(positionCount) + sizeOf(values);
   }
 
   @Override
@@ -195,6 +195,34 @@ public class BinaryColumn implements Column {
         valueIsNull[j] = isNullTmp;
       }
     }
+  }
+
+  @Override
+  public Column getPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    return DictionaryColumn.createInternal(
+        offset, length, this, positions, DictionaryId.randomDictionaryId());
+  }
+
+  @Override
+  public Column copyPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    boolean[] newValueIsNull = null;
+    if (valueIsNull != null) {
+      newValueIsNull = new boolean[length];
+    }
+    Binary[] newValues = new Binary[length];
+    for (int i = 0; i < length; i++) {
+      int position = positions[offset + i];
+      checkReadablePosition(this, position);
+      if (newValueIsNull != null) {
+        newValueIsNull[i] = valueIsNull[position + arrayOffset];
+      }
+      newValues[i] = values[position + arrayOffset];
+    }
+    return new BinaryColumn(0, length, newValueIsNull, newValues);
   }
 
   @Override
