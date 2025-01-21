@@ -633,7 +633,7 @@ TsFileWriter::split_tablet_by_device(const Tablet &tablet) {
 }
 
 int TsFileWriter::write_column(ChunkWriter *chunk_writer, const Tablet &tablet,
-                               int col_idx, int start_idx, int end_idx) {
+                               int col_idx, uint32_t start_idx, uint32_t end_idx) {
     int ret = E_OK;
 
     TSDataType data_type = tablet.schema_vec_->at(col_idx).data_type_;
@@ -676,7 +676,7 @@ int TsFileWriter::value_write_column(ValueChunkWriter *value_chunk_writer,
     int64_t *timestamps = tablet.timestamps_;
     Tablet::ValueMatrixEntry col_values = tablet.value_matrix_[col_idx];
     BitMap &col_notnull_bitmap = tablet.bitmaps_[col_idx];
-    int32_t row_count = tablet.max_row_num_;
+    uint32_t row_count = tablet.max_row_num_;
 
     if (data_type == common::BOOLEAN) {
         ret = write_typed_column(value_chunk_writer, timestamps,

@@ -43,14 +43,6 @@ int Tablet::init() {
         }
     }
     ASSERT(schema_map_.size() == schema_count);
-
-    // value_matrix_ = (void **)malloc(sizeof(void *) * schema_count);
-    // for (size_t c = 0; c < schema_count; c++) {
-    //     const MeasurementSchema &schema = schema_vec_->at(c);
-    //     value_matrix_[c] =
-    //         malloc(get_data_type_size(schema.data_type_) * max_row_num_);
-    // }
-
     value_matrix_ = (ValueMatrixEntry *)malloc(sizeof(ValueMatrixEntry) * schema_count);
     for (size_t c = 0; c < schema_count; ++c) {
         const MeasurementSchema &schema = schema_vec_->at(c);

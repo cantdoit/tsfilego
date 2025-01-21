@@ -142,7 +142,7 @@ class TsFileWriter {
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
     // std::vector<storage::ChunkWriter*> &chunk_writers);
     int write_column(storage::ChunkWriter *chunk_writer, const Tablet &,
-                     int col_idx, int start_idx = 0, int end_idx = INT_MAX);
+                     int col_idx, uint32_t start_idx = 0, uint32_t end_idx = UINT32_MAX);
     int register_timeseries(const std::string &device_path,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);

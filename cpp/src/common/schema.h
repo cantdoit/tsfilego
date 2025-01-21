@@ -93,7 +93,7 @@ namespace storage {
                         } else if (RET_FAIL(common::SerializationUtil::write_str(
                             prop.second, out))) {
                         }
-                        if (ret != common::E_OK) break;
+                        if (IS_FAIL(ret)) break;
                     }
                 }
             }
@@ -129,7 +129,7 @@ namespace storage {
                             value, in))) {
                         }
                         props_.insert(std::make_pair(key, value));
-                        if (ret != common::E_OK) break;
+                        if (IS_FAIL(ret)) break;
                     }
                 }
             }
@@ -232,7 +232,7 @@ namespace storage {
         const std::string &get_table_name() { return table_name_; }
 
         std::vector<std::string> get_measurement_names() const {
-            std::vector<std::string> ret;
+            std::vector<std::string> ret(column_schemas_.size());
             for (const auto &measurement_schema: column_schemas_) {
                 ret.emplace_back(measurement_schema->measurement_name_);
             }

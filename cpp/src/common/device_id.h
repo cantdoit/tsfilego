@@ -33,11 +33,13 @@
 #include <vector>
 
 #include "common/allocator/byte_stream.h"
+#include "constant/tsfile_constant.h"
 #include "parser/path_nodes_generator.h"
 #include "utils/errno_define.h"
 
+namespace storage {
 class IDeviceID {
-   public:
+public:
     virtual ~IDeviceID() = default;
     virtual int serialize(common::ByteStream& write_stream) { return 0; }
     virtual int deserialize(common::ByteStream& read_stream) { return 0; }
@@ -51,10 +53,10 @@ class IDeviceID {
     virtual bool operator==(const IDeviceID& other) { return false; }
     virtual bool operator!=(const IDeviceID& other) { return false; }
 
-   protected:
+protected:
     IDeviceID() : empty_segments_() {}
 
-   private:
+private:
     const std::vector<std::string> empty_segments_;
 };
 
@@ -66,7 +68,7 @@ struct IDeviceIDComparator {
 };
 
 class StringArrayDeviceID : public IDeviceID {
-   public:
+public:
     explicit StringArrayDeviceID(const std::vector<std::string>& segments)
         : segments_(formalize(segments)) {}
 
@@ -88,12 +90,12 @@ class StringArrayDeviceID : public IDeviceID {
         if (RET_FAIL(common::SerializationUtil::write_var_uint(segment_num(),
                                                                write_stream))) {
             return ret;
-        }
+                                                               }
         for (const auto& segment : segments_) {
             if (RET_FAIL(common::SerializationUtil::write_str(segment,
                                                               write_stream))) {
                 return ret;
-            }
+                                                              }
         }
         return ret;
     }
@@ -143,7 +145,7 @@ class StringArrayDeviceID : public IDeviceID {
         return !(*this == other);
     }
 
-   private:
+private:
     std::vector<std::string> segments_;
 
     std::vector<std::string> formalize(
@@ -161,9 +163,6 @@ class StringArrayDeviceID : public IDeviceID {
         return split_device_id_string(splits);
     }
 
-    static const char PATH_SEPARATOR = '.';
-    static const int DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME = 3;
-
     std::vector<std::string> split_device_id_string(
         const std::vector<std::string>& splits) {
         size_t segment_cnt = splits.size();
@@ -177,35 +176,36 @@ class StringArrayDeviceID : public IDeviceID {
             // "root" -> {"root"}
             final_segments.push_back(splits[0]);
         } else if (segment_cnt < static_cast<size_t>(
-                                     DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME + 1)) {
+            storage::DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME + 1)) {
             // "root.a" -> {"root", "a"}
             // "root.a.b" -> {"root.a", "b"}
             std::string table_name = std::accumulate(
                 splits.begin(), splits.end() - 1, std::string(),
                 [](const std::string& a, const std::string& b) {
-                    return a.empty() ? b : a + PATH_SEPARATOR + b;
+                    return a.empty() ? b : a + storage::PATH_SEPARATOR + b;
                 });
             final_segments.push_back(table_name);
             final_segments.push_back(splits.back());
-        } else {
-            // "root.a.b.c" -> {"root.a.b", "c"}
-            // "root.a.b.c.d" -> {"root.a.b", "c", "d"}
-            std::string table_name = std::accumulate(
-                splits.begin(),
-                splits.begin() + DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
-                std::string(), [](const std::string& a, const std::string& b) {
-                    return a.empty() ? b : a + PATH_SEPARATOR + b;
-                });
+            } else {
+                // "root.a.b.c" -> {"root.a.b", "c"}
+                // "root.a.b.c.d" -> {"root.a.b", "c", "d"}
+                std::string table_name = std::accumulate(
+                    splits.begin(),
+                    splits.begin() + storage::DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
+                    std::string(), [](const std::string& a, const std::string& b) {
+                        return a.empty() ? b : a + storage::PATH_SEPARATOR + b;
+                    });
 
-            final_segments.push_back(table_name);
-            final_segments.insert(
-                final_segments.end(),
-                splits.begin() + DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
-                splits.end());
-        }
+                final_segments.emplace_back(std::move(table_name));
+                final_segments.insert(
+                    final_segments.end(),
+                    splits.begin() + storage::DEFAULT_SEGMENT_NUM_FOR_TABLE_NAME,
+                    splits.end());
+            }
 
         return final_segments;
     }
 };
+}
 
 #endif

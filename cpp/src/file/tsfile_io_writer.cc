@@ -282,7 +282,7 @@ int TsFileIOWriter::write_log_index_range() {
 
 #if DEBUG_SE
 void debug_print_chunk_group_meta(ChunkGroupMeta *cgm) {
-    std::cout << "ChunkGroupMeta = {insert_target_name_="
+    std::cout << "ChunkGroupMeta = {device_id_="
               << cgm->device_id_ << ", chunk_meta_list_={";
     SimpleList<ChunkMeta *>::Iterator cm_it = cgm->chunk_meta_list_.begin();
     for (; cm_it != cgm->chunk_meta_list_.end(); cm_it++) {

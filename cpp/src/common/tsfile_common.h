@@ -642,14 +642,6 @@ public:
                TimeseriesIndex &ret_ts_index);
 
 private:
-  /*
-  FORCE_INLINE bool is_same_measurement_name(const common::String &s1, const
-  common::String &s2)
-  {
-    return s1.equal_to(s2);
-  }
-  */
-private:
   common::SimpleList<ChunkGroupMeta *> &chunk_group_meta_list_;
   common::SimpleList<ChunkGroupMeta *>::Iterator chunk_group_meta_iter_;
   common::SimpleList<ChunkMeta *>::Iterator chunk_meta_iter_;
