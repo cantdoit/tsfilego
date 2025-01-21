@@ -233,8 +233,8 @@ namespace storage {
 
         std::vector<std::string> get_measurement_names() const {
             std::vector<std::string> ret(column_schemas_.size());
-            for (const auto &measurement_schema: column_schemas_) {
-                ret.emplace_back(measurement_schema->measurement_name_);
+            for (size_t i = 0; i < column_schemas_.size(); i++) {
+                ret[i] = column_schemas_[i]->measurement_name_;
             }
             return ret;
         }

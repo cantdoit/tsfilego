@@ -28,7 +28,7 @@ using namespace common;
 namespace storage {
 
 int Tablet::init() {
-    ASSERT(timestamps_ == NULL);
+    ASSERT(timestamps_ == nullptr);
     timestamps_ = (int64_t *)malloc(sizeof(int64_t) * max_row_num_);
 
     size_t schema_count = schema_vec_->size();
@@ -68,14 +68,14 @@ int Tablet::init() {
                 break;
             }
             default:
-                    ASSERT(false);
+                ASSERT(false);
             return E_INVALID_ARG;
         }
     }
 
     bitmaps_ = new BitMap[schema_count];
     for (size_t c = 0; c < schema_count; c++) {
-        bitmaps_[c].init(max_row_num_, /*init_as_zero=*/true);
+        bitmaps_[c].init(max_row_num_, false);
     }
     return E_OK;
 }
@@ -141,7 +141,7 @@ void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType
 
     ValueMatrixEntry column_values = value_matrix_[schema_index];
     data_type = schema.data_type_;
-    if (!bitmaps_[schema_index].test(row_index)) {
+    if (bitmaps_[schema_index].test(row_index)) {
         return nullptr;
     }
     switch (schema.data_type_) {
@@ -177,7 +177,7 @@ void* Tablet::get_value(int row_index, uint32_t schema_index, common::TSDataType
 template <>
 void Tablet::process_val(uint32_t row_index, uint32_t schema_index, common::String val) {
     value_matrix_[schema_index].string_data[row_index].dup_from(val, page_arena_);
-    bitmaps_[schema_index].set(row_index); /* mark as non-null */
+    bitmaps_[schema_index].clear(row_index); /* mark as non-null */
 }
 
 template <typename T>
@@ -201,7 +201,7 @@ void Tablet::process_val(uint32_t row_index, uint32_t schema_index, T val) {
         default:
             ASSERT(false);
     }
-    bitmaps_[schema_index].set(row_index); /* mark as non-null */
+    bitmaps_[schema_index].clear(row_index); /* mark as non-null */
 }
 
 template <typename T>
