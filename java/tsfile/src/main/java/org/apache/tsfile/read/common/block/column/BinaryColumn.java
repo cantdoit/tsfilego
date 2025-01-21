@@ -78,6 +78,34 @@ public class BinaryColumn implements Column {
     retainedSizeInBytes = INSTANCE_SIZE + sizeOfBooleanArray(positionCount) + sizeOf(values);
   }
 
+  // called by getRegion which already knows the underlying retainedSizeInBytes
+  private BinaryColumn(
+      int arrayOffset,
+      int positionCount,
+      boolean[] valueIsNull,
+      Binary[] values,
+      long retainedSizeInBytes) {
+    if (arrayOffset < 0) {
+      throw new IllegalArgumentException("arrayOffset is negative");
+    }
+    this.arrayOffset = arrayOffset;
+    if (positionCount < 0) {
+      throw new IllegalArgumentException("positionCount is negative");
+    }
+    this.positionCount = positionCount;
+
+    if (values.length - arrayOffset < positionCount) {
+      throw new IllegalArgumentException("values length is less than positionCount");
+    }
+    this.values = values;
+
+    if (valueIsNull != null && valueIsNull.length - arrayOffset < positionCount) {
+      throw new IllegalArgumentException("isNull length is less than positionCount");
+    }
+    this.valueIsNull = valueIsNull;
+    this.retainedSizeInBytes = retainedSizeInBytes;
+  }
+
   @Override
   public TSDataType getDataType() {
     return TSDataType.TEXT;
@@ -141,7 +169,8 @@ public class BinaryColumn implements Column {
   @Override
   public Column getRegion(int positionOffset, int length) {
     checkValidRegion(getPositionCount(), positionOffset, length);
-    return new BinaryColumn(positionOffset + arrayOffset, length, valueIsNull, values);
+    return new BinaryColumn(
+        positionOffset + arrayOffset, length, valueIsNull, values, getRetainedSizeInBytes());
   }
 
   @Override
