@@ -22,7 +22,6 @@
 
 #include "common/row_record.h"
 #include "common/tsfile_common.h"
-#include "common/tsfile_common.h"
 #include "expression.h"
 #include "file/read_file.h"
 namespace storage {

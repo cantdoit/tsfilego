@@ -192,8 +192,7 @@ int TsFileWriter::register_timeseries(const std::string &device_path,
         ms_group->is_aligned_ = is_aligned;
         ms_group->measurement_schema_map_.insert(std::make_pair(
             measurement_schema->measurement_name_, measurement_schema));
-        schemas_.insert(std::make_pair(plain_device_id, ms_group));
-        schemas_.insert(std::make_pair(plain_device_id, ms_group));
+        schemas_.insert(std::make_pair(device_id, ms_group));
     }
     return E_OK;
 }

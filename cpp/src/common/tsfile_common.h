@@ -1109,13 +1109,13 @@ struct TsFileMeta {
   common::PageArena *page_arena_;
 
     int get_table_metaindex_node(common::String &table_name,
-                                 MetaIndexNode *&ret_node) {
-        DeviceNodeMap::iterator it =
-            table_metadata_index_node_map_.find(table_name);
-        if (it == table_metadata_index_node_map_.end()) {
-            return common::E_TABLE_NOT_EXIST;
-        }
-        ret_node = it->second;
+                                 MetaIndexNode *&ret_node) { // TODO
+        // DeviceNodeMap::iterator it =
+        //     table_metadata_index_node_map_.find(table_name);
+        // if (it == table_metadata_index_node_map_.end()) {
+        //     return common::E_TABLE_NOT_EXIST;
+        // }
+        // ret_node = it->second;
         return common::E_OK;
     }
 
