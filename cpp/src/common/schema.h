@@ -170,7 +170,7 @@ namespace storage {
               column_categories_(column_categories) {
             to_lowercase_inplace(table_name_);
             for (const auto column_schema : column_schemas) {
-                column_schemas_.emplace_back(std::move(std::shared_ptr<MeasurementSchema>(column_schema)));
+                column_schemas_.emplace_back(std::shared_ptr<MeasurementSchema>(column_schema));
             }
             int idx = 0;
             for (const auto &measurement_schema: column_schemas_) {
