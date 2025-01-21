@@ -450,10 +450,10 @@ TEST_F(TsFileMetaTest, SerializeDeserialize) {
   std::string table_name = "table_name";
   meta_.table_metadata_index_node_map_.insert(std::make_pair(table_name, index_node));
 
-  std::vector<std::shared_ptr<MeasurementSchema> > column_schemas;
+  std::vector<MeasurementSchema* > column_schemas;
   std::vector<ColumnCategory> column_categories;
   column_categories.emplace_back(ColumnCategory::FIELD);
-  column_schemas.emplace_back(std::make_shared<MeasurementSchema>());
+  column_schemas.emplace_back(new MeasurementSchema());
 
   auto table_schema = std::make_shared<TableSchema>(table_name, column_schemas, column_categories);
 

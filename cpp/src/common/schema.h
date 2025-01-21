@@ -163,13 +163,15 @@ namespace storage {
         TableSchema() = default;
 
         TableSchema(const std::string &table_name,
-                    const std::vector<std::shared_ptr<MeasurementSchema> >
+                    const std::vector<MeasurementSchema*>
                     &column_schemas,
                     const std::vector<ColumnCategory> &column_categories)
             : table_name_(table_name),
-              column_schemas_(column_schemas),
               column_categories_(column_categories) {
             to_lowercase_inplace(table_name_);
+            for (const auto column_schema : column_schemas) {
+                column_schemas_.emplace_back(std::move(std::shared_ptr<MeasurementSchema>(column_schema)));
+            }
             int idx = 0;
             for (const auto &measurement_schema: column_schemas_) {
                 to_lowercase_inplace(measurement_schema->measurement_name_);
