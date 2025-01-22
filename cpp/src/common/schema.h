@@ -93,7 +93,7 @@ namespace storage {
                         } else if (RET_FAIL(common::SerializationUtil::write_str(
                             prop.second, out))) {
                         }
-                        if (ret != common::E_OK) break;
+                        if (IS_FAIL(ret)) break;
                     }
                 }
             }
@@ -129,7 +129,7 @@ namespace storage {
                             value, in))) {
                         }
                         props_.insert(std::make_pair(key, value));
-                        if (ret != common::E_OK) break;
+                        if (IS_FAIL(ret)) break;
                     }
                 }
             }
@@ -157,19 +157,23 @@ namespace storage {
     public:
         static void to_lowercase_inplace(std::string &str) {
             std::transform(str.begin(), str.end(), str.begin(),
-                           [](unsigned char c) { return std::tolower(c); });
+                           [](unsigned char c) -> unsigned char { return std::tolower(c); });
         }
 
         TableSchema() = default;
 
         TableSchema(const std::string &table_name,
-                    const std::vector<std::shared_ptr<MeasurementSchema> >
+                    const std::vector<MeasurementSchema*>
                     &column_schemas,
                     const std::vector<ColumnCategory> &column_categories)
             : table_name_(table_name),
-              column_schemas_(column_schemas),
               column_categories_(column_categories) {
             to_lowercase_inplace(table_name_);
+            for (const auto column_schema : column_schemas) {
+                if (column_schema != nullptr) {
+                    column_schemas_.emplace_back(std::shared_ptr<MeasurementSchema>(column_schema));
+                }
+            }
             int idx = 0;
             for (const auto &measurement_schema: column_schemas_) {
                 to_lowercase_inplace(measurement_schema->measurement_name_);
@@ -232,9 +236,9 @@ namespace storage {
         const std::string &get_table_name() { return table_name_; }
 
         std::vector<std::string> get_measurement_names() const {
-            std::vector<std::string> ret;
-            for (const auto &measurement_schema: column_schemas_) {
-                ret.emplace_back(measurement_schema->measurement_name_);
+            std::vector<std::string> ret(column_schemas_.size());
+            for (size_t i = 0; i < column_schemas_.size(); i++) {
+                ret[i] = column_schemas_[i]->measurement_name_;
             }
             return ret;
         }
@@ -303,10 +307,10 @@ namespace storage {
         }
 
     private:
-        std::string to_lower(const std::string &str) {
+        static std::string to_lower(const std::string &str) {
             std::string result;
             std::transform(str.begin(), str.end(), std::back_inserter(result),
-                           [](unsigned char c) { return std::tolower(c); });
+                           [](unsigned char c) -> unsigned char { return std::tolower(c); });
             return result;
         }
 

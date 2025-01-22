@@ -26,7 +26,7 @@ namespace storage {
 class TsFileTableWriter {
    public:
     TsFileTableWriter(WriteFile* writer_file,
-                      const std::shared_ptr<TableSchema>& table_schema,
+                      TableSchema* table_schema,
                       uint64_t memory_threshold = 0);
     ~TsFileTableWriter();
     int write_table(const Tablet& tablet);

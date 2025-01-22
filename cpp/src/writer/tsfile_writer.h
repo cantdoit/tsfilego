@@ -110,24 +110,28 @@ class TsFileWriter {
 
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, bool *col_values,
-                           common::BitMap &col_notnull_bitmap, int start_idx,
-                           int end_idx);
+                           common::BitMap &col_notnull_bitmap, uint32_t start_idx,
+                           uint32_t end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, int32_t *col_values,
-                           common::BitMap &col_notnull_bitmap, int start_idx,
-                           int end_idx);
+                           common::BitMap &col_notnull_bitmap, uint32_t start_idx,
+                           uint32_t end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, int64_t *col_values,
-                           common::BitMap &col_notnull_bitmap, int start_idx,
-                           int end_idx);
+                           common::BitMap &col_notnull_bitmap, uint32_t start_idx,
+                           uint32_t end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, float *col_values,
-                           common::BitMap &col_notnull_bitmap, int start_idx,
-                           int end_idx);
+                           common::BitMap &col_notnull_bitmap, uint32_t start_idx,
+                           uint32_t end_idx);
     int write_typed_column(storage::ChunkWriter *chunk_writer,
                            int64_t *timestamps, double *col_values,
-                           common::BitMap &col_notnull_bitmap, int start_idx,
-                           int end_idx);int write_typed_column(ChunkWriter*chunk_writer, int64_t*timestamps, common::String*col_values, common::BitMap&col_notnull_bitmap, int start_idx, int end_idx);
+                           common::BitMap &col_notnull_bitmap, uint32_t start_idx,
+                           uint32_t end_idx);
+    int write_typed_column(ChunkWriter*chunk_writer, int64_t*timestamps,
+                           common::String*col_values, common::BitMap&col_notnull_bitmap,
+                           uint32_t start_idx,
+                           uint32_t end_idx);
 
     template <typename MeasurementNamesGetter>
     int do_check_schema(
@@ -142,7 +146,7 @@ class TsFileWriter {
         common::SimpleVector<storage::ValueChunkWriter *> &value_chunk_writers);
     // std::vector<storage::ChunkWriter*> &chunk_writers);
     int write_column(storage::ChunkWriter *chunk_writer, const Tablet &,
-                     int col_idx, int start_idx = 0, int end_idx = INT_MAX);
+                     int col_idx, uint32_t start_idx = 0, uint32_t end_idx = UINT32_MAX);
     int register_timeseries(const std::string &device_path,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);
@@ -168,27 +172,27 @@ class TsFileWriter {
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, bool *col_values,
                            common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           uint32_t row_count);
 
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, double *col_values,
                            common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);int write_typed_column(ValueChunkWriter*value_chunk_writer, int64_t*timestamps, common::String*col_values, common::BitMap&col_notnull_bitmap, int32_t row_count);
+                           uint32_t row_count);int write_typed_column(ValueChunkWriter*value_chunk_writer, int64_t*timestamps, common::String*col_values, common::BitMap&col_notnull_bitmap, int32_t row_count);
 
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, float *col_values,
                            common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           uint32_t row_count);
 
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, int32_t *col_values,
                            common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           uint32_t row_count);
 
     int write_typed_column(ValueChunkWriter *value_chunk_writer,
                            int64_t *timestamps, int64_t *col_values,
                            common::BitMap &col_notnull_bitmap,
-                           int32_t row_count);
+                           uint32_t row_count);
 
     int value_write_column(ValueChunkWriter *value_chunk_writer,
                            const Tablet &tablet, int col_idx);

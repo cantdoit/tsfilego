@@ -120,7 +120,6 @@ struct Field {
         if (type_ == common::STRING) {
             return value_.strval_;
         } else {
-            std::cout << "not String type" << std::endl;
             return nullptr;
         }
     }
