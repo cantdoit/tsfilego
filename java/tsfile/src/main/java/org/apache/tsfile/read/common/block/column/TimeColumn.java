@@ -114,6 +114,11 @@ public class TimeColumn implements Column {
   }
 
   @Override
+  public long getSizeInBytes() {
+    return (long) positionCount * SIZE_IN_BYTES_PER_POSITION;
+  }
+
+  @Override
   public Column getRegion(int positionOffset, int length) {
     ColumnUtil.checkValidRegion(getPositionCount(), positionOffset, length);
     return new TimeColumn(positionOffset + arrayOffset, length, values);

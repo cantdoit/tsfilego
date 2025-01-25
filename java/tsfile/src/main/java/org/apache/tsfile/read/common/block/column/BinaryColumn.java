@@ -46,6 +46,7 @@ public class BinaryColumn implements Column {
   private final Binary[] values;
 
   private final long retainedSizeInBytes;
+  private final long sizeInBytes;
 
   public BinaryColumn(int initialCapacity) {
     this(0, 0, null, new Binary[initialCapacity]);
@@ -76,6 +77,7 @@ public class BinaryColumn implements Column {
     this.valueIsNull = valueIsNull;
 
     retainedSizeInBytes = INSTANCE_SIZE + sizeOfBooleanArray(positionCount) + sizeOf(values);
+    sizeInBytes = values.length > 0 ? retainedSizeInBytes * positionCount / values.length : 0L;
   }
 
   // called by getRegion which already knows the underlying retainedSizeInBytes
@@ -104,6 +106,7 @@ public class BinaryColumn implements Column {
     }
     this.valueIsNull = valueIsNull;
     this.retainedSizeInBytes = retainedSizeInBytes;
+    this.sizeInBytes = values.length > 0 ? retainedSizeInBytes * positionCount / values.length : 0L;
   }
 
   @Override
@@ -164,6 +167,11 @@ public class BinaryColumn implements Column {
   @Override
   public long getRetainedSizeInBytes() {
     return retainedSizeInBytes;
+  }
+
+  @Override
+  public long getSizeInBytes() {
+    return sizeInBytes;
   }
 
   @Override
