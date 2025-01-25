@@ -25,12 +25,15 @@
 #include "common/tablet.h"
 #include "file/tsfile_io_writer.h"
 #include "file/write_file.h"
+#include "reader/table_result_set.h"
+#include "reader/tsfile_reader.h"
 #include "writer/chunk_writer.h"
 #include "writer/tsfile_table_writer.h"
+
 using namespace storage;
 using namespace common;
 
-class TsFileWriterTableTest : public ::testing::Test {
+class TsFileTableReaderTest : public ::testing::Test {
    protected:
     void SetUp() override {
         libtsfile_init();
@@ -138,7 +141,7 @@ class TsFileWriterTableTest : public ::testing::Test {
     }
 };
 
-TEST_F(TsFileWriterTableTest, WriteTableTest) {
+TEST_F(TsFileTableReaderTest, TableModelQuery) {
     auto table_schema = gen_table_schema(0);
     auto tsfile_table_writer_ =
         std::make_shared<TsFileTableWriter>(&write_file_, table_schema);
@@ -146,4 +149,20 @@ TEST_F(TsFileWriterTableTest, WriteTableTest) {
     ASSERT_EQ(tsfile_table_writer_->write_table(tablet), common::E_OK);
     ASSERT_EQ(tsfile_table_writer_->flush(), common::E_OK);
     ASSERT_EQ(tsfile_table_writer_->close(), common::E_OK);
+
+    storage::TsFileReader reader;
+    int ret = reader.open(file_name_);
+    ASSERT_EQ(ret, common::E_OK);
+
+    ResultSet* tmp_result_set = nullptr;
+    ret = reader.query(table_schema->get_table_name(),
+                       table_schema->get_measurement_names(), 0, 1000000000000,
+                       tmp_result_set);
+    auto* table_result_set = (TableResultSet*)tmp_result_set;
+    while(table_result_set->next()) {
+        for (uint32_t i = 0; i < table_schema->get_measurement_names().size(); i++) {
+            std::cout << table_schema->get_measurement_names()[i] << std::endl;
+        }
+    }
+    ASSERT_EQ(reader.close(), common::E_OK);
 }
