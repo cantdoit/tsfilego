@@ -16,28 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-
 #ifndef READER_TABLE_RESULT_SET_H
 #define READER_TABLE_RESULT_SET_H
+#include <memory>
 
-#include <map>
-#include <vector>
-
-#include "expression.h"
-#include "file/tsfile_io_reader.h"
-#include "result_set.h"
+#include "reader/block/tsblock_reader.h"
+#include "reader/result_set.h"
 
 namespace storage {
-
 class TableResultSet : public ResultSet {
    public:
+    explicit TableResultSet(std::unique_ptr<TsBlockReader> tsblock_reader,
+                         std::vector<std::string> column_names,
+                         std::vector<common::TSDataType> data_types) {
+        init();
+    }
+    ~TableResultSet();
+    bool next() override;
+    bool is_null(const std::string& column_name) override;
+    bool is_null(uint32_t column_index) override;
+    RowRecord* get_row_record() override;
+    ResultSetMetadata* get_metadata() override;
+    void close() override;
 
    private:
-    int get_next_tsblock(uint32_t index, bool alloc_mem);
-
-   private:
+    void init();
+    std::unique_ptr<TsBlockReader> tsblock_reader_;
+    common::RowIterator* row_iterator_ = nullptr;
+    common::TsBlock* tsblock_;
+    RowRecord* row_record_ = nullptr;
+    std::vector<std::unique_ptr<TsBlockReader>> tsblock_readers_;
+    std::vector<std::string> column_names_;
+    std::vector<common::TSDataType> data_types_;
 };
-
 }  // namespace storage
-
-#endif  // READER_TABLE_RESULT_SET_H
+#endif // TABLE_RESULT_SET_H
