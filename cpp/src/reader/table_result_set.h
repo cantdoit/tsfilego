@@ -28,7 +28,7 @@ class TableResultSet : public ResultSet {
    public:
     explicit TableResultSet(std::unique_ptr<TsBlockReader> tsblock_reader,
                          std::vector<std::string> column_names,
-                         std::vector<common::TSDataType> data_types) {
+                         std::vector<common::TSDataType> data_types) : tsblock_reader_(std::move(tsblock_reader)), column_names_(column_names), data_types_(data_types) {
         init();
     }
     ~TableResultSet();
@@ -38,7 +38,6 @@ class TableResultSet : public ResultSet {
     RowRecord* get_row_record() override;
     ResultSetMetadata* get_metadata() override;
     void close() override;
-
    private:
     void init();
     std::unique_ptr<TsBlockReader> tsblock_reader_;
