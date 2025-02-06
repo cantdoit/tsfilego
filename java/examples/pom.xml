@@ -27,7 +27,6 @@
         <version>2.0.0-250118-SNAPSHOT</version>
     </parent>
     <artifactId>examples</artifactId>
-    <packaging>pom</packaging>
     <name>TsFile: Java: Examples</name>
     <dependencies>
         <dependency>
