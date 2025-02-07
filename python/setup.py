@@ -24,7 +24,7 @@ import platform
 import shutil
 import os
 
-version = "2.0.0.dev"
+version = "2.0.1"
 system = platform.system()
 
 
