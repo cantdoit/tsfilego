@@ -21,6 +21,7 @@ package org.apache.tsfile.file.metadata;
 
 import org.apache.tsfile.file.metadata.statistics.Statistics;
 
+import java.util.Collections;
 import java.util.List;
 
 public class AlignedTimeSeriesMetadata extends AbstractAlignedTimeSeriesMetadata {
@@ -55,12 +56,17 @@ public class AlignedTimeSeriesMetadata extends AbstractAlignedTimeSeriesMetadata
 
   @Override
   void constructAlignedChunkMetadata(
-      List<AlignedChunkMetadata> res,
+      List<AbstractAlignedChunkMetadata> res,
       IChunkMetadata timeChunkMetadata,
       List<IChunkMetadata> chunkMetadataList,
       boolean exits) {
     if (exits) {
       res.add(new AlignedChunkMetadata(timeChunkMetadata, chunkMetadataList));
     }
+  }
+
+  @Override
+  AbstractAlignedChunkMetadata constructOnlyTimeChunkMetadata(IChunkMetadata timeChunkMetadata) {
+    return new AlignedChunkMetadata(timeChunkMetadata, Collections.emptyList());
   }
 }

@@ -21,11 +21,12 @@ package org.apache.tsfile.file.metadata;
 
 import org.apache.tsfile.file.metadata.statistics.Statistics;
 
+import java.util.Collections;
 import java.util.List;
 
-public class TableDeviceMetadata extends AbstractAlignedTimeSeriesMetadata {
+public class TableDeviceTimeSeriesMetadata extends AbstractAlignedTimeSeriesMetadata {
 
-  public TableDeviceMetadata(
+  public TableDeviceTimeSeriesMetadata(
       TimeseriesMetadata timeseriesMetadata, List<TimeseriesMetadata> valueTimeseriesMetadataList) {
     super(timeseriesMetadata, valueTimeseriesMetadataList);
   }
@@ -41,10 +42,15 @@ public class TableDeviceMetadata extends AbstractAlignedTimeSeriesMetadata {
 
   @Override
   void constructAlignedChunkMetadata(
-      List<AlignedChunkMetadata> res,
+      List<AbstractAlignedChunkMetadata> res,
       IChunkMetadata timeChunkMetadata,
       List<IChunkMetadata> chunkMetadataList,
       boolean exits) {
-    res.add(new AlignedChunkMetadata(timeChunkMetadata, chunkMetadataList));
+    res.add(new TableDeviceChunkMetadata(timeChunkMetadata, chunkMetadataList));
+  }
+
+  @Override
+  AbstractAlignedChunkMetadata constructOnlyTimeChunkMetadata(IChunkMetadata timeChunkMetadata) {
+    return new TableDeviceChunkMetadata(timeChunkMetadata, Collections.emptyList());
   }
 }

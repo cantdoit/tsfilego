@@ -95,8 +95,6 @@ public class TsFileWriteAlignedWithTablet {
       long startValue)
       throws IOException, WriteProcessException {
     Tablet tablet = new Tablet(deviceId, schemas);
-    long[] timestamps = tablet.timestamps;
-    Object[] values = tablet.values;
     long sensorNum = schemas.size();
 
     for (long r = 0; r < rowNum; r++, startValue++) {
@@ -133,8 +131,6 @@ public class TsFileWriteAlignedWithTablet {
     measurementSchemas.add(new MeasurementSchema(SENSOR_1, TSDataType.INT64, TSEncoding.RLE));
     measurementSchemas.add(new MeasurementSchema(SENSOR_2, TSDataType.INT64, TSEncoding.RLE));
     Tablet tablet = new Tablet(DEVICE_2, measurementSchemas);
-    long[] timestamps = tablet.timestamps;
-    Object[] values = tablet.values;
     int rowNum = 100;
     int sensorNum = measurementSchemas.size();
     long timestamp = 1;
@@ -143,8 +139,7 @@ public class TsFileWriteAlignedWithTablet {
       int row = tablet.getRowSize();
       tablet.addTimestamp(row, timestamp++);
       for (int i = 0; i < sensorNum; i++) {
-        long[] sensor = (long[]) values[i];
-        sensor[row] = value;
+        tablet.addValue(row, i, value);
       }
       // write
       if (tablet.getRowSize() == tablet.getMaxRowNumber()) {

@@ -20,10 +20,12 @@ cmake_minimum_required(VERSION 3.11)
 project(TsFile_CPP)
 
 cmake_policy(SET CMP0079 NEW)
-set(TsFile_CPP_VERSION 2.0.0.dev)
+set(TsFile_CPP_VERSION 2.1.0.dev)
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -Wall -Werror")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=maybe-uninitialized")
+endif()
 message("cmake using: USE_CPP11=${USE_CPP11}")
-
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 

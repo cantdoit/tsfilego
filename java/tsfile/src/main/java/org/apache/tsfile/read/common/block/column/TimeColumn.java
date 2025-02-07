@@ -26,6 +26,8 @@ import org.apache.tsfile.utils.RamUsageEstimator;
 
 import java.util.Arrays;
 
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkArrayRange;
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkReadablePosition;
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfLongArray;
 
 public class TimeColumn implements Column {
@@ -98,8 +100,7 @@ public class TimeColumn implements Column {
 
   @Override
   public boolean[] isNull() {
-    // todo
-    return null;
+    throw new UnsupportedOperationException("isNull is not supported for TimeColumn");
   }
 
   @Override
@@ -110,6 +111,11 @@ public class TimeColumn implements Column {
   @Override
   public long getRetainedSizeInBytes() {
     return retainedSizeInBytes;
+  }
+
+  @Override
+  public long getSizeInBytes() {
+    return (long) positionCount * SIZE_IN_BYTES_PER_POSITION;
   }
 
   @Override
@@ -159,6 +165,27 @@ public class TimeColumn implements Column {
     }
   }
 
+  @Override
+  public Column getPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    return DictionaryColumn.createInternal(
+        offset, length, this, positions, DictionaryId.randomDictionaryId());
+  }
+
+  @Override
+  public Column copyPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    long[] newValues = new long[length];
+    for (int i = 0; i < length; i++) {
+      int position = positions[offset + i];
+      checkReadablePosition(this, position);
+      newValues[i] = values[position + arrayOffset];
+    }
+    return new TimeColumn(0, length, newValues);
+  }
+
   public long getStartTime() {
     return values[arrayOffset];
   }
@@ -188,4 +215,9 @@ public class TimeColumn implements Column {
 
   @Override
   public void setNull(int start, int end) {}
+
+  @Override
+  public void reset() {
+    setPositionCount(0);
+  }
 }

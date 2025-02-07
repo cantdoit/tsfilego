@@ -22,6 +22,7 @@ package org.apache.tsfile.read;
 import org.apache.tsfile.common.conf.TSFileConfig;
 import org.apache.tsfile.common.conf.TSFileDescriptor;
 import org.apache.tsfile.common.constant.TsFileConstant;
+import org.apache.tsfile.compatibility.BufferDeserializer;
 import org.apache.tsfile.compatibility.CompatibilityUtils;
 import org.apache.tsfile.compatibility.DeserializeConfig;
 import org.apache.tsfile.compress.IUnCompressor;
@@ -40,8 +41,8 @@ import org.apache.tsfile.file.MetaMarker;
 import org.apache.tsfile.file.header.ChunkGroupHeader;
 import org.apache.tsfile.file.header.ChunkHeader;
 import org.apache.tsfile.file.header.PageHeader;
+import org.apache.tsfile.file.metadata.AbstractAlignedChunkMetadata;
 import org.apache.tsfile.file.metadata.AbstractAlignedTimeSeriesMetadata;
-import org.apache.tsfile.file.metadata.AlignedChunkMetadata;
 import org.apache.tsfile.file.metadata.AlignedTimeSeriesMetadata;
 import org.apache.tsfile.file.metadata.ChunkGroupMetadata;
 import org.apache.tsfile.file.metadata.ChunkMetadata;
@@ -51,7 +52,8 @@ import org.apache.tsfile.file.metadata.IDeviceID;
 import org.apache.tsfile.file.metadata.ITimeSeriesMetadata;
 import org.apache.tsfile.file.metadata.MeasurementMetadataIndexEntry;
 import org.apache.tsfile.file.metadata.MetadataIndexNode;
-import org.apache.tsfile.file.metadata.TableDeviceMetadata;
+import org.apache.tsfile.file.metadata.TableDeviceTimeSeriesMetadata;
+import org.apache.tsfile.file.metadata.TableSchema;
 import org.apache.tsfile.file.metadata.TimeseriesMetadata;
 import org.apache.tsfile.file.metadata.TsFileMetadata;
 import org.apache.tsfile.file.metadata.enums.CompressionType;
@@ -134,6 +136,7 @@ public class TsFileSequenceReader implements AutoCloseable {
   private byte fileVersion;
 
   private DeserializeConfig deserializeConfig = new DeserializeConfig();
+  private volatile boolean cacheTableSchemaMap = false;
 
   /**
    * Create a file reader of the given file. The reader will read the tail of the file to get the
@@ -285,6 +288,10 @@ public class TsFileSequenceReader implements AutoCloseable {
     }
   }
 
+  public void setEnableCacheTableSchemaMap() {
+    this.cacheTableSchemaMap = true;
+  }
+
   public void loadMetadataSize() throws IOException {
     loadMetadataSize(null);
   }
@@ -394,9 +401,7 @@ public class TsFileSequenceReader implements AutoCloseable {
       if (tsFileMetaData == null) {
         synchronized (this) {
           if (tsFileMetaData == null) {
-            tsFileMetaData =
-                deserializeConfig.tsFileMetadataBufferDeserializer.deserialize(
-                    readData(fileMetadataPos, fileMetadataSize, ioSizeRecorder), deserializeConfig);
+            tsFileMetaData = forceReadFileMetadata(cacheTableSchemaMap, ioSizeRecorder);
           }
         }
       }
@@ -407,6 +412,34 @@ public class TsFileSequenceReader implements AutoCloseable {
       throw e;
     }
     return tsFileMetaData;
+  }
+
+  public Map<String, TableSchema> getTableSchemaMap() throws IOException {
+    return getTableSchemaMap(null);
+  }
+
+  public Map<String, TableSchema> getTableSchemaMap(LongConsumer ioSizeRecorder)
+      throws IOException {
+    if (tsFileMetaData != null && tsFileMetaData.hasTableSchemaMapCache()) {
+      return tsFileMetaData.getTableSchemaMap();
+    }
+    TsFileMetadata tempTsFileMetadata = forceReadFileMetadata(true, ioSizeRecorder);
+    if (cacheTableSchemaMap) {
+      synchronized (this) {
+        this.tsFileMetaData = tempTsFileMetadata;
+      }
+    }
+    return tempTsFileMetadata.getTableSchemaMap();
+  }
+
+  private TsFileMetadata forceReadFileMetadata(
+      boolean needTableSchemaMap, LongConsumer ioSizeRecorder) throws IOException {
+    ByteBuffer buffer = readData(fileMetadataPos, fileMetadataSize, ioSizeRecorder);
+    BufferDeserializer<TsFileMetadata> deserializer =
+        needTableSchemaMap
+            ? deserializeConfig.cacheTableSchemaMapTsFileMetadataBufferDeserializer
+            : deserializeConfig.tsFileMetadataBufferDeserializer;
+    return deserializer.deserialize(buffer, deserializeConfig);
   }
 
   /**
@@ -883,7 +916,7 @@ public class TsFileSequenceReader implements AutoCloseable {
     if (valueTimeseriesMetadataList != null && !valueTimeseriesMetadataList.isEmpty()) {
       if (this.tsFileMetaData.getTableSchemaMap().containsKey(device.getTableName())) {
         resultTimeseriesMetadataList.add(
-            new TableDeviceMetadata(timeColumnMetadata, valueTimeseriesMetadataList));
+            new TableDeviceTimeSeriesMetadata(timeColumnMetadata, valueTimeseriesMetadataList));
       } else {
         resultTimeseriesMetadataList.add(
             new AlignedTimeSeriesMetadata(timeColumnMetadata, valueTimeseriesMetadataList));
@@ -2546,7 +2579,7 @@ public class TsFileSequenceReader implements AutoCloseable {
    *
    * @param device device name
    */
-  public List<AlignedChunkMetadata> getAlignedChunkMetadata(
+  public List<AbstractAlignedChunkMetadata> getAlignedChunkMetadata(
       IDeviceID device, boolean ignoreAllNullRows) throws IOException {
     readFileMetadata();
     MetadataIndexNode deviceMetadataIndexNode =
@@ -2578,7 +2611,7 @@ public class TsFileSequenceReader implements AutoCloseable {
    * @param metadataIndexNode the first measurement metadata index node of the device
    * @param ignoreAllNullRows ignore all null rows
    */
-  public List<AlignedChunkMetadata> getAlignedChunkMetadataByMetadataIndexNode(
+  public List<AbstractAlignedChunkMetadata> getAlignedChunkMetadataByMetadataIndexNode(
       IDeviceID device, MetadataIndexNode metadataIndexNode, boolean ignoreAllNullRows)
       throws IOException {
     TimeseriesMetadata firstTimeseriesMetadata = getTimeColumnMetadata(metadataIndexNode);
@@ -2637,11 +2670,11 @@ public class TsFileSequenceReader implements AutoCloseable {
           new AlignedTimeSeriesMetadata(timeseriesMetadata, valueTimeseriesMetadataList);
     } else {
       alignedTimeSeriesMetadata =
-          new TableDeviceMetadata(timeseriesMetadata, valueTimeseriesMetadataList);
+          new TableDeviceTimeSeriesMetadata(timeseriesMetadata, valueTimeseriesMetadataList);
     }
-    List<AlignedChunkMetadata> chunkMetadataList = new ArrayList<>();
+    List<AbstractAlignedChunkMetadata> chunkMetadataList = new ArrayList<>();
     for (IChunkMetadata chunkMetadata : readIChunkMetaDataList(alignedTimeSeriesMetadata)) {
-      chunkMetadataList.add((AlignedChunkMetadata) chunkMetadata);
+      chunkMetadataList.add((AbstractAlignedChunkMetadata) chunkMetadata);
     }
     return chunkMetadataList;
   }

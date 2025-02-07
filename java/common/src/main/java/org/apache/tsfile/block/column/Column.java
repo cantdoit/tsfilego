@@ -144,6 +144,13 @@ public interface Column {
   long getRetainedSizeInBytes();
 
   /**
+   * Returns the size of this Column as if it was compacted, ignoring any over-allocations and any
+   * unloaded nested Columns. For example, in dictionary blocks, this only counts each dictionary
+   * entry once, rather than each time a value is referenced.
+   */
+  long getSizeInBytes();
+
+  /**
    * Returns a column starting at the specified position and extends for the specified length. The
    * specified region must be entirely contained within this column.
    *
@@ -169,6 +176,23 @@ public interface Column {
 
   /** This method will create a copy of origin column with different array offset. */
   Column subColumnCopy(int fromIndex);
+
+  /**
+   * Create a new colum from the current colum by keeping the same elements only with respect to
+   * {@code positions} that starts at {@code offset} and has length of {@code length}. The
+   * implementation may return a view over the data in this colum or may return a copy, and the
+   * implementation is allowed to retain the positions array for use in the view.
+   */
+  Column getPositions(int[] positions, int offset, int length);
+
+  /**
+   * Returns a column containing the specified positions. Positions to copy are stored in a subarray
+   * within {@code positions} array that starts at {@code offset} and has length of {@code length}.
+   * All specified positions must be valid for this block.
+   *
+   * <p>The returned column must be a compact representation of the original column.
+   */
+  Column copyPositions(int[] positions, int offset, int length);
 
   /** reverse the column */
   void reverse();

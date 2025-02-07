@@ -28,6 +28,8 @@ import org.apache.tsfile.utils.TsPrimitiveType;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkArrayRange;
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkReadablePosition;
 import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkValidRegion;
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfBooleanArray;
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfDoubleArray;
@@ -138,6 +140,11 @@ public class DoubleColumn implements Column {
   }
 
   @Override
+  public long getSizeInBytes() {
+    return (long) positionCount * SIZE_IN_BYTES_PER_POSITION;
+  }
+
+  @Override
   public Column getRegion(int positionOffset, int length) {
     checkValidRegion(getPositionCount(), positionOffset, length);
     return new DoubleColumn(positionOffset + arrayOffset, length, valueIsNull, values);
@@ -178,6 +185,34 @@ public class DoubleColumn implements Column {
 
     int length = positionCount - fromIndex;
     return new DoubleColumn(0, length, valueIsNullCopy, valuesCopy);
+  }
+
+  @Override
+  public Column getPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    return DictionaryColumn.createInternal(
+        offset, length, this, positions, DictionaryId.randomDictionaryId());
+  }
+
+  @Override
+  public Column copyPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    boolean[] newValueIsNull = null;
+    if (valueIsNull != null) {
+      newValueIsNull = new boolean[length];
+    }
+    double[] newValues = new double[length];
+    for (int i = 0; i < length; i++) {
+      int position = positions[offset + i];
+      checkReadablePosition(this, position);
+      if (newValueIsNull != null) {
+        newValueIsNull[i] = valueIsNull[position + arrayOffset];
+      }
+      newValues[i] = values[position + arrayOffset];
+    }
+    return new DoubleColumn(0, length, newValueIsNull, newValues);
   }
 
   @Override

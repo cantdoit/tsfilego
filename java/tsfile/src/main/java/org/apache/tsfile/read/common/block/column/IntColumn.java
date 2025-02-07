@@ -28,10 +28,13 @@ import org.apache.tsfile.utils.TsPrimitiveType;
 import java.util.Arrays;
 import java.util.Optional;
 
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkArrayRange;
+import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkReadablePosition;
 import static org.apache.tsfile.read.common.block.column.ColumnUtil.checkValidRegion;
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfBooleanArray;
 import static org.apache.tsfile.utils.RamUsageEstimator.sizeOfIntArray;
 
+@SuppressWarnings("java:S3012")
 public class IntColumn implements Column {
 
   private static final int INSTANCE_SIZE =
@@ -93,8 +96,50 @@ public class IntColumn implements Column {
   }
 
   @Override
+  public long getLong(int position) {
+    return values[position + arrayOffset];
+  }
+
+  @Override
+  public float getFloat(int position) {
+    return values[position + arrayOffset];
+  }
+
+  @Override
+  public double getDouble(int position) {
+    return values[position + arrayOffset];
+  }
+
+  @Override
   public int[] getInts() {
     return values;
+  }
+
+  @Override
+  public float[] getFloats() {
+    float[] result = new float[values.length];
+    for (int i = 0; i < values.length; i++) {
+      result[i] = values[i];
+    }
+    return result;
+  }
+
+  @Override
+  public long[] getLongs() {
+    long[] result = new long[values.length];
+    for (int i = 0; i < values.length; i++) {
+      result[i] = values[i];
+    }
+    return result;
+  }
+
+  @Override
+  public double[] getDoubles() {
+    double[] result = new double[values.length];
+    for (int i = 0; i < values.length; i++) {
+      result[i] = values[i];
+    }
+    return result;
   }
 
   @Override
@@ -135,6 +180,11 @@ public class IntColumn implements Column {
   @Override
   public long getRetainedSizeInBytes() {
     return retainedSizeInBytes;
+  }
+
+  @Override
+  public long getSizeInBytes() {
+    return (long) positionCount * SIZE_IN_BYTES_PER_POSITION;
   }
 
   @Override
@@ -193,6 +243,34 @@ public class IntColumn implements Column {
         valueIsNull[j] = isNullTmp;
       }
     }
+  }
+
+  @Override
+  public Column getPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    return DictionaryColumn.createInternal(
+        offset, length, this, positions, DictionaryId.randomDictionaryId());
+  }
+
+  @Override
+  public Column copyPositions(int[] positions, int offset, int length) {
+    checkArrayRange(positions, offset, length);
+
+    boolean[] newValueIsNull = null;
+    if (valueIsNull != null) {
+      newValueIsNull = new boolean[length];
+    }
+    int[] newValues = new int[length];
+    for (int i = 0; i < length; i++) {
+      int position = positions[offset + i];
+      checkReadablePosition(this, position);
+      if (newValueIsNull != null) {
+        newValueIsNull[i] = valueIsNull[position + arrayOffset];
+      }
+      newValues[i] = values[position + arrayOffset];
+    }
+    return new IntColumn(0, length, newValueIsNull, newValues);
   }
 
   @Override
