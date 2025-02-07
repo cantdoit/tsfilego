@@ -3,13 +3,11 @@ name: Site Build
 on:
   push:
     branches:
-      - develop
       - 'docs/**'
     paths:
       - 'docs/**'
   pull_request:
     branches:
-      - develop
       - 'docs/**'
     paths:
       - 'docs/**'
