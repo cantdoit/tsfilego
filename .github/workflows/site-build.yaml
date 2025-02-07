@@ -4,11 +4,13 @@ on:
   push:
     branches:
       - develop
+      - 'docs/**'
     paths:
       - 'docs/**'
   pull_request:
     branches:
       - develop
+      - 'docs/**'
     paths:
       - 'docs/**'
   # allow manually run the action:
