@@ -38,3 +38,7 @@ cpp/cmake-build-debug-mingw/
 .vscode/
 
 build/*
+node_modules/
+src/.vuepress/.cache/
+src/.vuepress/.temp/
+src/.vuepress/dist/
