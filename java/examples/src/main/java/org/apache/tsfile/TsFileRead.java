@@ -86,15 +86,15 @@ public class TsFileRead {
       paths.add(new Path(DEVICE_1, SENSOR_6, true));
       paths.add(new Path(DEVICE_1, SENSOR_7, true));
 
-      //      // no filter, should select 1 2 3 4 6 7 8
-      //      queryAndPrint(paths, readTsFile, null);
+      // no filter, should select 1 2 3 4 6 7 8
+      queryAndPrint(paths, readTsFile, null);
 
       // time filter : 4 <= time <= 10, should select 4 6 7 8
       IExpression timeFilter =
           BinaryExpression.and(
               new GlobalTimeExpression(TimeFilterApi.gtEq(4L)),
               new GlobalTimeExpression(TimeFilterApi.ltEq(10L)));
-      //      queryAndPrint(paths, readTsFile, timeFilter);
+      queryAndPrint(paths, readTsFile, timeFilter);
 
       // value filter : device_1.sensor_2 <= 20, should select 1 2 4 6 7
       IExpression valueFilter =
