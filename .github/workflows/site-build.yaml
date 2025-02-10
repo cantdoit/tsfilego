@@ -4,12 +4,8 @@ on:
   push:
     branches:
       - 'docs/**'
-    paths:
-      - 'docs/**'
   pull_request:
     branches:
-      - 'docs/**'
-    paths:
       - 'docs/**'
   # allow manually run the action:
   workflow_dispatch:
