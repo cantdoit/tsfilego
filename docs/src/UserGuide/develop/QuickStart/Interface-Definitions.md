@@ -174,7 +174,7 @@ interface ITsFileReader extends AutoCloseable {
 
 ### TsFileReaderBuilder
 
-Used to construct ITsFileWriter
+Used to construct ITsFileReader
 
 ```Java
 class TsFileReaderBuilder {
