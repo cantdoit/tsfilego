@@ -27,6 +27,14 @@
 Used to write data to tsfile
 
 ```cpp
+/**
+ * @brief Facilitates writing structured table data into a TsFile with a specified schema.
+ *
+ * The TsFileTableWriter class is designed to write structured data, particularly suitable for time-series data,
+ * into a file optimized for efficient storage and retrieval (referred to as TsFile here). It allows users to define
+ * the schema of the tables they want to write, add rows of data according to that schema, and serialize this data
+ * into a TsFile. Additionally, it provides options to limit memory usage during the writing process.
+ */
 class TsFileTableWriter {
    public:
     /**
@@ -34,9 +42,8 @@ class TsFileTableWriter {
      * optionally limiting the memory usage.
      *
      * @param writer_file Target file where the table data will be written. Must not be null.
-     *                    The caller retains ownership of this pointer.
      * @param table_schema Used to construct table structures. Defines the schema of the table
-     *                     being written. Must not be null. The caller retains ownership of this pointer.
+     *                     being written.
      * @param memory_threshold Optional parameter used to limit the memory size of objects.
      *                         If set to 0, no memory limit is enforced.
      */
@@ -48,7 +55,6 @@ class TsFileTableWriter {
      * Writes the given tablet data into the target file according to the schema.
      *
      * @param tablet The tablet containing the data to be written. Must not be null.
-     *               The caller retains ownership of this object.
      * @return Returns 0 on success, or a non-zero error code on failure.
      */
     int write_table(const Tablet& tablet);
@@ -74,51 +80,55 @@ class TsFileTableWriter {
 Describe the data structure of the table schema
 
 ```cpp
+/**
+* @brief Represents the schema information for an entire table.
+*
+* This class holds the metadata necessary to describe how a specific table is structured,
+* including its name and the schemas of all its columns.
+*/
 class TableSchema {
-public:
+    public:
     /**
      * Constructs a TableSchema object with the given table name, column schemas, and column categories.
      *
      * @param table_name The name of the table. Must be a non-empty string.
      *                   This name is used to identify the table within the system.
-     * @param column_schemas A vector containing pointers to MeasurementSchema objects.
-     *                       Each MeasurementSchema defines the schema for one column in the table.
-     *                       The caller retains ownership of these pointers.
-     * @param column_categories A vector containing ColumnCategory enums that correspond to each column schema.
-     *                          These categories provide additional information about how each column should be handled or optimized.
-     * @note It is the responsibility of the caller to ensure that the sizes of `column_schemas` and `column_categories` match.
+     * @param column_schemas A vector containing pointers to ColumnSchema objects.
+     *                       Each ColumnSchema defines the schema for one column in the table.
      */
-    TableSchema(const std::string &table_name,
-                const std::vector<MeasurementSchema*>
-                &column_schemas,
-                const std::vector<ColumnCategory> &column_categories);
+    TableSchema(const std::string& table_name,
+                const std::vector<ColumnSchema>& column_schemas);
 };
 
-struct MeasurementSchema {
-    std::string measurement_name_; // for example: "s1"
+
+/**
+* @brief Represents the schema information for a single column.
+*
+* This structure holds the metadata necessary to describe how a specific column is stored,
+* including its name, data type, category.
+*/
+struct ColumnSchema {
+    std::string column_name_;
     common::TSDataType data_type_;
-    common::TSEncoding encoding_;
-    common::CompressionType compression_type_;
+    ColumnCategory column_category_;
+
     /**
-     * @brief Constructs a MeasurementSchema object with the given parameters.
+     * @brief Constructs a ColumnSchema object with the given parameters.
      *
-     * @param measurement_name The name of the measurement. Must be a non-empty string.
-     *                         This name is used to identify the measurement within the table.
+     * @param column_name The name of the column. Must be a non-empty string.
+     *                    This name is used to identify the column within the table.
      * @param data_type The data type of the measurement, such as INT32, DOUBLE, TEXT, etc.
      *                  This determines how the data will be stored and interpreted.
-     * @param encoding The encoding method to use for this measurement.
-     *                 Encoding can help optimize storage and retrieval performance.
-     * @param compression_type The compression type to apply to this measurement.
-     *                         Compression reduces storage space but may impact read/write performance.
-     * @note It is the responsibility of the caller to ensure that `measurement_name` is not empty.
+     * @param column_category The category of the column indicating its role or type
+     *                        within the schema, e.g., FIELD, TAG.
+     *                        Defaults to ColumnCategory::FIELD if not specified.
+     * @note It is the responsibility of the caller to ensure that `column_name` is not empty.
      */
-    MeasurementSchema(const std::string &measurement_name,
-                      common::TSDataType data_type, common::TSEncoding encoding,
-                      common::CompressionType compression_type)
-        : measurement_name_(measurement_name),
-          data_type_(data_type),
-          encoding_(encoding),
-          compression_type_(compression_type);
+    ColumnSchema(std::string column_name, common::TSDataType data_type,
+                 ColumnCategory column_category = ColumnCategory::FIELD) : column_name_(std::move(column_name)),
+                                                                           data_type_(data_type),
+                                                                           column_category_(column_category) {
+    }
 };
 
 /**
