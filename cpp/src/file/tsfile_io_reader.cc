@@ -397,6 +397,35 @@ int TsFileIOReader::read_device_meta_index(int32_t start_offset,
     return ret;
 }
 
+int TsFileIOReader::get_timeseries_indexes(std::shared_ptr<IDeviceID> device_id,
+                             const std::vector<std::string> &measurement_names,
+                             std::vector<ITimeseriesIndex *> &timeseries_indexs,
+                             common::PageArena &pa) {
+  int ret = E_OK;
+  DeviceMetaIndexEntry device_index_entry;
+  int64_t device_ie_end_offset = 0;
+  MeasurementMetaIndexEntry measurement_index_entry;
+  int64_t measurement_ie_end_offset = 0;
+  if (RET_FAIL(load_device_index_entry(
+      std::make_shared<DeviceIDComparable>(device_id), device_index_entry,
+      device_ie_end_offset))) {
+    return ret;
+  }
+  for (size_t i = 0; i < measurement_names.size(); i++) {
+    const auto &measurement_name = measurement_names[i];
+    if (RET_FAIL(load_measurement_index_entry(
+        measurement_name, device_index_entry.offset_,
+        device_ie_end_offset, measurement_index_entry,
+        measurement_ie_end_offset))) {
+    } else if (RET_FAIL(do_load_timeseries_index(
+        measurement_name, measurement_index_entry.offset_,
+        measurement_ie_end_offset, pa,
+        timeseries_indexs[i]))) {
+    }
+  }
+  return ret;
+}
+
 /*
  * @target_name device_name or measurement_name
  * @index_node  leaf device node or leaf measurement node

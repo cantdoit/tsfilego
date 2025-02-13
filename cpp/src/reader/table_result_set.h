@@ -42,7 +42,7 @@ class TableResultSet : public ResultSet {
     void init();
     std::unique_ptr<TsBlockReader> tsblock_reader_;
     common::RowIterator* row_iterator_ = nullptr;
-    common::TsBlock* tsblock_;
+    common::TsBlock* tsblock_ = nullptr;
     RowRecord* row_record_ = nullptr;
     std::vector<std::unique_ptr<TsBlockReader>> tsblock_readers_;
     std::vector<std::string> column_names_;

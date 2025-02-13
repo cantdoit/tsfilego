@@ -185,8 +185,6 @@ class TableSchema {
           column_schemas_(std::move(other.column_schemas_)),
           column_categories_(std::move(other.column_categories_)) {}
 
-    TableSchema(const TableSchema &other) = default;
-
     int serialize_to(common::ByteStream &out) {
         int ret = common::E_OK;
         if (RET_FAIL(common::SerializationUtil::write_var_uint(
