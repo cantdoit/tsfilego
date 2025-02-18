@@ -93,7 +93,7 @@ class TableSchema {
      *
      * @param table_name The name of the table. Must be a non-empty string.
      *                   This name is used to identify the table within the system.
-     * @param column_schemas A vector containing pointers to ColumnSchema objects.
+     * @param column_schemas A vector containing ColumnSchema objects.
      *                       Each ColumnSchema defines the schema for one column in the table.
      */
     TableSchema(const std::string& table_name,
@@ -143,10 +143,7 @@ enum TSDataType : uint8_t {
     FLOAT = 3,
     DOUBLE = 4,
     TEXT = 5,
-    VECTOR = 6,
-    STRING = 11,
-    NULL_TYPE = 254,
-    INVALID_DATATYPE = 255
+    STRING = 11
 };
 
 /**
@@ -165,8 +162,7 @@ enum TSEncoding : uint8_t {
     REGULAR = 7,
     GORILLA = 8,
     ZIGZAG = 9,
-    FREQ = 10,
-    INVALID_ENCODING = 255
+    FREQ = 10
 };
 
 /**
@@ -182,8 +178,7 @@ enum CompressionType : uint8_t {
     SDT = 4,
     PAA = 5,
     PLA = 6,
-    LZ4 = 7,
-    INVALID_COMPRESSION = 255
+    LZ4 = 7
 };
 ```
 
