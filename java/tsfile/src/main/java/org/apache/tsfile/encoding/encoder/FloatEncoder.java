@@ -129,8 +129,13 @@ public class FloatEncoder extends Encoder {
         return Math.round(value);
       }
     } else {
-      underflowFlags.add(true);
-      return (int) Math.round(value * maxPointValue);
+      if (Float.isNaN(value)) {
+        underflowFlags.add(null);
+        return Float.floatToIntBits(value);
+      } else {
+        underflowFlags.add(true);
+        return (int) Math.round(value * maxPointValue);
+      }
     }
   }
 
@@ -144,8 +149,13 @@ public class FloatEncoder extends Encoder {
         return Math.round(value);
       }
     } else {
-      underflowFlags.add(true);
-      return Math.round(value * maxPointValue);
+      if (Double.isNaN(value)) {
+        underflowFlags.add(null);
+        return Double.doubleToLongBits(value);
+      } else {
+        underflowFlags.add(true);
+        return Math.round(value * maxPointValue);
+      }
     }
   }
 
