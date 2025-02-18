@@ -25,7 +25,6 @@ import org.apache.tsfile.exception.encoding.TsFileDecodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.utils.Binary;
 import org.apache.tsfile.utils.BitMap;
-import org.apache.tsfile.utils.BytesUtils;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import org.slf4j.Logger;
@@ -101,7 +100,7 @@ public class FloatDecoder extends Decoder {
     int value = decoder.readInt(buffer);
     if (valueItselfOverflowInfo != null && valueItselfOverflowInfo.isMarked(position)) {
       position++;
-      return BytesUtils.bytesToFloat(BytesUtils.intToBytes(value));
+      return Float.intBitsToFloat(value);
     }
     double result = value / getMaxPointValue();
     position++;
@@ -112,6 +111,10 @@ public class FloatDecoder extends Decoder {
   public double readDouble(ByteBuffer buffer) {
     readMaxPointValue(buffer);
     long value = decoder.readLong(buffer);
+    if (valueItselfOverflowInfo != null && valueItselfOverflowInfo.isMarked(position)) {
+      position++;
+      return Double.longBitsToDouble(value);
+    }
     double result = value / getMaxPointValue();
     position++;
     return result;

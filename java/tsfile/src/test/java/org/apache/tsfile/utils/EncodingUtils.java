@@ -23,6 +23,9 @@ public class EncodingUtils {
 
   // Copied from org.apache.iotdb.db.utils.MathUtils
   public static float roundWithGivenPrecision(float data, int size) {
+    if (data > Integer.MAX_VALUE || data < Integer.MIN_VALUE) {
+      return data;
+    }
     if (size == 0) {
       return Math.round(data);
     }
@@ -32,6 +35,9 @@ public class EncodingUtils {
 
   // Copied from org.apache.iotdb.db.utils.MathUtils
   public static double roundWithGivenPrecision(double data, int size) {
+    if (data > Long.MAX_VALUE || data < Long.MIN_VALUE) {
+      return data;
+    }
     if (size == 0) {
       return Math.round(data);
     }

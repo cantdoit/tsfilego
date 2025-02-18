@@ -23,7 +23,6 @@ import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileEncodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
 import org.apache.tsfile.utils.BitMap;
-import org.apache.tsfile.utils.BytesUtils;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -124,7 +123,7 @@ public class FloatEncoder extends Encoder {
     if (value * maxPointValue > Integer.MAX_VALUE || value * maxPointValue < Integer.MIN_VALUE) {
       if (value > Integer.MAX_VALUE || value < Integer.MIN_VALUE) {
         underflowFlags.add(null);
-        return BytesUtils.bytesToInt(BytesUtils.floatToBytes(value));
+        return Float.floatToIntBits(value);
       } else {
         underflowFlags.add(false);
         return Math.round(value);
@@ -137,8 +136,13 @@ public class FloatEncoder extends Encoder {
 
   private long convertDoubleToLong(double value) {
     if (value * maxPointValue > Long.MAX_VALUE || value * maxPointValue < Long.MIN_VALUE) {
-      underflowFlags.add(false);
-      return Math.round(value);
+      if (value > Long.MAX_VALUE || value < Long.MIN_VALUE) {
+        underflowFlags.add(null);
+        return Double.doubleToLongBits(value);
+      } else {
+        underflowFlags.add(false);
+        return Math.round(value);
+      }
     } else {
       underflowFlags.add(true);
       return Math.round(value * maxPointValue);
