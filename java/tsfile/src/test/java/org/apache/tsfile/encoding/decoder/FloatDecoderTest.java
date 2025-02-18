@@ -203,6 +203,50 @@ public class FloatDecoderTest {
     }
   }
 
+  @Test
+  public void testBigFloat() throws Exception {
+    float a = 0.333F;
+    float b = 6.5536403E8F;
+    float c = 3.123456768E20F;
+    float d = Float.NaN;
+    Encoder encoder = new FloatEncoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT, 2);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    encoder.encode(a, baos);
+    encoder.encode(b, baos);
+    encoder.encode(c, baos);
+    encoder.encode(d, baos);
+    encoder.flush(baos);
+
+    ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
+    Decoder decoder = new FloatDecoder(TSEncoding.TS_2DIFF, TSDataType.FLOAT);
+    assertEquals(a, decoder.readFloat(buffer), 0.01);
+    assertEquals(b, decoder.readFloat(buffer), 0.01);
+    assertEquals(c, decoder.readFloat(buffer), 0.01);
+    assertEquals(d, decoder.readFloat(buffer), 0.01);
+  }
+
+  @Test
+  public void testBigDouble() throws Exception {
+    double a = 0.333;
+    double b = 9.223372036854E18;
+    double c = 9.223372036854E100;
+    double d = Double.NaN;
+    Encoder encoder = new FloatEncoder(TSEncoding.RLE, TSDataType.DOUBLE, 2);
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    encoder.encode(a, baos);
+    encoder.encode(b, baos);
+    encoder.encode(c, baos);
+    encoder.encode(d, baos);
+    encoder.flush(baos);
+
+    ByteBuffer buffer = ByteBuffer.wrap(baos.toByteArray());
+    Decoder decoder = new FloatDecoder(TSEncoding.RLE, TSDataType.DOUBLE);
+    assertEquals(a, decoder.readDouble(buffer), 0.01);
+    assertEquals(b, decoder.readDouble(buffer), 0.01);
+    assertEquals(c, decoder.readDouble(buffer), 0.01);
+    assertEquals(d, decoder.readDouble(buffer), 0.01);
+  }
+
   // private void testDecimalLenght(TSEncoding encoding, List<Double> valueList,
   // int maxPointValue,
   // boolean isDebug, int repeatCount) throws Exception {

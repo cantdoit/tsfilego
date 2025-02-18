@@ -22,10 +22,13 @@ package org.apache.tsfile.encoding.encoder;
 import org.apache.tsfile.enums.TSDataType;
 import org.apache.tsfile.exception.encoding.TsFileEncodingException;
 import org.apache.tsfile.file.metadata.enums.TSEncoding;
+import org.apache.tsfile.utils.BitMap;
 import org.apache.tsfile.utils.ReadWriteForEncodingUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Encoder for float or double value using rle or two-diff according to following grammar.
@@ -38,7 +41,7 @@ import java.io.IOException;
  */
 public class FloatEncoder extends Encoder {
 
-  private Encoder encoder;
+  private final Encoder encoder;
 
   /** number for accuracy of decimal places. */
   private int maxPointNumber;
@@ -49,11 +52,17 @@ public class FloatEncoder extends Encoder {
   /** flag to check whether maxPointNumber is saved in the stream. */
   private boolean isMaxPointNumberSaved;
 
+  // value * maxPointValue not overflow -> True
+  // value * maxPointValue overflow -> False
+  // value itself overflow -> null
+  private final List<Boolean> underflowFlags;
+
   public FloatEncoder(TSEncoding encodingType, TSDataType dataType, int maxPointNumber) {
     super(encodingType);
     this.maxPointNumber = maxPointNumber;
-    calculateMaxPonitNum();
+    calculateMaxPointNum();
     isMaxPointNumberSaved = false;
+    underflowFlags = new ArrayList<>();
     if (encodingType == TSEncoding.RLE) {
       if (dataType == TSDataType.FLOAT) {
         encoder = new IntRleEncoder();
@@ -101,7 +110,7 @@ public class FloatEncoder extends Encoder {
     encoder.encode(valueLong, out);
   }
 
-  private void calculateMaxPonitNum() {
+  private void calculateMaxPointNum() {
     if (maxPointNumber <= 0) {
       maxPointNumber = 0;
       maxPointValue = 1;
@@ -111,21 +120,91 @@ public class FloatEncoder extends Encoder {
   }
 
   private int convertFloatToInt(float value) {
-    return (int) Math.round(value * maxPointValue);
+    if (value * maxPointValue > Integer.MAX_VALUE || value * maxPointValue < Integer.MIN_VALUE) {
+      if (value > Integer.MAX_VALUE || value < Integer.MIN_VALUE) {
+        underflowFlags.add(null);
+        return Float.floatToIntBits(value);
+      } else {
+        underflowFlags.add(false);
+        return Math.round(value);
+      }
+    } else {
+      if (Float.isNaN(value)) {
+        underflowFlags.add(null);
+        return Float.floatToIntBits(value);
+      } else {
+        underflowFlags.add(true);
+        return (int) Math.round(value * maxPointValue);
+      }
+    }
   }
 
   private long convertDoubleToLong(double value) {
-    return Math.round(value * maxPointValue);
+    if (value * maxPointValue > Long.MAX_VALUE || value * maxPointValue < Long.MIN_VALUE) {
+      if (value > Long.MAX_VALUE || value < Long.MIN_VALUE) {
+        underflowFlags.add(null);
+        return Double.doubleToLongBits(value);
+      } else {
+        underflowFlags.add(false);
+        return Math.round(value);
+      }
+    } else {
+      if (Double.isNaN(value)) {
+        underflowFlags.add(null);
+        return Double.doubleToLongBits(value);
+      } else {
+        underflowFlags.add(true);
+        return Math.round(value * maxPointValue);
+      }
+    }
   }
 
   @Override
   public void flush(ByteArrayOutputStream out) throws IOException {
     encoder.flush(out);
+    if (hasOverflow()) {
+      byte[] ba = out.toByteArray();
+      out.reset();
+      BitMap bitMapOfValueItselfOverflowInfo = null;
+      BitMap bitMapOfUnderflowInfo = new BitMap(underflowFlags.size());
+      for (int i = 0; i < underflowFlags.size(); i++) {
+        if (underflowFlags.get(i) == null) {
+          if (bitMapOfValueItselfOverflowInfo == null) {
+            bitMapOfValueItselfOverflowInfo = new BitMap(underflowFlags.size());
+          }
+          bitMapOfValueItselfOverflowInfo.mark(i);
+        } else if (underflowFlags.get(i)) {
+          bitMapOfUnderflowInfo.mark(i);
+        }
+      }
+      if (bitMapOfValueItselfOverflowInfo != null) {
+        // flag of value itself contains
+        ReadWriteForEncodingUtils.writeUnsignedVarInt(Integer.MAX_VALUE - 1, out);
+      } else {
+        ReadWriteForEncodingUtils.writeUnsignedVarInt(Integer.MAX_VALUE, out);
+      }
+      ReadWriteForEncodingUtils.writeUnsignedVarInt(underflowFlags.size(), out);
+      out.write(bitMapOfUnderflowInfo.getByteArray());
+      if (bitMapOfValueItselfOverflowInfo != null) {
+        out.write(bitMapOfValueItselfOverflowInfo.getByteArray());
+      }
+      out.write(ba);
+    }
     reset();
   }
 
   private void reset() {
     isMaxPointNumberSaved = false;
+    underflowFlags.clear();
+  }
+
+  private Boolean hasOverflow() {
+    for (Boolean flag : underflowFlags) {
+      if (flag == null || !flag) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void saveMaxPointNumber(ByteArrayOutputStream out) {
