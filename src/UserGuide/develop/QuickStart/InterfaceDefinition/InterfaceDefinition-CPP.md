@@ -198,20 +198,14 @@ public:
     /**
      * @brief Constructs a Tablet object with the given parameters.
      *
-     * @param insert_target_name The name of the target table where the data will be inserted.
-     *                           Must be a non-empty string.
      * @param column_names A vector containing the names of the columns in the tablet.
      *                     Each name corresponds to a column in the target table.
      * @param data_types A vector containing the data types of each column.
      *                   These must match the schema of the target table.
-     * @param column_categories A vector containing the categories (tag or field) of each column.
-     *                          These provide additional information on how each column should be handled.
      * @param max_rows The maximum number of rows that this tablet can hold. Defaults to DEFAULT_MAX_ROWS.
      */
-    Tablet(const std::string &insert_target_name,
-           const std::vector<std::string> &column_names,
+    Tablet(const std::vector<std::string> &column_names,
            const std::vector<common::TSDataType> &data_types,
-           const std::vector<ColumnCategory> &column_categories,
            int max_rows = DEFAULT_MAX_ROWS);
 
     /**
@@ -250,13 +244,5 @@ public:
      */
     template <typename T>
     int add_value(uint32_t row_index, const std::string &measurement_name, T val);
-
-    /**
-     * @brief Initializes the Tablet object.
-     *
-     * This method performs any necessary setup before the tablet can be used.
-     * @return Returns 0 on success, or a non-zero error code on failure.
-     */
-    int init();
 };
 ```
