@@ -31,6 +31,7 @@ typedef enum {
     TS_DATATYPE_DOUBLE = 4,
     TS_DATATYPE_TEXT = 5,
     TS_DATATYPE_VECTOR = 6,
+    TS_DATATYPE_STRING = 11,
     TS_DATATYPE_NULL_TYPE = 254,
     TS_DATATYPE_INVALID = 255
 } TSDataType;
@@ -117,8 +118,8 @@ extern "C" {
 
 /*--------------------------Tablet API------------------------ */
 Tablet tablet_new_with_device(const char* device_id, char** column_name_list,
-                              TSDataType* data_types, int column_num,
-                              int max_rows);
+                              TSDataType* data_types, ColumnCategory* category,
+                              int column_num, int max_rows);
 
 Tablet tablet_new(const char** column_name_list, TSDataType* data_types,
                   int column_num);
@@ -138,15 +139,21 @@ TABLET_ADD_VALUE_BY_NAME(float);
 TABLET_ADD_VALUE_BY_NAME(double);
 TABLET_ADD_VALUE_BY_NAME(bool);
 
-#define TABLE_ADD_VALUE_BY_INDEX(type)                                        \
+ERRNO tablet_add_value_by_name_string(Tablet tablet, uint32_t row_index,
+                                      const char* column_name, char* value);
+
+#define TABLET_ADD_VALUE_BY_INDEX(type)                                       \
     ERRNO tablet_add_value_by_index_##type(Tablet tablet, uint32_t row_index, \
                                            uint32_t column_index, type value);
 
-TABLE_ADD_VALUE_BY_INDEX(int32_t);
-TABLE_ADD_VALUE_BY_INDEX(int64_t);
-TABLE_ADD_VALUE_BY_INDEX(float);
-TABLE_ADD_VALUE_BY_INDEX(double);
-TABLE_ADD_VALUE_BY_INDEX(bool);
+TABLET_ADD_VALUE_BY_INDEX(int32_t);
+TABLET_ADD_VALUE_BY_INDEX(int64_t);
+TABLET_ADD_VALUE_BY_INDEX(float);
+TABLET_ADD_VALUE_BY_INDEX(double);
+TABLET_ADD_VALUE_BY_INDEX(bool);
+
+ERRNO tablet_add_value_by_index_string(Tablet tablet, uint32_t row_index,
+                                       uint32_t column_index, char* value);
 
 void* tablet_get_value(Tablet tablet, uint32_t row_index, uint32_t schema_index,
                        TSDataType* type);
@@ -157,7 +164,7 @@ TsRecord ts_record_new(const char* device_id, timestamp timestamp,
 
 #define INSERT_DATA_INTO_TS_RECORD_BY_NAME(type)     \
     ERRNO insert_data_into_ts_record_by_name_##type( \
-        TsRecord data, const char* measurement_name, type value);
+        TsRecord data, const char* measurement_name, const type value);
 
 INSERT_DATA_INTO_TS_RECORD_BY_NAME(int32_t);
 INSERT_DATA_INTO_TS_RECORD_BY_NAME(int64_t);
@@ -184,6 +191,7 @@ ERRNO tsfile_writer_register_device(TsFileWriter writer,
 
 /*-------------------TsFile Writer write and flush data------------------ */
 ERRNO tsfile_writer_write_tablet(TsFileWriter writer, Tablet tablet);
+ERRNO tsfile_writer_write_table(TsFileWriter writer, Tablet tablet);
 ERRNO tsfile_writer_write_ts_record(TsFileWriter writer, TsRecord record);
 ERRNO tsfile_writer_flush_data(TsFileWriter writer);
 
@@ -195,7 +203,7 @@ ResultSet tsfile_reader_query_device(TsFileReader reader,
                                      const char* device_name,
                                      char** sensor_name, uint32_t sensor_num,
                                      timestamp start_time, timestamp end_time);
-bool tsfile_result_set_has_next(ResultSet result_set);
+bool tsfile_result_set_next(ResultSet result_set);
 
 #define TSFILE_RESULT_SET_GET_VALUE_BY_NAME(type)                         \
     type tsfile_result_set_get_value_by_name_##type(ResultSet result_set, \
