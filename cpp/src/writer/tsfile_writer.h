@@ -147,6 +147,8 @@ class TsFileWriter {
     // std::vector<storage::ChunkWriter*> &chunk_writers);
     int write_column(storage::ChunkWriter *chunk_writer, const Tablet &,
                      int col_idx, uint32_t start_idx = 0, uint32_t end_idx = UINT32_MAX);
+    int time_write_column(TimeChunkWriter* time_chunk_writer, const Tablet& tablet, uint32_t start_idx = 0,
+                          uint32_t end_idx = UINT32_MAX);
     int register_timeseries(const std::string &device_path,
                             MeasurementSchema *measurement_schema,
                             bool is_aligned = false);
@@ -161,7 +163,6 @@ class TsFileWriter {
     storage::TsFileIOWriter *io_writer_;
     // device_id -> MeasurementSchemaGroup
     DeviceSchemasMap schemas_;
-    TableSchemasMap table_schema_map_;
     bool start_file_done_;
     // record count since last flush
     int64_t record_count_since_last_flush_;
@@ -195,7 +196,8 @@ class TsFileWriter {
                            uint32_t row_count);
 
     int value_write_column(ValueChunkWriter *value_chunk_writer,
-                           const Tablet &tablet, int col_idx);
+                           const Tablet &tablet, int col_idx,
+                           uint32_t start_idx = 0, uint32_t end_idx = UINT32_MAX);
 };
 
 }  // end namespace storage
