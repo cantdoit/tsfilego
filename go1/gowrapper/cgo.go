@@ -20,16 +20,15 @@
 package gowrapper
 
 /*
-#cgo CFLAGS: -I${SRCDIR}/../../cwrapper
-#cgo LDFLAGS: -L${SRCDIR}/../../cwrapper -ltsfile
-#include "TsFile-cwrapper.h"
+#cgo CFLAGS: -I../../../cpp/src/cwrapper
+#include "tsfile_cwrapper.h"
 */
 import "C"
 import (
-	"fmt"
-	"unsafe"
-	"time"
 	"errors"
+	"fmt"
+	"time"
+	"unsafe"
 )
 
 const (
@@ -47,16 +46,16 @@ var typeMapping = map[string]C.TSDataType{
 
 // Reader represents a TsFile reader
 type Reader struct {
-	cReader C.TsFileReader
-	cRet    C.QueryDataRet
-	batchSize int
+	cReader       C.TsFileReader
+	cRet          C.QueryDataRet
+	batchSize     int
 	readAllAtOnce bool
 }
 
 // NewReader creates a new TsFile reader
 func NewReader(path string, tableName string, columns []string, startTime, endTime *time.Time, batchSize *int) (*Reader, error) {
 	r := &Reader{
-		batchSize: 1024,
+		batchSize:     1024,
 		readAllAtOnce: true,
 	}
 
@@ -72,7 +71,7 @@ func NewReader(path string, tableName string, columns []string, startTime, endTi
 	var errCode C.ErrorCode
 	r.cReader = C.ts_reader_open(cPath, &errCode)
 	if errCode != 0 {
-		return nil, fmt.Errorf("failed to open reader (code %d)", errCode)
+		return nil, fmt.Errorf("failed to open reader (code %v)", errCode)
 	}
 
 	// Query the data
@@ -194,7 +193,7 @@ func (r *Reader) nextBatch() ([]map[string]interface{}, error) {
 			// Check if value is NULL
 			isNull := *(*C.bint)(unsafe.Pointer(
 				uintptr(unsafe.Pointer(result.bitmap[col])) + uintptr(row)*unsafe.Sizeof(*result.bitmap[col]),
-			))) == 0
+			)) == 0
 			if isNull {
 				rowData[colName] = nil
 				continue
@@ -255,7 +254,7 @@ func NewWriter(path string) (*Writer, error) {
 	var errCode C.ErrorCode
 	cWriter := C.ts_writer_open(cPath, &errCode)
 	if errCode != 0 {
-		return nil, fmt.Errorf("failed to open writer (code %d)", errCode)
+		return nil, fmt.Errorf("failed to open writer (code %v)", errCode)
 	}
 
 	return &Writer{cWriter: cWriter}, nil
@@ -275,8 +274,8 @@ func (w *Writer) RegisterTimeseries(tableName, columnName, dataType string) erro
 	}
 
 	schema := C.ColumnSchema{
-		name:          cCol,
-		data_type:     typ,
+		name:      cCol,
+		data_type: typ,
 	}
 
 	if C.tsfile_register_table_column(w.cWriter, cTable, &schema) != 0 {

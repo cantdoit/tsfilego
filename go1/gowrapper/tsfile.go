@@ -124,7 +124,7 @@ func (tf *TsFile) Close() error {
 	return err
 }
 
-// Helper function to create a new TsFile with reader
+// OpenForReading Helper function to create a new TsFile with reader
 func OpenForReading(path string, tableName string, columns []string,
 	startTime, endTime *time.Time, batchSize *int) (*TsFile, error) {
 

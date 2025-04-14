@@ -1,4 +1,4 @@
-package tsfile
+package tsfilego
 
 import (
 	"fmt"
