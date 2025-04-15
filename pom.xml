@@ -134,7 +134,7 @@
                             <!-- Exclude third_party-->
                             <exclude>**/third_party/**</exclude>
                             <!-- Exclude entire go directory -->
-                            <exclude>go/**/*</exclude>
+                            <exclude>go1/**/*</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
