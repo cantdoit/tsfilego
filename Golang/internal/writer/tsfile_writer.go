@@ -25,7 +25,8 @@ type TsFileWriter struct {
 // NewTsFileWriter creates a new instance of TsFileWriter
 func NewTsFileWriter() *TsFileWriter {
 	return &TsFileWriter{
-		DeviceSchemas: make(map[string]*common.DeviceSchema),
+		DeviceSchemas:  make(map[string]*common.DeviceSchema),
+		WriteFileReady: false,
 	}
 }
 
@@ -35,11 +36,6 @@ type MeasurementSchema struct {
 	DataType   string // Data type (e.g., INT32, FLOAT)
 	Encoding   string // Encoding method (e.g., RLE, TS_2DIFF)
 	Compressor string // Compression algorithm (e.g., LZ4, SNAPPY)
-}
-
-// DeviceSchema holds the schema for a specific device
-type DeviceSchema struct {
-	Measurements map[string]*MeasurementSchema // Map of measurement names to measurement schemas
 }
 
 // Open handles opening or creating a TSFile
