@@ -22,7 +22,7 @@
 # TsFile Python Document
 
 <pre>
-___________    ___________.__.__          
+___________    ___________.__.__        
 \__    ___/____\_   _____/|__|  |   ____  
   |    | /  ___/|    __)  |  |  | _/ __ \ 
   |    | \___ \ |     \   |  |  |_\  ___/ 
@@ -30,23 +30,20 @@ ___________    ___________.__.__
              \/     \/                 \/  
 </pre>
 
-
 ## Introduction
 
 This directory contains the Python implementation of TsFile. The Python version is built on the CPP version and uses the Cython package to integrate TsFile's read and write capabilities into the Python environment. Users can read and write TsFile as easily as they use read_csv and write_csv in Pandas.
 
 The source code can be found in the `./tsfile` directory. Files ending with `.pyx` and `.pyd` are wrapper code written in Cython. The `tsfile/tsfile.py` defines some user interfaces. You can find some examples of reading and writing in the `.examples/examples.py`.
 
-
 ## How to make contributions
 
 Using pylint to check Python code is recommended. However, there is no suitable style checking tool for Cython code, and this part of the code should be consistent with the Python style required by pylint.
 
 **Feature List**
-- [ ] In pywrapper, invoke the batch reading interface implemented in CPP version of TsFile.
-- [ ] Supports writing multiple DataFrames into one single TsFile.
 
-
+- [ ]  In pywrapper, invoke the batch reading interface implemented in CPP version of TsFile.
+- [ ]  Supports writing multiple DataFrames into one single TsFile.
 
 ## Build
 
@@ -55,7 +52,7 @@ Before constructing Python version of TsFile, it is necessary to build [CPP vers
 Build by mvn in root directory:
 
 ```sh
-mvn -P with-cpp,with-python clean verify
+span
 ```
 
 Build by python command:
@@ -63,4 +60,3 @@ Build by python command:
 ```sh
 python setup.py build_ext --inplace
 ```
-

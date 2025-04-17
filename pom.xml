@@ -135,6 +135,8 @@
                             <exclude>**/third_party/**</exclude>
                             <!-- Exclude entire go directory -->
                             <exclude>go1/**/*</exclude>
+                            <!-- Exclude entire golang directory -->
+                            <exclude>Golang/**/*</exclude>
                         </excludes>
                     </configuration>
                 </plugin>
