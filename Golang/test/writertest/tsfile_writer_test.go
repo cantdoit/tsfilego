@@ -19,7 +19,7 @@ func TestTsFileWriter_Open(t *testing.T) {
 	}{
 		{
 			name:     "nonexistent_path",
-			filePath: "testfile1.txt",
+			filePath: "testfile1.tsfile",
 			flags:    os.O_CREATE | os.O_WRONLY,
 			mode:     0644,
 			setupFunc: func(filePath string) error {
@@ -35,7 +35,7 @@ func TestTsFileWriter_Open(t *testing.T) {
 		},
 		{
 			name:     "file_already_exists",
-			filePath: "testfile2.txt",
+			filePath: "testfile2.tsfile",
 			flags:    os.O_CREATE | os.O_WRONLY,
 			mode:     0644,
 			setupFunc: func(filePath string) error {
@@ -52,7 +52,7 @@ func TestTsFileWriter_Open(t *testing.T) {
 		},
 		{
 			name:     "invalid_path",
-			filePath: "/invalid_path/testfile3.txt",
+			filePath: "/invalid_path/testfile3.tsfile",
 			flags:    os.O_CREATE | os.O_WRONLY,
 			mode:     0644,
 			setupFunc: func(filePath string) error {
