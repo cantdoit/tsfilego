@@ -31,6 +31,7 @@ func RegisterOrUpdateSchema(deviceSchemas map[string]*DeviceSchema, deviceName, 
 	}
 
 	// Check the encoding (example validation can be expanded)
+	// TODO: if no encoding make sure it defaults to no encoding
 	validEncodings := []string{"RLE", "PLAIN", "TS_2DIFF"}
 	isValidEncoding := false
 	for _, e := range validEncodings {
@@ -42,6 +43,8 @@ func RegisterOrUpdateSchema(deviceSchemas map[string]*DeviceSchema, deviceName, 
 	if !isValidEncoding {
 		return errors.New("invalid encoding: " + encoding)
 	}
+
+	// TODO: check the compression and if there is no compression default to one setting
 
 	deviceSchema, exists := deviceSchemas[deviceName]
 	if !exists {

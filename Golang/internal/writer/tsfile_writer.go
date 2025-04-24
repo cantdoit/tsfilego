@@ -19,17 +19,20 @@ type TsFileWriter struct {
 	WriteFile      *file.WriteFile                 // Instance of WriteFile used to manage underlying file
 	DeviceSchemas  map[string]*common.DeviceSchema // Map of device names to their respective schemas
 	WriteFileReady bool                            // Tracks if the write file is initialized and ready
+	ChunkWriters   map[string]*ChunkWriter         // Map of device to their ChunkWriters
 
 }
 
 // NewTsFileWriter creates a new instance of TsFileWriter
 func NewTsFileWriter() *TsFileWriter {
 	return &TsFileWriter{
-		DeviceSchemas:  make(map[string]*common.DeviceSchema),
-		WriteFileReady: false,
+		DeviceSchemas: make(map[string]*common.DeviceSchema), // Initialize device schemas map
+		ChunkWriters:  make(map[string]*ChunkWriter),         // Initialize chunk writers map
+
 	}
 }
 
+/*
 // MeasurementSchema defines the schema for a single measurement
 type MeasurementSchema struct {
 	Name       string // Measurement name (e.g., temperature)
@@ -37,6 +40,7 @@ type MeasurementSchema struct {
 	Encoding   string // Encoding method (e.g., RLE, TS_2DIFF)
 	Compressor string // Compression algorithm (e.g., LZ4, SNAPPY)
 }
+*/
 
 // Open handles opening or creating a TSFile
 // - Parameters:
