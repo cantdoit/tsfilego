@@ -70,7 +70,7 @@ procedure MTest is
             Compare_First := Next_First;
          end Compare;
 
-         procedure Compare_Write is new ZLib.Write (Write => Compare);
+         procedure Compare_Write is new ZLib.WriteBuf (WriteBuf => Compare);
       begin
          Compare_Write (Inflate, Item, No_Flush);
       end Further;

@@ -220,7 +220,7 @@ public class TsFileIOWriter implements AutoCloseable {
    * Writes given bytes to output stream. This method is called when total memory size exceeds the
    * chunk group size threshold.
    *
-   * @param bytes - data of several pages which has been packed
+   * @param bytes - data of several Pages which has been packed
    * @throws IOException if an I/O error occurs.
    */
   public void writeBytesToStream(PublicBAOS bytes) throws IOException {
@@ -278,7 +278,7 @@ public class TsFileIOWriter implements AutoCloseable {
    * @param compressionCodecName - compression name of this time series
    * @param tsDataType - data type
    * @param statistics - Chunk statistics
-   * @param dataSize - the serialized size of all pages
+   * @param dataSize - the serialized size of all Pages
    * @param mask - 0x80 for time chunk, 0x40 for value chunk, 0x00 for common chunk
    * @throws IOException if I/O error occurs
    */
@@ -315,7 +315,7 @@ public class TsFileIOWriter implements AutoCloseable {
     header.serializeTo(out.wrapAsStream());
   }
 
-  /** Write a whole chunk in another file into this file. Providing fast merge for IoTDB. */
+  /** WriteBuf a whole chunk in another file into this file. Providing fast merge for IoTDB. */
   public void writeChunk(Chunk chunk, ChunkMetadata chunkMetadata) throws IOException {
     ChunkHeader chunkHeader = chunk.getHeader();
     currentChunkMetadata =
@@ -337,7 +337,7 @@ public class TsFileIOWriter implements AutoCloseable {
     }
   }
 
-  /** Write an empty value chunk into file directly. Only used for aligned timeseries. */
+  /** WriteBuf an empty value chunk into file directly. Only used for aligned timeseries. */
   public void writeEmptyValueChunk(
       String measurementId,
       CompressionType compressionType,
@@ -793,11 +793,11 @@ public class TsFileIOWriter implements AutoCloseable {
               iChunkMetadataList.get(0).getDataType(), tempOutput.wrapAsStream());
     }
     PublicBAOS buffer = new PublicBAOS();
-    int totalSize = 0;
+    int TotalSize = 0;
     for (IChunkMetadata chunkMetadata : iChunkMetadataList) {
-      totalSize += chunkMetadata.serializeTo(buffer, true);
+      TotalSize += chunkMetadata.serializeTo(buffer, true);
     }
-    writtenSize += ReadWriteIOUtils.write(totalSize, tempOutput.wrapAsStream());
+    writtenSize += ReadWriteIOUtils.write(TotalSize, tempOutput.wrapAsStream());
     buffer.writeTo(tempOutput);
     writtenSize += buffer.size();
     return writtenSize;

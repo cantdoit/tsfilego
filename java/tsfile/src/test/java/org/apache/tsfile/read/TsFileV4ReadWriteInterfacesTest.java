@@ -54,7 +54,7 @@ public class TsFileV4ReadWriteInterfacesTest {
       long startTime = 1;
       int startValue = 1;
       int chunkGroupSize = 10;
-      int pageSize = 100;
+      int PageSize = 100;
       File file =
           TsFileGeneratorUtils.generateAlignedTsFile(
               filePath,
@@ -64,7 +64,7 @@ public class TsFileV4ReadWriteInterfacesTest {
               startTime,
               startValue,
               chunkGroupSize,
-              pageSize);
+              PageSize);
       List<IDeviceID> deviceIDList = new ArrayList<>();
       TableSchema tableSchema =
           new TableSchema(

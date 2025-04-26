@@ -92,7 +92,7 @@ public class FloatColumnBuilder implements ColumnBuilder {
     return writeFloat(value.getFloat());
   }
 
-  /** Write an Object to the current entry, which should be the Float type; */
+  /** WriteBuf an Object to the current entry, which should be the Float type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
     if (value instanceof Float) {

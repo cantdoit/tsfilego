@@ -80,7 +80,7 @@ TsFile adopts a columnar storage design, similar to other file formats, primaril
 
 - Page: The basic unit for storing time series data, sorted by time in ascending order with separate columns for timestamps and values.
 
-- Chunk: Comprising metadata headers and several pages, each chunk belongs to one time series, with variable sizes allowing for different compression and encoding methods.
+- Chunk: Comprising metadata headers and several Pages, each chunk belongs to one time series, with variable sizes allowing for different compression and encoding methods.
 
 - Chunk Group: Multiple chunks within a chunk group belong to one or multiple series of a device written in the same period, facilitating efficient query processing.
 
@@ -101,7 +101,7 @@ TsFile, CSV and Parquet in Comparison
 | Dimension       | TsFile       | CSV   | Parquet |
 |-----------------|--------------|-------|---------|
 | Data Model      | IoT          | Plain | Nested  |
-| Write Mode      | Tablet, Line | Line  | Line    |
+| WriteBuf Mode      | Tablet, Line | Line  | Line    |
 | Compression     | Yes          | No    | Yes     |
 | Read Mode       | Query, Scan  | Scan  | Query   |
 | Index on Series | Yes          | No    | No      |

@@ -86,7 +86,7 @@ public class TimeChunkWriterTest {
     }
     chunkWriter.sealCurrentPage();
     assertEquals(2, chunkWriter.getNumOfPages());
-    // two pages with statistics size: (82 + 17) * 2 + chunk header size: 9
+    // two Pages with statistics size: (82 + 17) * 2 + chunk header size: 9
     assertEquals(207L, chunkWriter.getCurrentChunkSize());
 
     try {
@@ -125,7 +125,7 @@ public class TimeChunkWriterTest {
     chunkWriter.write(times, 10, 0);
     chunkWriter.sealCurrentPage();
     assertEquals(2, chunkWriter.getNumOfPages());
-    // two pages with statistics size: (82 + 17) * 2 + chunk header size: 9
+    // two Pages with statistics size: (82 + 17) * 2 + chunk header size: 9
     assertEquals(207L, chunkWriter.getCurrentChunkSize());
 
     try {

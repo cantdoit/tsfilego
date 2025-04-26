@@ -91,9 +91,9 @@ public class TsFileWriteApiTest {
     TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(oldChunkGroupSize);
   }
 
-  private void setEnv(int chunkGroupSize, int pageSize) {
+  private void setEnv(int chunkGroupSize, int PageSize) {
     TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
   }
 
   public void registerAlignedTimeseries(TsFileWriter tsFileWriter) throws WriteProcessException {
@@ -615,7 +615,7 @@ public class TsFileWriteApiTest {
     }
   }
 
-  /** Write an empty page and then write a nonEmpty page. */
+  /** WriteBuf an empty page and then write a nonEmpty page. */
   @Test
   public void writeAlignedTimeseriesWithEmptyPage() throws IOException, WriteProcessException {
     TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(30);
@@ -666,7 +666,7 @@ public class TsFileWriteApiTest {
     }
   }
 
-  /** Write a nonEmpty page and then write an empty page. */
+  /** WriteBuf a nonEmpty page and then write an empty page. */
   @Test
   public void writeAlignedTimeseriesWithEmptyPage2() throws IOException, WriteProcessException {
     TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(30);
@@ -711,7 +711,7 @@ public class TsFileWriteApiTest {
     }
   }
 
-  /** Write a nonEmpty page and then write an empty page. */
+  /** WriteBuf a nonEmpty page and then write an empty page. */
   @Test
   public void writeAlignedTimeseriesWithEmptyPage3() throws IOException, WriteProcessException {
     try (TsFileWriter tsFileWriter = new TsFileWriter(f)) {
@@ -781,7 +781,7 @@ public class TsFileWriteApiTest {
   public void writeTsFileByFlushingPageDirectly() throws IOException, WriteProcessException {
     TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(30);
 
-    // create a tsfile with four pages in one timeseries
+    // create a tsfile with four Pages in one timeseries
     try (TsFileWriter tsFileWriter = new TsFileWriter(f)) {
       registerTimeseries(tsFileWriter);
 

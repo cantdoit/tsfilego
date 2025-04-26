@@ -294,7 +294,7 @@ public class TsFileIOWriterMemoryControlTest {
   /** The following tests is for writing normal series in different nums. */
 
   /**
-   * Write a file with 10 devices and 5 series in each device. For each series, we write one chunk
+   * WriteBuf a file with 10 devices and 5 series in each device. For each series, we write one chunk
    * for it. This test make sure that each chunk
    *
    * @throws IOException
@@ -348,7 +348,7 @@ public class TsFileIOWriterMemoryControlTest {
   }
 
   /**
-   * Write a file with 10 devices and 5 series in each device. For each series, we write 100 chunks
+   * WriteBuf a file with 10 devices and 5 series in each device. For each series, we write 100 chunks
    * for it. This test make sure that each chunk
    *
    * @throws IOException
@@ -436,7 +436,7 @@ public class TsFileIOWriterMemoryControlTest {
   }
 
   /**
-   * Write a file with 10 devices and 5 series in each device. For each series, we write 100 chunks
+   * WriteBuf a file with 10 devices and 5 series in each device. For each series, we write 100 chunks
    * for it. We maintain some chunk metadata in memory when calling endFile().
    *
    * @throws IOException
@@ -527,7 +527,7 @@ public class TsFileIOWriterMemoryControlTest {
   }
 
   /**
-   * Write a file with 2 devices and 5 series in each device. For each series, we write 1024 chunks
+   * WriteBuf a file with 2 devices and 5 series in each device. For each series, we write 1024 chunks
    * for it. This test make sure that each chunk
    *
    * @throws IOException
@@ -619,7 +619,7 @@ public class TsFileIOWriterMemoryControlTest {
   }
 
   /**
-   * Write a file with 2 devices and 1024 series in each device. For each series, we write 50 chunks
+   * WriteBuf a file with 2 devices and 1024 series in each device. For each series, we write 50 chunks
    * for it. This test make sure that each chunk
    *
    * @throws IOException
@@ -711,7 +711,7 @@ public class TsFileIOWriterMemoryControlTest {
   }
 
   /**
-   * Write a file with 1024 devices and 5 series in each device. For each series, we write 10 chunks
+   * WriteBuf a file with 1024 devices and 5 series in each device. For each series, we write 10 chunks
    * for it. This test make sure that each chunk
    *
    * @throws IOException

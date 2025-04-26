@@ -78,7 +78,7 @@ public class TsFileWriter implements AutoCloseable {
 
   private EncryptParameter encryptParam;
 
-  private final int pageSize;
+  private final int PageSize;
   private long recordCount = 0;
 
   // deviceId -> measurementIdList
@@ -175,14 +175,14 @@ public class TsFileWriter implements AutoCloseable {
     }
     fileWriter.setSchema(schema);
 
-    this.pageSize = conf.getPageSizeInByte();
+    this.PageSize = conf.getPageSizeInByte();
     this.chunkGroupSizeThreshold = conf.getGroupSizeInByte();
     config.setTSFileStorageFs(conf.getTSFileStorageFs());
-    if (this.pageSize >= chunkGroupSizeThreshold) {
+    if (this.PageSize >= chunkGroupSizeThreshold) {
       LOG.warn(
           "TsFile's page size {} is greater than chunk group size {}, please enlarge the chunk group"
               + " size or decrease page size. ",
-          pageSize,
+          PageSize,
           chunkGroupSizeThreshold);
     }
 
@@ -697,7 +697,7 @@ public class TsFileWriter implements AutoCloseable {
   }
 
   /**
-   * Write the tablet in to the TsFile with the table-view. The method will try to split the tablet
+   * WriteBuf the tablet in to the TsFile with the table-view. The method will try to split the tablet
    * by device. If you know the device association within the tablet, please use writeTable(Tablet
    * tablet, List<Pair<IDeviceID, Integer>> deviceIdEndIndexPairs). One typical case where the other
    * method should be used is that all rows in the tablet belong to the same device.
@@ -713,7 +713,7 @@ public class TsFileWriter implements AutoCloseable {
   }
 
   /**
-   * Write the tablet in to the TsFile with the table-view.
+   * WriteBuf the tablet in to the TsFile with the table-view.
    *
    * @param tablet data to write
    * @param deviceIdEndIndexPairs each deviceId and its end row number in row order. For example, if

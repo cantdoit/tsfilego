@@ -48,7 +48,7 @@ public class DeviceTableModelWriter extends AbstractTableModelTsFileWriter {
   }
 
   /**
-   * Write the tablet in to the TsFile with the table-view. The method will try to split the tablet
+   * WriteBuf the tablet in to the TsFile with the table-view. The method will try to split the tablet
    * by device.
    *
    * @param table data to write

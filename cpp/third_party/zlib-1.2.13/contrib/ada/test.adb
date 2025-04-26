@@ -168,7 +168,7 @@ procedure Test is
    begin
       loop
          Read  (Source, Buffer, Last);
-         Write (Target, Buffer (1 .. Last));
+         WriteBuf (Target, Buffer (1 .. Last));
 
          exit when Last < Buffer'Last;
       end loop;
@@ -191,7 +191,7 @@ procedure Test is
 
    procedure Data_Out (Item : in Stream_Element_Array) is
    begin
-      Write (File_Out, Item);
+      WriteBuf (File_Out, Item);
    end Data_Out;
 
    -------------------
@@ -237,14 +237,14 @@ procedure Test is
       Fill_Buffer (1, Buffer'Length - 2);
 
       for J in 1 .. Buffer_Count loop
-         Write (File_In, Buffer);
+         WriteBuf (File_In, Buffer);
 
          Fill_Buffer (J, Density);
       end loop;
 
       --  fill remain size.
 
-      Write
+      WriteBuf
         (File_In,
          Buffer
            (1 .. Stream_Element_Offset
@@ -365,7 +365,7 @@ begin
 
          ZLib.Streams.Flush (File_Z, ZLib.Finish);
 
-         Print_Statistic ("Write compress",
+         Print_Statistic ("WriteBuf compress",
                           ZLib.Streams.Write_Total_Out (File_Z));
 
          ZLib.Streams.Close (File_Z);
@@ -444,7 +444,7 @@ begin
            (Source => Stream (File_In).all,
             Target => File_Z);
 
-         Print_Statistic ("Write decompress",
+         Print_Statistic ("WriteBuf decompress",
                           ZLib.Streams.Write_Total_Out (File_Z));
 
          ZLib.Streams.Close (File_Z);

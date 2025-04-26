@@ -346,9 +346,9 @@ public class TsFileSequenceReader implements AutoCloseable {
 
   /** this function does not modify the position of the file reader. */
   public String readTailMagic() throws IOException {
-    long totalSize = tsFileInput.size();
+    long TotalSize = tsFileInput.size();
     ByteBuffer magicStringBytes = ByteBuffer.allocate(TSFileConfig.MAGIC_STRING.getBytes().length);
-    tsFileInput.read(magicStringBytes, totalSize - TSFileConfig.MAGIC_STRING.getBytes().length);
+    tsFileInput.read(magicStringBytes, TotalSize - TSFileConfig.MAGIC_STRING.getBytes().length);
     magicStringBytes.flip();
     return new String(magicStringBytes.array());
   }
@@ -1706,7 +1706,7 @@ public class TsFileSequenceReader implements AutoCloseable {
    *
    * @param dataSize the size of chunkdata
    * @param position the offset of the chunk data
-   * @return the pages of this chunk
+   * @return the Pages of this chunk
    */
   public ByteBuffer readChunk(long position, int dataSize) throws IOException {
     return readChunk(position, dataSize, null);
@@ -1718,7 +1718,7 @@ public class TsFileSequenceReader implements AutoCloseable {
    * @param dataSize the size of chunkdata
    * @param position the offset of the chunk data
    * @param ioSizeRecorder can be null
-   * @return the pages of this chunk
+   * @return the Pages of this chunk
    */
   public ByteBuffer readChunk(long position, int dataSize, LongConsumer ioSizeRecorder)
       throws IOException {
@@ -1955,11 +1955,11 @@ public class TsFileSequenceReader implements AutoCloseable {
    *
    * @param position the start position of data in the tsFileInput, or the current position if
    *     position = -1
-   * @param totalSize the size of data that want to read
+   * @param TotalSize the size of data that want to read
    * @return data that been read.
    */
-  protected final ByteBuffer readData(long position, int totalSize) throws IOException {
-    return readData(position, totalSize, null);
+  protected final ByteBuffer readData(long position, int TotalSize) throws IOException {
+    return readData(position, TotalSize, null);
   }
 
   /**
@@ -1970,22 +1970,22 @@ public class TsFileSequenceReader implements AutoCloseable {
    *
    * @param position the start position of data in the tsFileInput, or the current position if
    *     position = -1
-   * @param totalSize the size of data that want to read
+   * @param TotalSize the size of data that want to read
    * @param ioSizeRecorder can be null
    * @return data that been read.
    */
-  protected ByteBuffer readData(long position, int totalSize, LongConsumer ioSizeRecorder)
+  protected ByteBuffer readData(long position, int TotalSize, LongConsumer ioSizeRecorder)
       throws IOException {
     if (ioSizeRecorder != null) {
-      ioSizeRecorder.accept(totalSize);
+      ioSizeRecorder.accept(TotalSize);
     }
-    int allocateSize = Math.min(MAX_READ_BUFFER_SIZE, totalSize);
-    int allocateNum = (int) Math.ceil((double) totalSize / allocateSize);
-    ByteBuffer buffer = ByteBuffer.allocate(totalSize);
+    int allocateSize = Math.min(MAX_READ_BUFFER_SIZE, TotalSize);
+    int allocateNum = (int) Math.ceil((double) TotalSize / allocateSize);
+    ByteBuffer buffer = ByteBuffer.allocate(TotalSize);
     int bufferLimit = 0;
     for (int i = 0; i < allocateNum; i++) {
       if (i == allocateNum - 1) {
-        allocateSize = totalSize - allocateSize * (allocateNum - 1);
+        allocateSize = TotalSize - allocateSize * (allocateNum - 1);
       }
       bufferLimit += allocateSize;
       buffer.limit(bufferLimit);
@@ -2420,7 +2420,7 @@ public class TsFileSequenceReader implements AutoCloseable {
         } catch (StopReadTsFileByInterruptException e) {
           throw e;
         } catch (IOException e) {
-          logger.error("Error occurred while checking the statistics of chunk and its pages");
+          logger.error("Error occurred while checking the statistics of chunk and its Pages");
           throw e;
         }
         if (tscheckStatus == TsFileCheckStatus.FILE_EXISTS_MISTAKES) {

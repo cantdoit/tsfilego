@@ -59,14 +59,14 @@ public class TsFileGeneratorForSeriesReaderByTimestamp {
   public static Schema schema;
   private static int rowCount;
   private static int chunkGroupSize;
-  private static int pageSize;
+  private static int PageSize;
   private static int preChunkGroupSize;
   private static int prePageSize;
 
   public static void generateFile(int rc, int rs, int ps) throws IOException {
     rowCount = rc;
     chunkGroupSize = rs;
-    pageSize = ps;
+    PageSize = ps;
     prepare();
     write();
   }
@@ -178,7 +178,7 @@ public class TsFileGeneratorForSeriesReaderByTimestamp {
     preChunkGroupSize = TSFileDescriptor.getInstance().getConfig().getGroupSizeInByte();
     prePageSize = TSFileDescriptor.getInstance().getConfig().getMaxNumberOfPointsInPage();
     TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
     innerWriter = new TsFileWriter(file, schema, TSFileDescriptor.getInstance().getConfig());
 
     // write

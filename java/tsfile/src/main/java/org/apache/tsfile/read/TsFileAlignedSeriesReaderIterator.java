@@ -62,7 +62,7 @@ public class TsFileAlignedSeriesReaderIterator {
     int schemaIdx = 0;
     Chunk timeChunk = reader.readMemChunk((ChunkMetadata) timeChunkMetadata);
     Chunk[] valueChunks = new Chunk[schemaList.size()];
-    long totalSize = 0;
+    long TotalSize = 0;
     long totalPointNum = 0;
     int notNullChunkNum = 0;
     for (IChunkMetadata valueChunkMetadata : valueChunkMetadataList) {
@@ -78,24 +78,24 @@ public class TsFileAlignedSeriesReaderIterator {
       valueChunks[schemaIdx++] = chunk;
       notNullChunkNum++;
       totalPointNum += ((ChunkMetadata) valueChunkMetadata).getNumOfPoints();
-      totalSize += chunk.getHeader().getSerializedSize() + chunk.getHeader().getDataSize();
+      TotalSize += chunk.getHeader().getSerializedSize() + chunk.getHeader().getDataSize();
     }
 
     AlignedChunkReader chunkReader = new AlignedChunkReader(timeChunk, Arrays.asList(valueChunks));
 
-    return new NextAlignedChunkInfo(chunkReader, totalSize, notNullChunkNum, totalPointNum);
+    return new NextAlignedChunkInfo(chunkReader, TotalSize, notNullChunkNum, totalPointNum);
   }
 
   public class NextAlignedChunkInfo {
     private AlignedChunkReader reader;
-    private long totalSize;
+    private long TotalSize;
     private int notNullChunkNum;
     private long totalPointNum;
 
     public NextAlignedChunkInfo(
-        AlignedChunkReader reader, long totalSize, int notNullChunkNum, long totalPointNum) {
+        AlignedChunkReader reader, long TotalSize, int notNullChunkNum, long totalPointNum) {
       this.reader = reader;
-      this.totalSize = totalSize;
+      this.TotalSize = TotalSize;
       this.notNullChunkNum = notNullChunkNum;
       this.totalPointNum = totalPointNum;
     }
@@ -105,7 +105,7 @@ public class TsFileAlignedSeriesReaderIterator {
     }
 
     public long getTotalSize() {
-      return totalSize;
+      return TotalSize;
     }
 
     public long getTotalPointNum() {

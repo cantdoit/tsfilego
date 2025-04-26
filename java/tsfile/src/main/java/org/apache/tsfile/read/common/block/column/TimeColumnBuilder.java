@@ -74,7 +74,7 @@ public class TimeColumnBuilder implements ColumnBuilder {
     return this;
   }
 
-  /** Write an Object to the current entry, which should be the Long type; */
+  /** WriteBuf an Object to the current entry, which should be the Long type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
     if (value instanceof Long) {

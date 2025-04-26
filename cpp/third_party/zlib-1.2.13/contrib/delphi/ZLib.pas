@@ -89,7 +89,7 @@ type
     constructor Create(CompressionLevel: TCompressionLevel; Dest: TStream);
     destructor Destroy; override;
     function Read(var Buffer; Count: Longint): Longint; override;
-    function Write(const Buffer; Count: Longint): Longint; override;
+    function WriteBuf(const Buffer; Count: Longint): Longint; override;
     function Seek(Offset: Longint; Origin: Word): Longint; override;
     property CompressionRate: Single read GetCompressionRate;
     property OnProgress;
@@ -118,7 +118,7 @@ type
     constructor Create(Source: TStream);
     destructor Destroy; override;
     function Read(var Buffer; Count: Longint): Longint; override;
-    function Write(const Buffer; Count: Longint): Longint; override;
+    function WriteBuf(const Buffer; Count: Longint): Longint; override;
     function Seek(Offset: Longint; Origin: Word): Longint; override;
     property OnProgress;
   end;
@@ -441,7 +441,7 @@ begin
   raise ECompressionError.CreateRes(@sInvalidStreamOp);
 end;
 
-function TCompressionStream.Write(const Buffer; Count: Longint): Longint;
+function TCompressionStream.WriteBuf(const Buffer; Count: Longint): Longint;
 begin
   FZRec.next_in := @Buffer;
   FZRec.avail_in := Count;
@@ -519,7 +519,7 @@ begin
   Result := Count;
 end;
 
-function TDecompressionStream.Write(const Buffer; Count: Longint): Longint;
+function TDecompressionStream.WriteBuf(const Buffer; Count: Longint): Longint;
 begin
   raise EDecompressionError.CreateRes(@sInvalidStreamOp);
 end;

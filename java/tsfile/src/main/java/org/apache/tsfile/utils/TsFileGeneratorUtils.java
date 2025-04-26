@@ -155,7 +155,7 @@ public class TsFileGeneratorUtils {
       int startTime,
       int startValue,
       int chunkGroupSize,
-      int pageSize)
+      int PageSize)
       throws IOException, WriteProcessException {
     File file = fsFactory.getFile(filePath);
     if (file.exists()) {
@@ -166,8 +166,8 @@ public class TsFileGeneratorUtils {
     try {
       if (chunkGroupSize > 0)
         TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-      if (pageSize > 0)
-        TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+      if (PageSize > 0)
+        TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
       try (TsFileWriter tsFileWriter = new TsFileWriter(file)) {
         // register align timeseries
         List<IMeasurementSchema> alignedMeasurementSchemas = new ArrayList<>();
@@ -230,7 +230,7 @@ public class TsFileGeneratorUtils {
       long startTime,
       int startValue,
       int chunkGroupSize,
-      int pageSize)
+      int PageSize)
       throws IOException, WriteProcessException {
     File file = fsFactory.getFile(filePath);
     if (file.exists()) {
@@ -242,8 +242,8 @@ public class TsFileGeneratorUtils {
     if (chunkGroupSize > 0) {
       TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
     }
-    if (pageSize > 0) {
-      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    if (PageSize > 0) {
+      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
     }
 
     try (TsFileWriter tsFileWriter = new TsFileWriter(file)) {
@@ -284,7 +284,7 @@ public class TsFileGeneratorUtils {
       long startTime,
       int startValue,
       int chunkGroupSize,
-      int pageSize)
+      int PageSize)
       throws IOException, WriteProcessException {
     File file = fsFactory.getFile(filePath);
     if (file.exists()) {
@@ -295,8 +295,8 @@ public class TsFileGeneratorUtils {
     int originPageSize = TSFileDescriptor.getInstance().getConfig().getMaxNumberOfPointsInPage();
     if (chunkGroupSize > 0)
       TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    if (pageSize > 0)
-      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    if (PageSize > 0)
+      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
     try (TsFileWriter tsFileWriter = new TsFileWriter(file)) {
       // register nonAlign timeseries
       List<IMeasurementSchema> measurementSchemas = new ArrayList<>();
@@ -334,7 +334,7 @@ public class TsFileGeneratorUtils {
       int startTime,
       String value,
       int chunkGroupSize,
-      int pageSize)
+      int PageSize)
       throws IOException, WriteProcessException {
     File file = fsFactory.getFile(filePath);
     if (file.exists()) {
@@ -345,8 +345,8 @@ public class TsFileGeneratorUtils {
     int originPageSize = TSFileDescriptor.getInstance().getConfig().getMaxNumberOfPointsInPage();
     if (chunkGroupSize > 0)
       TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    if (pageSize > 0)
-      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    if (PageSize > 0)
+      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
 
     try (TsFileWriter tsFileWriter = new TsFileWriter(file)) {
       // register align timeseries
@@ -399,7 +399,7 @@ public class TsFileGeneratorUtils {
       int startTime,
       String value,
       int chunkGroupSize,
-      int pageSize)
+      int PageSize)
       throws IOException, WriteProcessException {
     File file = fsFactory.getFile(filePath);
     if (file.exists()) {
@@ -410,8 +410,8 @@ public class TsFileGeneratorUtils {
     int originPageSize = TSFileDescriptor.getInstance().getConfig().getMaxNumberOfPointsInPage();
     if (chunkGroupSize > 0)
       TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    if (pageSize > 0)
-      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    if (PageSize > 0)
+      TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
     try (TsFileWriter tsFileWriter = new TsFileWriter(file)) {
       // register nonAlign timeseries
       List<IMeasurementSchema> measurementSchemas = new ArrayList<>();

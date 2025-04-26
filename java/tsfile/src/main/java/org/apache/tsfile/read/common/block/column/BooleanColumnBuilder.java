@@ -82,7 +82,7 @@ public class BooleanColumnBuilder implements ColumnBuilder {
     return this;
   }
 
-  /** Write an Object to the current entry, which should be the Boolean type; */
+  /** WriteBuf an Object to the current entry, which should be the Boolean type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
     if (value instanceof Boolean) {

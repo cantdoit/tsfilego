@@ -57,7 +57,7 @@ public class TimeChunkWriter {
 
   private EncryptParameter encryptParam;
 
-  /** all pages of this chunk. */
+  /** all Pages of this chunk. */
   private PublicBAOS pageBuffer;
 
   private int numOfPages;
@@ -277,7 +277,7 @@ public class TimeChunkWriter {
     if (pageBuffer.size() == 0) {
       return 0;
     }
-    // return the serialized size of the chunk header + all pages
+    // return the serialized size of the chunk header + all Pages
     return ChunkHeader.getSerializedSize(measurementId, pageBuffer.size())
         + (long) pageBuffer.size();
   }
@@ -328,7 +328,7 @@ public class TimeChunkWriter {
 
     long dataOffset = writer.getPos();
 
-    // write all pages of this column
+    // write all Pages of this column
     writer.writeBytesToStream(pageBuffer);
 
     int dataSize = (int) (writer.getPos() - dataOffset);

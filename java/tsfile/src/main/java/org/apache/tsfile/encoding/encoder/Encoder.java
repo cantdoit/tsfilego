@@ -82,7 +82,7 @@ public abstract class Encoder {
   }
 
   /**
-   * Write all values buffered in memory cache to OutputStream.
+   * WriteBuf all values buffered in memory cache to OutputStream.
    *
    * @param out - ByteArrayOutputStream
    * @throws IOException cannot flush to OutputStream

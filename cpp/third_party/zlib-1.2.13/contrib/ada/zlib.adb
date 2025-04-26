@@ -662,10 +662,10 @@ package body ZLib is
    end Version;
 
    -----------
-   -- Write --
+   -- WriteBuf --
    -----------
 
-   procedure Write
+   procedure WriteBuf
      (Filter : in out Filter_Type;
       Item   : in     Ada.Streams.Stream_Element_Array;
       Flush  : in     Flush_Mode := No_Flush)
@@ -689,13 +689,13 @@ package body ZLib is
             Flush    => Flush);
 
          if Out_Last >= Buffer'First then
-            Write (Buffer (1 .. Out_Last));
+            WriteBuf (Buffer (1 .. Out_Last));
          end if;
 
          exit when In_Last = Item'Last or Stream_End (Filter);
 
          In_First := In_Last + 1;
       end loop;
-   end Write;
+   end WriteBuf;
 
 end ZLib;

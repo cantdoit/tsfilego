@@ -48,7 +48,7 @@ The current release version is `2.1.0`
 
 ### TsFile Java API
 
-#### Write Data
+#### WriteBuf Data
 
 Data written is through TsFileWriter.
 
@@ -75,7 +75,7 @@ Data written is through TsFileWriter.
     tsFileWriter.registerTimeseries(new Path("turbine1"), schema2);
     ```
 
-3. Write data
+3. WriteBuf data
 
     ```java
     TSRecord tsRecord = new TSRecord(1, "solarpanel1");
@@ -90,11 +90,11 @@ Data written is through TsFileWriter.
     tsFileWriter.close();
     ```
 
-Write TsFile Example
+WriteBuf TsFile Example
 
-[Write Data By TSRecord](../examples/src/main/java/org/apache/tsfile/TsFileWriteAlignedWithTSRecord.java)。
+[WriteBuf Data By TSRecord](../examples/src/main/java/org/apache/tsfile/TsFileWriteAlignedWithTSRecord.java)。
 
-[Write Data By Tablet](../examples/src/main/java/org/apache/tsfile/TsFileWriteAlignedWithTablet.java)。
+[WriteBuf Data By Tablet](../examples/src/main/java/org/apache/tsfile/TsFileWriteAlignedWithTablet.java)。
 
 
 #### Read TsFile

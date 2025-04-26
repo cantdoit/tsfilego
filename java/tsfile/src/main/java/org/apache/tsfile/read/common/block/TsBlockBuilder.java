@@ -332,7 +332,7 @@ public class TsBlockBuilder {
   }
 
   /**
-   * Write a text value to the columnIndex. If the value is null, then the place will be recorded
+   * WriteBuf a text value to the columnIndex. If the value is null, then the place will be recorded
    * with null.
    *
    * @param columnIndex the target column index.

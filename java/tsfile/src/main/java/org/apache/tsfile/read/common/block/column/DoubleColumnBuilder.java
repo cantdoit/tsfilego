@@ -97,7 +97,7 @@ public class DoubleColumnBuilder implements ColumnBuilder {
     return this;
   }
 
-  /** Write an Object to the current entry, which should be the Double type; */
+  /** WriteBuf an Object to the current entry, which should be the Double type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
     if (value instanceof Double) {

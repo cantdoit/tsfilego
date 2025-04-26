@@ -92,7 +92,7 @@ ITsFileWriter writer =
                      .build();
 ```
 
-### Write Data
+### WriteBuf Data
 
 ```shell
 Tablet tablet =

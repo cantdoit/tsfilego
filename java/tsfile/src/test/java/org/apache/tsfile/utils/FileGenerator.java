@@ -260,7 +260,7 @@ public class FileGenerator {
     try {
       writeToTsFile(schema);
     } catch (WriteProcessException e) {
-      LOG.warn("Write to tsfile error", e);
+      LOG.warn("WriteBuf to tsfile error", e);
     }
     LOG.info("write to file successfully!!");
   }

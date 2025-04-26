@@ -62,37 +62,37 @@ public interface Type {
     return c.getObject(position);
   }
 
-  /** Write a boolean to the current entry; */
+  /** WriteBuf a boolean to the current entry; */
   default void writeBoolean(ColumnBuilder builder, boolean value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write an int to the current entry; */
+  /** WriteBuf an int to the current entry; */
   default void writeInt(ColumnBuilder builder, int value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a long to the current entry; */
+  /** WriteBuf a long to the current entry; */
   default void writeLong(ColumnBuilder builder, long value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a float to the current entry; */
+  /** WriteBuf a float to the current entry; */
   default void writeFloat(ColumnBuilder builder, float value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a double to the current entry; */
+  /** WriteBuf a double to the current entry; */
   default void writeDouble(ColumnBuilder builder, double value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a Binary to the current entry; */
+  /** WriteBuf a Binary to the current entry; */
   default void writeBinary(ColumnBuilder builder, Binary value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a Object to the current entry; */
+  /** WriteBuf a Object to the current entry; */
   default void writeObject(ColumnBuilder builder, Object value) {
     builder.writeObject(value);
   }

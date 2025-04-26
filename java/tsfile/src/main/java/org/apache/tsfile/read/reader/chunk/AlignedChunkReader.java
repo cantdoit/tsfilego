@@ -52,7 +52,7 @@ public class AlignedChunkReader extends AbstractAlignedChunkReader {
 
   /**
    * Constructor of ChunkReader by timestamp. This constructor is used to accelerate queries by
-   * filtering out pages whose endTime is less than current timestamp.
+   * filtering out Pages whose endTime is less than current timestamp.
    */
   public AlignedChunkReader(Chunk timeChunk, List<Chunk> valueChunkList, long readStopTime)
       throws IOException {

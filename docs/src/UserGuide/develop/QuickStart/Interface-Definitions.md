@@ -20,7 +20,7 @@
 -->
 # Interface Definitions
 
-## Write Interface
+## WriteBuf Interface
 
 ### ITsFileWriter
 
@@ -28,10 +28,10 @@ Used to write data to tsfile
 
 ```Java
 interface ITsFileWriter extends AutoCloseable {
-  // Write data
+  // WriteBuf data
   void write(Tablet tablet);
   
-  // Close Write
+  // Close WriteBuf
   void close();
 }
 ```
@@ -117,7 +117,7 @@ class ColumnSchemaBuilder {
 
 ### Tablet
 
-Write column memory structure
+WriteBuf column memory structure
 
 ```Java
 class Tablet {

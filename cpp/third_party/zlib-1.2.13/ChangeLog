@@ -178,7 +178,7 @@ Changes in 1.2.7.1 (24 Mar 2013)
 - Fix configure for Sun shell
 - Remove runtime check in configure for four-byte integer type
 - Add casts and consts to ease user conversion to C++
-- Add man pages for minizip and miniunzip
+- Add man Pages for minizip and miniunzip
 - In Makefile uninstall, don't rm if preceding cd fails
 - Do not return Z_BUF_ERROR if deflateParam() has nothing to write
 
@@ -283,7 +283,7 @@ Changes in 1.2.5.3 (15 Jan 2012)
 - Permit Z_NULL arguments to deflatePending
 - Allow deflatePrime() to insert bits in the middle of a stream
 - Remove second empty static block for Z_PARTIAL_FLUSH
-- Write out all of the available bits when using Z_BLOCK
+- WriteBuf out all of the available bits when using Z_BLOCK
 - Insert the first two strings in the hash table after a flush
 
 Changes in 1.2.5.2 (17 Dec 2011)

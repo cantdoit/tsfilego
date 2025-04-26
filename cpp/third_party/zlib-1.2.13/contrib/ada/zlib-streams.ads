@@ -22,7 +22,7 @@ package ZLib.Streams is
       Item   :    out Ada.Streams.Stream_Element_Array;
       Last   :    out Ada.Streams.Stream_Element_Offset);
 
-   procedure Write
+   procedure WriteBuf
      (Stream : in out Stream_Type;
       Item   : in     Ada.Streams.Stream_Element_Array);
 
@@ -63,7 +63,7 @@ package ZLib.Streams is
       Write_Buffer_Size : in     Ada.Streams.Stream_Element_Offset
                                     := Default_Buffer_Size);
    --  Create the Comression/Decompression stream.
-   --  If mode is In_Stream then Write operation is disabled.
+   --  If mode is In_Stream then WriteBuf operation is disabled.
    --  If mode is Out_Stream then Read operation is disabled.
 
    --  If Back_Compressed is true then

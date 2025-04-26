@@ -60,7 +60,7 @@ schema2.add(new MeasurementSchema("wind_speed", TSDataType.FLOAT));
 tsFileWriter.registerTimeseries(new Path("Fan_1"), schema2);
 ```
 
-### Write Data
+### WriteBuf Data
 
 ```shell
 TSRecord tsRecord = new TSRecord(1, "Solar_panel_1");

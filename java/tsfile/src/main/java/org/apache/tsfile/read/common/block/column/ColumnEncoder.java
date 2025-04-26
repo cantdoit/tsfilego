@@ -31,7 +31,7 @@ public interface ColumnEncoder {
   /** Read a column from the specified input. */
   Column readColumn(ByteBuffer input, TSDataType dataType, int positionCount);
 
-  /** Write the specified column to the specified output */
+  /** WriteBuf the specified column to the specified output */
   void writeColumn(DataOutputStream output, Column column) throws IOException;
 
   static void serializeNullIndicators(DataOutputStream output, Column column) throws IOException {

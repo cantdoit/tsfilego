@@ -7,7 +7,7 @@ import (
 )
 
 /*
-Write from buffer to file
+WriteBuf from buffer to file
 (from io writer to here)
 Used to handle high level file operations
 Create file, sync file, write to file, close file

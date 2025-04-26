@@ -119,7 +119,7 @@ public abstract class RleEncoder<T extends Comparable<T>> extends Encoder {
   }
 
   /**
-   * Write all values buffered in cache to OutputStream.
+   * WriteBuf all values buffered in cache to OutputStream.
    *
    * @param out - byteArrayOutputStream
    * @throws IOException cannot flush to OutputStream
@@ -158,7 +158,7 @@ public abstract class RleEncoder<T extends Comparable<T>> extends Encoder {
   }
 
   /**
-   * Write bytes to OutputStream using rle. rle format: {@code [header][value] header: (repeated
+   * WriteBuf bytes to OutputStream using rle. rle format: {@code [header][value] header: (repeated
    * value) << 1}
    *
    * @throws IOException cannot write RLE run

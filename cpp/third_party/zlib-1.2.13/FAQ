@@ -42,7 +42,7 @@ The lastest zlib FAQ is at http://zlib.net/zlib_faq.html
     strm.avail_out returns with zero.  See http://zlib.net/zlib_how.html for a
     heavily annotated example.
 
- 6. Where's the zlib documentation (man pages, etc.)?
+ 6. Where's the zlib documentation (man Pages, etc.)?
 
     It's in zlib.h .  Examples of zlib usage are in the files test/example.c
     and test/minigzip.c, with more in examples/ .

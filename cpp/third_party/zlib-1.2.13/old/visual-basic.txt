@@ -113,7 +113,7 @@ more space then original file size
 SUCCESS Then
         lngpvtPcnSml = (1# - (lngCprSiz / lngOriSiz)) * 100
         ReDim Preserve bytaryCpr(lngCprSiz - 1)
-        Open strCprPth For Binary Access Write As #1
+        Open strCprPth For Binary Access WriteBuf As #1
             Put #1, , bytaryCpr()
             Put #1, , lngOriSiz 'Add the the original size value to the end
 (last 4 bytes)
@@ -146,7 +146,7 @@ Public Sub subUncompressFile(ByVal strargFilPth As String)
     If lngfncUcp(bytaryOri(0), lngOriSiz, bytaryCpr(0), lngCprSiz) = SUCCESS
 Then
         strOriPth = Left(strargFilPth, Len(strargFilPth) - Len(strFilExt))
-        Open strOriPth For Binary Access Write As #1
+        Open strOriPth For Binary Access WriteBuf As #1
             Put #1, , bytaryOri()
         Close #1
     Else

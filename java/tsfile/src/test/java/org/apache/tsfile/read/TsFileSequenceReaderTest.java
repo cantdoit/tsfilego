@@ -216,7 +216,7 @@ public class TsFileSequenceReaderTest {
       TsFileGeneratorUtils.writeWithTsRecord(
           tsFileWriter, "d1", writeMeasurementScheams, 25, 0, 0, true);
 
-      // write s1 and s2, fill 2 empty pages for s2
+      // write s1 and s2, fill 2 empty Pages for s2
       writeMeasurementScheams.add(alignedMeasurementSchemas.get(1));
       TsFileGeneratorUtils.writeWithTsRecord(
           tsFileWriter, "d1", writeMeasurementScheams, 10, 25, 0, true);

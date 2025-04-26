@@ -7,7 +7,7 @@ http://www.ietf.org/rfc/rfc1950.txt (zlib format), rfc1951.txt (deflate format)
 and rfc1952.txt (gzip format).
 
 All functions of the compression library are documented in the file zlib.h
-(volunteer to write man pages welcome, contact zlib@gzip.org).  Two compiled
+(volunteer to write man Pages welcome, contact zlib@gzip.org).  Two compiled
 examples are distributed in this package, example and minigzip.  The example_d
 and minigzip_d flavors validate that the zlib1.dll file is working correctly.
 

@@ -74,7 +74,7 @@ public class TsFileReaderTest {
     }
 
     TSFileConfig tsFileConfig = TSFileDescriptor.getInstance().getConfig();
-    // make multi pages in one group
+    // make multi Pages in one group
     int oldPointNumInPage = tsFileConfig.getMaxNumberOfPointsInPage();
     int oldGroupSizeInByte = tsFileConfig.getGroupSizeInByte();
     tsFileConfig.setMaxNumberOfPointsInPage(100);
@@ -90,7 +90,7 @@ public class TsFileReaderTest {
       TSRecord t = new TSRecord("t", i);
       if (i % 100 == 0) {
         // Add a large max_value to the page statistics,
-        // and get a very large number of invalid pages when the query is executed
+        // and get a very large number of invalid Pages when the query is executed
         t.addTuple(new IntDataPoint("id", 9000001));
       } else {
         t.addTuple(new IntDataPoint("id", i));

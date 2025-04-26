@@ -239,21 +239,21 @@ package ZLib is
    --  Flushing the data from the compressor.
 
    generic
-      with procedure Write
+      with procedure WriteBuf
         (Item : in Ada.Streams.Stream_Element_Array);
       --  User should provide this routine for accept
       --  compressed/decompressed data.
 
       Buffer_Size : in Ada.Streams.Stream_Element_Offset
          := Default_Buffer_Size;
-      --  Buffer size for Write user routine.
+      --  Buffer size for WriteBuf user routine.
 
-   procedure Write
+   procedure WriteBuf
      (Filter  : in out Filter_Type;
       Item    : in     Ada.Streams.Stream_Element_Array;
       Flush   : in     Flush_Mode := No_Flush);
    --  Compress/Decompress data from Item to the generic parameter procedure
-   --  Write. Output buffer size could be set in Buffer_Size generic parameter.
+   --  WriteBuf. Output buffer size could be set in Buffer_Size generic parameter.
 
    generic
       with procedure Read

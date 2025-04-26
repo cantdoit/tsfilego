@@ -67,7 +67,7 @@ public class ChunkReader extends AbstractChunkReader {
 
   /**
    * Constructor of ChunkReader by timestamp. This constructor is used to accelerate queries by
-   * filtering out pages whose endTime is less than current timestamp.
+   * filtering out Pages whose endTime is less than current timestamp.
    */
   public ChunkReader(Chunk chunk, long readStopTime) {
     this(chunk, readStopTime, null);

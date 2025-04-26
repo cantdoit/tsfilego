@@ -85,7 +85,7 @@ public class ValueChunkWriterTest {
       chunkWriter.write(time, (float) time, time % 4 == 0);
     }
     chunkWriter.sealCurrentPage();
-    // two pages with statistics size: (69 + 41) * 2 + chunk header size: 9
+    // two Pages with statistics size: (69 + 41) * 2 + chunk header size: 9
     assertEquals(229L, chunkWriter.getCurrentChunkSize());
 
     TestTsFileOutput testTsFileOutput = new TestTsFileOutput();

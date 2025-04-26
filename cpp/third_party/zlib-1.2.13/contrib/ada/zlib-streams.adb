@@ -108,7 +108,7 @@ package body ZLib.Streams is
       loop
          Flush (Stream.Writer, Buffer, Last, Mode);
 
-         Ada.Streams.Write (Stream.Back.all, Buffer (1 .. Last));
+         Ada.Streams.WriteBuf (Stream.Back.all, Buffer (1 .. Last));
 
          exit when Last < Buffer'Last;
       end loop;
@@ -177,32 +177,32 @@ package body ZLib.Streams is
    end Read_Total_Out;
 
    -----------
-   -- Write --
+   -- WriteBuf --
    -----------
 
-   procedure Write
+   procedure WriteBuf
      (Stream : in out Stream_Type;
       Item   : in     Stream_Element_Array)
    is
 
-      procedure Write (Item : in Stream_Element_Array);
+      procedure WriteBuf (Item : in Stream_Element_Array);
 
       -----------
-      -- Write --
+      -- WriteBuf --
       -----------
 
-      procedure Write (Item : in Stream_Element_Array) is
+      procedure WriteBuf (Item : in Stream_Element_Array) is
       begin
-         Ada.Streams.Write (Stream.Back.all, Item);
-      end Write;
+         Ada.Streams.WriteBuf (Stream.Back.all, Item);
+      end WriteBuf;
 
-      procedure Write is new ZLib.Write
-         (Write       => Write,
+      procedure WriteBuf is new ZLib.WriteBuf
+         (WriteBuf       => WriteBuf,
           Buffer_Size => Stream.Buffer_Size);
 
    begin
-      Write (Stream.Writer, Item, No_Flush);
-   end Write;
+      WriteBuf (Stream.Writer, Item, No_Flush);
+   end WriteBuf;
 
    --------------------
    -- Write_Total_In --

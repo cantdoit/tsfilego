@@ -27,48 +27,48 @@ public interface ColumnBuilder {
   /** Returns the number of positions in this block builder. */
   int getPositionCount();
 
-  /** Write a boolean to the current entry; */
+  /** WriteBuf a boolean to the current entry; */
   default ColumnBuilder writeBoolean(boolean value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write an int to the current entry; */
+  /** WriteBuf an int to the current entry; */
   default ColumnBuilder writeInt(int value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a long to the current entry; */
+  /** WriteBuf a long to the current entry; */
   default ColumnBuilder writeLong(long value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a float to the current entry; */
+  /** WriteBuf a float to the current entry; */
   default ColumnBuilder writeFloat(float value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a double to the current entry; */
+  /** WriteBuf a double to the current entry; */
   default ColumnBuilder writeDouble(double value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a Binary to the current entry; */
+  /** WriteBuf a Binary to the current entry; */
   default ColumnBuilder writeBinary(Binary value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write a TsPrimitiveType sequences to the current entry; */
+  /** WriteBuf a TsPrimitiveType sequences to the current entry; */
   default ColumnBuilder writeTsPrimitiveType(TsPrimitiveType value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
-  /** Write an Object to the current entry, which should be the corresponding type; */
+  /** WriteBuf an Object to the current entry, which should be the corresponding type; */
   default ColumnBuilder writeObject(Object value) {
     throw new UnsupportedOperationException(getClass().getName());
   }
 
   /**
-   * Write value at index of passing column
+   * WriteBuf value at index of passing column
    *
    * <p>Caller should make sure that value at index is not null
    *

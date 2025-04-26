@@ -127,10 +127,7 @@ TEST_F(TsFileWriterTest, WriteDiffDataType) {
     for (uint32_t i = 0; i < measurement_names.size(); i++) {
         std::string measurement_name = measurement_names[i];
         common::TSDataType data_type = data_types[i];
-        tsfile_writer_->register_timeseries(
-            device_name,
-            storage::MeasurementSchema(measurement_name, data_type, encoding,
-                                       compression_type));
+        tsfile_writer_->register_timeseries(device_name, storage::MeasurementSchema(measurement_name, data_type, encoding,compression_type));
     }
 
     int row_num = 1000;

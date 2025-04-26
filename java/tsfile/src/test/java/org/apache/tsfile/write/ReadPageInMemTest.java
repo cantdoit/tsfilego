@@ -47,7 +47,7 @@ public class ReadPageInMemTest {
   private TsFileWriter innerWriter;
   private Schema schema = null;
 
-  private int pageSize;
+  private int PageSize;
   private int ChunkGroupSize;
   private int pageCheckSizeThreshold;
   private int defaultMaxStringLength;
@@ -85,7 +85,7 @@ public class ReadPageInMemTest {
   @Before
   public void setUp() throws Exception {
     file.delete();
-    pageSize = conf.getPageSizeInByte();
+    PageSize = conf.getPageSizeInByte();
     conf.setPageSizeInByte(200);
     ChunkGroupSize = conf.getGroupSizeInByte();
     conf.setGroupSizeInByte(100000);
@@ -100,7 +100,7 @@ public class ReadPageInMemTest {
   @After
   public void tearDown() {
     file.delete();
-    conf.setPageSizeInByte(pageSize);
+    conf.setPageSizeInByte(PageSize);
     conf.setGroupSizeInByte(ChunkGroupSize);
     conf.setPageCheckSizeThreshold(pageCheckSizeThreshold);
     conf.setMaxStringLength(defaultMaxStringLength);

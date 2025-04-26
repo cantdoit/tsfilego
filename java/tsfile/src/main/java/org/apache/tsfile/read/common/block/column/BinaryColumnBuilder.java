@@ -80,7 +80,7 @@ public class BinaryColumnBuilder implements ColumnBuilder {
     return this;
   }
 
-  /** Write an Object to the current entry, which should be the Binary type; */
+  /** WriteBuf an Object to the current entry, which should be the Binary type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
     if (value instanceof Binary) {

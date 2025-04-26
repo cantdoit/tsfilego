@@ -58,19 +58,19 @@ public class TsFileGeneratorForTest {
   private static String errorOutputDataFile;
   private static int rowCount;
   private static int chunkGroupSize;
-  private static int pageSize;
+  private static int PageSize;
   private static final FSFactory fsFactory = FSFactoryProducer.getFSFactory();
 
-  public static void generateFile(int rowCount, int chunkGroupSize, int pageSize)
+  public static void generateFile(int rowCount, int chunkGroupSize, int PageSize)
       throws IOException {
-    generateFile(rowCount, rowCount, chunkGroupSize, pageSize);
+    generateFile(rowCount, rowCount, chunkGroupSize, PageSize);
   }
 
   public static void generateFile(
-      int minRowCount, int maxRowCount, int chunkGroupSize, int pageSize) throws IOException {
+      int minRowCount, int maxRowCount, int chunkGroupSize, int PageSize) throws IOException {
     TsFileGeneratorForTest.rowCount = maxRowCount;
     TsFileGeneratorForTest.chunkGroupSize = chunkGroupSize;
-    TsFileGeneratorForTest.pageSize = pageSize;
+    TsFileGeneratorForTest.PageSize = PageSize;
     prepare(minRowCount, maxRowCount);
     write();
   }
@@ -182,7 +182,7 @@ public class TsFileGeneratorForTest {
     int oldMaxPointNumInPage =
         TSFileDescriptor.getInstance().getConfig().getMaxNumberOfPointsInPage();
     TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
 
     // write
     try (TsFileWriter innerWriter =
@@ -284,7 +284,7 @@ public class TsFileGeneratorForTest {
 
   // generate aligned timeseries "d1.s1","d1.s2","d1.s3","d1.s4" and nonAligned timeseries
   // "d2.s1","d2.s2","d2.s3"
-  public static void generateAlignedTsFile(int rowCount, int chunkGroupSize, int pageSize) {
+  public static void generateAlignedTsFile(int rowCount, int chunkGroupSize, int PageSize) {
     File file = fsFactory.getFile(alignedOutputDataFile);
     if (file.exists()) {
       Assert.assertTrue(file.delete());
@@ -294,7 +294,7 @@ public class TsFileGeneratorForTest {
     int oldMaxPointNumInPage =
         TSFileDescriptor.getInstance().getConfig().getMaxNumberOfPointsInPage();
     TSFileDescriptor.getInstance().getConfig().setGroupSizeInByte(chunkGroupSize);
-    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(pageSize);
+    TSFileDescriptor.getInstance().getConfig().setMaxNumberOfPointsInPage(PageSize);
     try (TsFileWriter tsFileWriter = new TsFileWriter(file)) {
       // register align timeseries
       List<IMeasurementSchema> alignedMeasurementSchemas = new ArrayList<>();

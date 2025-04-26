@@ -306,7 +306,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
   @Override
   public long flushToFileWriter(TsFileIOWriter tsfileWriter) throws IOException {
     LOG.debug("start flush device id:{}", deviceId);
-    // make sure all the pages have been compressed into buffers, so that we can get correct
+    // make sure all the Pages have been compressed into buffers, so that we can get correct
     // groupWriter.getCurrentChunkGroupSize().
     sealAllChunks();
     long currentChunkGroupSize = getCurrentChunkGroupSize();
@@ -341,7 +341,7 @@ public class AlignedChunkGroupWriterImpl implements IChunkGroupWriter {
       valueChunkWriter.writeEmptyPageToPageBuffer();
     }
 
-    // add empty data of currentPage
+    // add empty data of CurrentPage
     for (long i = 0; i < timeChunkWriter.getPageWriter().getStatistics().getCount(); i++) {
       valueChunkWriter.write(0, 0, true);
     }

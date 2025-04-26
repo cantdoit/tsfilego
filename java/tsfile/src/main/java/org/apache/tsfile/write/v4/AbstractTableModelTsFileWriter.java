@@ -56,7 +56,7 @@ abstract class AbstractTableModelTsFileWriter implements ITsFileWriter {
 
   protected EncryptParameter encryptParam;
 
-  protected final int pageSize;
+  protected final int PageSize;
   protected long recordCount = 0;
 
   // deviceId -> measurementIdList
@@ -88,13 +88,13 @@ abstract class AbstractTableModelTsFileWriter implements ITsFileWriter {
     this.fileWriter = new TsFileIOWriter(file);
     fileWriter.setSchema(schema);
 
-    this.pageSize = conf.getPageSizeInByte();
+    this.PageSize = conf.getPageSizeInByte();
     this.chunkGroupSizeThreshold = chunkGroupSizeThreshold;
-    if (this.pageSize >= chunkGroupSizeThreshold) {
+    if (this.PageSize >= chunkGroupSizeThreshold) {
       LOG.warn(
           "TsFile's page size {} is greater than chunk group size {}, please enlarge the chunk group"
               + " size or decrease page size. ",
-          pageSize,
+          PageSize,
           chunkGroupSizeThreshold);
     }
 

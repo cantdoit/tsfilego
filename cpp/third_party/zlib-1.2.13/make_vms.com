@@ -703,7 +703,7 @@ $ endif
 $ return
 $!------------------------------------------------------------------------------
 $!
-$! Write configuration to both permanent and temporary config file
+$! WriteBuf configuration to both permanent and temporary config file
 $!
 $! Version history
 $! 0.01 20031029 First version to receive a number

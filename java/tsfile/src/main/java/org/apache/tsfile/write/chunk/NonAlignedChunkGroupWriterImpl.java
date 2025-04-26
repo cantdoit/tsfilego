@@ -181,7 +181,7 @@ public class NonAlignedChunkGroupWriterImpl implements IChunkGroupWriter {
   @Override
   public long flushToFileWriter(TsFileIOWriter fileWriter) throws IOException {
     LOG.debug("start flush device id:{}", deviceId);
-    // make sure all the pages have been compressed into buffers, so that we can get correct
+    // make sure all the Pages have been compressed into buffers, so that we can get correct
     // groupWriter.getCurrentChunkGroupSize().
     sealAllChunks();
     long currentChunkGroupSize = getCurrentChunkGroupSize();
@@ -209,7 +209,7 @@ public class NonAlignedChunkGroupWriterImpl implements IChunkGroupWriter {
     return size;
   }
 
-  /** seal all the chunks which may has un-sealed pages in force. */
+  /** seal all the chunks which may has un-sealed Pages in force. */
   private void sealAllChunks() {
     for (IChunkWriter writer : chunkWriters.values()) {
       writer.sealCurrentPage();

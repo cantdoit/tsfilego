@@ -60,7 +60,7 @@ public class ValueChunkWriter {
 
   private final EncryptParameter encryptParam;
 
-  /** all pages of this chunk. */
+  /** all Pages of this chunk. */
   private final PublicBAOS pageBuffer;
 
   private int numOfPages;
@@ -328,7 +328,7 @@ public class ValueChunkWriter {
       return ChunkHeader.getSerializedSize(measurementId, 0);
     }
 
-    // return the serialized size of the chunk header + all pages
+    // return the serialized size of the chunk header + all Pages
     return ChunkHeader.getSerializedSize(measurementId, pageBuffer.size())
         + (long) pageBuffer.size();
   }
@@ -420,7 +420,7 @@ public class ValueChunkWriter {
 
     long dataOffset = writer.getPos();
 
-    // write all pages of this column
+    // write all Pages of this column
     writer.writeBytesToStream(pageBuffer);
 
     int dataSize = (int) (writer.getPos() - dataOffset);

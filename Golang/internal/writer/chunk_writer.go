@@ -54,7 +54,7 @@ func (mcw *MergedChunkWriter) Write(data interface{}) error {
 		}
 		return mcw.PageWriter.WriteTimestamp(timestamp)
 	case "value":
-		// Write value (should support multiple data types in PageWriter)
+		// WriteBuf value (should support multiple data types in PageWriter)
 		return mcw.PageWriter.WriteValue(data)
 	default:
 		return errors.New("unknown chunk type")
@@ -87,10 +87,10 @@ func (mcw *MergedChunkWriter) FinalizeChunk(endChunk bool) error {
 	} else {
 		// Flush the current page and handle multiple pages
 		if mcw.NumOfPages == 1 {
-			// Write the first saved page now
+			// WriteBuf the first saved page now
 			mcw.FlushFirstPage()
 		}
-		// Write the current page
+		// WriteBuf the current page
 		err := mcw.PageWriter.WriteToChunk(mcw.ChunkBuffer, false, true, true)
 		mcw.PageWriter.Reset()
 		return err

@@ -321,7 +321,7 @@ public class ReadWriteIOUtils {
   }
 
   /**
-   * Write a float n to outputStream.
+   * WriteBuf a float n to outputStream.
    *
    * @return The number of bytes used to represent n.
    */
@@ -332,7 +332,7 @@ public class ReadWriteIOUtils {
   }
 
   /**
-   * Write a double n to outputStream.
+   * WriteBuf a double n to outputStream.
    *
    * @return The number of bytes used to represent n.
    */
@@ -372,7 +372,7 @@ public class ReadWriteIOUtils {
   }
 
   /**
-   * Write string to outputStream.
+   * WriteBuf string to outputStream.
    *
    * @return the length of string represented by byte[].
    */
@@ -391,7 +391,7 @@ public class ReadWriteIOUtils {
   }
 
   /**
-   * Write string to outputStream.
+   * WriteBuf string to outputStream.
    *
    * @return the length of string represented by byte[].
    */
@@ -769,9 +769,9 @@ public class ReadWriteIOUtils {
     return map;
   }
 
-  public static List<Map<String, String>> readMaps(ByteBuffer buffer, int totalSize) {
-    List<Map<String, String>> results = new ArrayList<>(totalSize);
-    for (int i = 0; i < totalSize; i++) {
+  public static List<Map<String, String>> readMaps(ByteBuffer buffer, int TotalSize) {
+    List<Map<String, String>> results = new ArrayList<>(TotalSize);
+    for (int i = 0; i < TotalSize; i++) {
       results.add(ReadWriteIOUtils.readMap(buffer));
     }
     return results;

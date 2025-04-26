@@ -146,7 +146,7 @@ public class PublicBAOS extends ByteArrayOutputStream {
 
   /**
    * The synchronized keyword in this function is intentionally removed. For details, see
-   * https://cwiki.apache.org/confluence/pages/viewpage.action?pageId=173085039
+   * https://cwiki.apache.org/confluence/Pages/viewpage.action?pageId=173085039
    */
   @Override
   @SuppressWarnings("squid:S3551")

@@ -84,7 +84,7 @@ public class IntColumnBuilder implements ColumnBuilder {
     return this;
   }
 
-  /** Write an Object to the current entry, which should be the Integer type; */
+  /** WriteBuf an Object to the current entry, which should be the Integer type; */
   @Override
   public ColumnBuilder writeObject(Object value) {
     if (value instanceof Integer) {
