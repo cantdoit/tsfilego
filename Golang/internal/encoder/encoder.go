@@ -10,7 +10,7 @@ import (
 
 // Encoder is a generic interface for encoding data into a ByteStream.
 type Encoder interface {
-	Encode(value interface{}, stream *common.ByteStream) error
+	Encode(value interface{}, stream *common.ByteStream, su *common.SerializationUtil) error
 	Destroy()
 }
 
@@ -39,21 +39,21 @@ func NewPlainEncoder() *PlainEncoder {
 }
 
 // Encode encodes a value (of supported types) and writes it into the ByteStream.
-func (pe *PlainEncoder) Encode(value interface{}, stream *common.ByteStream) error {
+func (pe *PlainEncoder) Encode(value interface{}, stream *common.ByteStream, su *common.SerializationUtil) error {
 	switch v := value.(type) {
 	case uint8:
-		return stream.WriteByte(v)
+		return su.WriteUint8(v, stream)
 	case uint16:
-		return stream.WriteUint16(v)
+		return su.WriteUint16(v, stream)
 	case uint32:
-		return stream.WriteUint32(v)
+		return su.WriteUint32(v, stream)
 	case uint64:
-		return stream.WriteUint64(v)
+		return su.WriteUint64(v, stream)
 	case int32:
 		// Convert signed to unsigned for consistency before writing
-		return stream.WriteUint32(uint32(v))
+		return su.WriteUint32(uint32(v), stream)
 	case int64:
-		return stream.WriteUint64(uint64(v))
+		return su.WriteUint64(uint64(v), stream)
 	default:
 		return errors.New("unsupported type for encoding")
 	}

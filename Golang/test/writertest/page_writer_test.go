@@ -3,12 +3,10 @@ package writertest
 import (
 	"Golang/internal/writer"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 func TestPageWriter_WriteBooleanSuccess(t *testing.T) {
-	pageWriter := NewPageWriter()
+	pageWriter, _ := writer.NewPageWriter()
 	pageWriter.Init(BOOLEAN, PLAIN, UNCOMPRESSED)
 
 	result := pageWriter.Write(1234567890, true)

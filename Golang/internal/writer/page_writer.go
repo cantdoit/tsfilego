@@ -2,6 +2,7 @@ package writer
 
 import (
 	"Golang/internal/common"
+	"Golang/internal/compressor"
 	"Golang/internal/encoder"
 	_ "bytes"
 	"errors"
@@ -9,14 +10,14 @@ import (
 
 // PageWriter handles the low-level processing of individual pages in a chunk
 type PageWriter struct {
-	PageType      string             // Indicates whether this is a "time" or "value" page
-	PageBuffer    *common.ByteStream // Use ByteStream for storing uncompressed page data
-	Encoder       encoder.Encoder    // Encoder for generating binary data based on type
-	Compressor    Compressor         // Compressor for compressing page data
-	Statistics    Statistics         // Statistics collector for the page
-	CompressedBuf []byte             // Buffer for holding compressed page data
-	SizeLimit     int                // Limit for the maximum size of a page
-	IsInitialized bool               // Indicates if the PageWriter has been initialized
+	PageType      string                // Indicates whether this is a "time" or "value" page
+	PageBuffer    *common.ByteStream    // Use ByteStream for storing uncompressed page data
+	Encoder       encoder.Encoder       // Encoder for generating binary data based on type
+	Compressor    compressor.Compressor // Compressor for compressing page data
+	Statistics    Statistics            // Statistics collector for the page
+	CompressedBuf []byte                // Buffer for holding compressed page data
+	SizeLimit     int                   // Limit for the maximum size of a page
+	IsInitialized bool                  // Indicates if the PageWriter has been initialized
 }
 
 // NewPageWriter initializes a PageWriter with encoding and compression settings

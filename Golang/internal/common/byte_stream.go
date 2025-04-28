@@ -1,6 +1,7 @@
 package common
 
 import (
+	"Golang/internal/utils"
 	"errors"
 )
 
@@ -154,15 +155,18 @@ func (bs *ByteStream) WriteBuf(buf []uint8, bufLen uint32) error {
 
 // ReadBuf reads up to `wantLen` bytes from the ByteStream into the provided buffer.
 // Returns the actual number of bytes read.
-// This corresponds to the C++ function `read_buf`.
 func (bs *ByteStream) ReadBuf(buf []uint8, wantLen uint32) (uint32, error) {
 	if bs.ReadPos >= bs.TotalSize {
-		return 0, errors.New("read position exceeds total size")
+		return 0, utils.GetError(utils.ErrNoMoreData)
+
 	}
 
 	readLen := uint32(0) // Tracks the number of bytes read into `buf`
 
 	for readLen < wantLen && bs.ReadPos < bs.TotalSize {
+		if bs.CurrentPageIdx >= uint32(len(bs.Pages)) {
+			return 0, utils.GetError(utils.ErrNoMoreData)
+		}
 		// Get the current page using the read position
 		page := bs.Pages[bs.CurrentPageIdx]
 		pageOffset := bs.ReadPos % bs.PageSize
@@ -186,7 +190,41 @@ func (bs *ByteStream) ReadBuf(buf []uint8, wantLen uint32) (uint32, error) {
 		}
 	}
 
+	// If fewer bytes were read than requested, this is considered a partial read.
+	if readLen < wantLen {
+		return readLen, utils.GetError(utils.ErrPartialRead)
+	}
+
 	return readLen, nil
+}
+
+// PurgePrevPages removes a specified number of pages from the beginning of the ByteStream.
+// If purgePageCount is greater than the current number of pages, all pages except the last one will be purged.
+func (bs *ByteStream) PurgePrevPages(purgePageCount int) {
+	if len(bs.Pages) == 0 || purgePageCount <= 0 {
+		return // Nothing to purge or invalid input
+	}
+
+	if purgePageCount >= len(bs.Pages) {
+		// Retain only the last page
+		lastPage := bs.Pages[len(bs.Pages)-1]
+		bs.Pages = []*Page{lastPage}
+		bs.TotalSize = uint32(len(lastPage.data))
+		bs.ReadPos = 0
+		bs.CurrentPageIdx = 0
+		return
+	}
+
+	// Remove pages and adjust metadata
+	bs.Pages = bs.Pages[purgePageCount:]
+	bs.TotalSize -= uint32(purgePageCount) * bs.PageSize
+
+	if bs.ReadPos >= bs.PageSize*uint32(purgePageCount) {
+		bs.ReadPos -= bs.PageSize * uint32(purgePageCount)
+	} else {
+		bs.ReadPos = 0
+	}
+	bs.CurrentPageIdx = 0
 }
 
 ///////////////////////////////////////
@@ -220,12 +258,39 @@ func (bs *ByteStream) BufferIterator() func() ([]byte, uint32, bool) {
 	currentIndex := 0
 	return func() ([]byte, uint32, bool) {
 		if currentIndex >= len(bs.Pages) {
-			return nil, 0, false
+			return nil, 0, false // No more pages
 		}
 		page := bs.Pages[currentIndex]
 		currentIndex++
-		return page.data, uint32(len(page.data)), true
+		// Return the actual portion of page data that was written, not full capacity
+		dataLen := uint32(len(page.data))
+		return page.data[:dataLen], dataLen, true
+
 	}
+}
+
+// InitBufferIterator resets the internal buffer iterator to the beginning of the ByteStream.
+// It should be called before starting a new iteration.
+func (bs *ByteStream) InitBufferIterator() {
+	bs.CurrentPageIdx = 0 // Reset the current page index to the beginning
+}
+
+// GetNextBuffer retrieves the buffer and its length from the current page in the ByteStream.
+// Advances the internal iterator to the next page. Returns nil if there are no more pages.
+func (bs *ByteStream) GetNextBuffer() ([]byte, uint32, error) {
+	// Check if there are any remaining pages to process
+	if int(bs.CurrentPageIdx) >= len(bs.Pages) {
+		return nil, 0, errors.New("no more buffers available")
+	}
+
+	// Get the current page
+	page := bs.Pages[bs.CurrentPageIdx]
+
+	// Advance to the next page
+	bs.CurrentPageIdx++
+
+	// Return the buffer and its length
+	return page.data, uint32(len(page.data)), nil
 }
 
 //////////////////////////////////////
@@ -247,4 +312,60 @@ func minUint32(a, b uint32) uint32 {
 		return a
 	}
 	return b
+}
+
+// MergeByteStream merges the contents of the "river" ByteStream into the "sea" ByteStream.
+// If purgeRiver is true, it clears the read sections of the river after they're merged.
+func (bs *ByteStream) MergeByteStream(sea *ByteStream, river *ByteStream, purgeRiver bool) error {
+	// Initialize the buffer iterator for the river
+	river.InitBufferIterator()
+
+	// Iterate through all buffers in the river
+	for {
+		buf, length, err := river.GetNextBuffer()
+		if err != nil {
+			// No more buffers to process
+			break
+		}
+
+		// Write the buffer from the river into the sea
+		if err := sea.WriteBuf(buf, length); err != nil {
+			return err // Abort if write to the sea fails
+		}
+
+		// Optionally purge the old page in the river
+		if purgeRiver {
+			river.PurgePrevPages(1)
+		}
+	}
+
+	return nil
+}
+
+// CopyBSToBuffer copies the contents of the ByteStream into the provided buffer (`destBuf`) up to the buffer's length.
+// Returns an error if the buffer is not large enough.
+func CopyBSToBuffer(bs *ByteStream, destBuf []byte, destBufLen uint32) error {
+	it := bs.BufferIterator() // Initialize the buffer iterator
+	var copiedLen uint32 = 0
+
+	for {
+		// Get the next buffer from the iterator
+		buf, length, ok := it()
+		if !ok {
+			// No more data in the byte stream, finish copying
+			break
+		}
+		// Check if there's enough space in the destination buffer
+		if destBufLen-copiedLen < length {
+			return utils.GetError(utils.ErrBufNotEnough)
+		}
+
+		// Copy the data from the ByteStream buffer to the destination buffer
+		copy(destBuf[copiedLen:], buf[:length])
+
+		// Update the copied length
+		copiedLen += length
+	}
+
+	return utils.GetError(utils.ErrOk)
 }
