@@ -8,13 +8,44 @@ import (
 // TSDataType defines the supported data types for timeseries values
 type TSDataType string
 
+// TSEncoding defines the available encoding types
+type TSEncoding string
+
+// CompressionType defines the available compression types
+type CompressionType string
+
+// Supported timeseries data types
 const (
-	BOOLEAN TSDataType = "BOOLEAN"
-	INT32   TSDataType = "INT32"
-	INT64   TSDataType = "INT64"
-	FLOAT   TSDataType = "FLOAT"
-	DOUBLE  TSDataType = "DOUBLE"
-	TEXT    TSDataType = "TEXT"
+	BOOLEAN    TSDataType = "BOOLEAN"
+	INT32      TSDataType = "INT32"
+	INT64      TSDataType = "INT64"
+	FLOAT      TSDataType = "FLOAT"
+	DOUBLE     TSDataType = "DOUBLE"
+	TEXT       TSDataType = "TEXT"
+	NULL_TYPE  TSDataType = "NULL_TYPE"
+	INVALID_TS TSDataType = "INVALID_DATATYPE"
+)
+
+// Supported encoding types
+const (
+	PLAIN      TSEncoding = "PLAIN"
+	DICTIONARY TSEncoding = "DICTIONARY"
+	RLE        TSEncoding = "RLE"
+	DIFF       TSEncoding = "DIFF"
+	TS_2DIFF   TSEncoding = "TS_2DIFF"
+	BITMAP     TSEncoding = "BITMAP"
+	REGULAR    TSEncoding = "REGULAR"
+	INVALID_E  TSEncoding = "INVALID_ENCODING"
+)
+
+// Supported compression types
+const (
+	UNCOMPRESSED CompressionType = "UNCOMPRESSED"
+	SNAPPY       CompressionType = "SNAPPY"
+	GZIP         CompressionType = "GZIP"
+	LZO          CompressionType = "LZO"
+	LZ4          CompressionType = "LZ4"
+	INVALID_C    CompressionType = "INVALID_COMPRESSION"
 )
 
 // Value represents a type-agnostic data holder
