@@ -3,6 +3,7 @@ package common
 import (
 	"Golang/internal/utils"
 	"errors"
+	"fmt"
 )
 
 // ByteStream provides a mechanism for buffered reading and writing of binary data.
@@ -344,8 +345,8 @@ func (bs *ByteStream) MergeByteStream(sea *ByteStream, river *ByteStream, purgeR
 
 // CopyBSToBuffer copies the contents of the ByteStream into the provided buffer (`destBuf`) up to the buffer's length.
 // Returns an error if the buffer is not large enough.
-func CopyBSToBuffer(bs *ByteStream, destBuf []byte, destBufLen uint32) error {
-	it := bs.BufferIterator() // Initialize the buffer iterator
+func (bs *ByteStream) CopyBSToBuffer(stream *ByteStream, destBuf []byte, destBufLen uint32) error {
+	it := stream.BufferIterator() // Initialize the buffer iterator
 	var copiedLen uint32 = 0
 
 	for {
@@ -368,4 +369,41 @@ func CopyBSToBuffer(bs *ByteStream, destBuf []byte, destBufLen uint32) error {
 	}
 
 	return utils.GetError(utils.ErrOk)
+}
+
+// GetBytesFromByteStream reads all data from the internal ByteStream and returns it as a single byte array.
+// If there is no data, or if memory allocation fails, it returns an error.
+func (bs *ByteStream) GetBytesFromByteStream() ([]byte, error) {
+	// Check if the stream has data
+	if bs.TotalSize == 0 {
+		return nil, nil // No data in the stream
+	}
+
+	// Allocate a buffer to hold the entire byte stream
+	retBuf := make([]byte, bs.TotalSize)
+	if retBuf == nil {
+		return nil, errors.New("memory allocation failed for retBuf")
+	}
+
+	// Iterate through each page in the ByteStream and copy data to the retBuf
+	offset := 0
+	for _, page := range bs.Pages {
+		if len(page.data) == 0 {
+			break // No more data in this page
+		}
+		copy(retBuf[offset:], page.data)
+		offset += len(page.data)
+	}
+
+	// Ensure the entire TotalSize is copied
+	if offset != int(bs.TotalSize) {
+		return nil, fmt.Errorf("unexpected offset mismatch: expected %d, got %d", bs.TotalSize, offset)
+	}
+
+	return retBuf, nil
+}
+
+// deserializeBufNotEnough checks if the buffer state indicates an out-of-range or partial-read error.
+func deserializeBufNotEnough(ret int) bool {
+	return nil != utils.GetError(utils.ErrOutOfRange) || nil != utils.GetError(utils.ErrPartialRead)
 }
