@@ -901,6 +901,7 @@ type Interface interface {
 	GetType() base.TSDataType
 	ToString() string
 	Clone() Interface
+	DeserializeTypedStat(stream *base.ByteStream) error
 }
 
 // CloneStatistic dynamically clones a statistic from one object to another, based on the type.

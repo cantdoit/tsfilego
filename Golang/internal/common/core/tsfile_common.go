@@ -72,15 +72,18 @@ func (p *PageHeader) DeserializeFrom(stream *base.ByteStream, deserializeStat bo
 
 	if deserializeStat {
 		// Allocate a statistic object
-		p.Statistic, _ = factory.AllocStatistic(dataType)
-		if p.Statistic == nil {
-			return errors.New("failed to allocate statistic")
+		stat, err := factory.AllocStatistic(dataType)
+		if err != nil {
+			return errors.New("failed to allocate statistic: " + err.Error())
 		}
 
 		// Deserialize the statistic
-		if err = p.Statistic.(stream); err != nil {
+		if err = stat.DeserializeTypedStat(stream); err != nil {
 			return errors.New("failed to deserialize statistic: " + err.Error())
 		}
+
+		p.Statistic = stat // Assign the deserialized statistic
+
 	}
 	return nil
 }
