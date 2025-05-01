@@ -1,7 +1,8 @@
 package writer
 
 import (
-	"Golang/internal/common"  // Schema-related utilities/constants
+	"Golang/internal/common/base"
+	"Golang/internal/common/core"
 	"Golang/internal/file"    // Path to the file package
 	_ "Golang/internal/utils" // For error codes or handling
 	_ "errors"
@@ -16,18 +17,18 @@ tsfile_writer -> tsfile_io_writer -> tsfile_writer
 
 // TsFileWriter represents the high-level writer managing TSFiles
 type TsFileWriter struct {
-	WriteFile      *file.WriteFile                 // Instance of WriteFile used to manage underlying file
-	DeviceSchemas  map[string]*common.DeviceSchema // Map of device names to their respective schemas
-	WriteFileReady bool                            // Tracks if the write file is initialized and ready
-	ChunkWriters   map[string]*ChunkWriter         // Map of device to their ChunkWriters
+	WriteFile      *file.WriteFile               // Instance of WriteFile used to manage underlying file
+	DeviceSchemas  map[string]*core.DeviceSchema // Map of device names to their respective schemas
+	WriteFileReady bool                          // Tracks if the write file is initialized and ready
+	ChunkWriters   map[string]*ChunkWriter       // Map of device to their ChunkWriters
 
 }
 
 // NewTsFileWriter creates a new instance of TsFileWriter
 func NewTsFileWriter() *TsFileWriter {
 	return &TsFileWriter{
-		DeviceSchemas: make(map[string]*common.DeviceSchema), // Initialize device schemas map
-		ChunkWriters:  make(map[string]*ChunkWriter),         // Initialize chunk writers map
+		DeviceSchemas: make(map[string]*core.DeviceSchema), // Initialize device schemas map
+		ChunkWriters:  make(map[string]*ChunkWriter),       // Initialize chunk writers map
 
 	}
 }
@@ -77,17 +78,17 @@ func (tf *TsFileWriter) Open(filePath string, flags int, mode os.FileMode) error
 // - Error if the registration fails, or nil if it succeeds
 func (tf *TsFileWriter) RegisterTimeseries(deviceName, measurementName, dataType, encoding, compressor string, defaultValue interface{}) error {
 	// Create a TSDataType-compatible value object
-	var value *common.Value
+	var value *base.Value
 	if defaultValue != nil {
 		var err error
-		value, err = common.NewValue(common.TSDataType(dataType), defaultValue)
+		value, err = base.NewValue(base.TSDataType(dataType), defaultValue)
 		if err != nil {
 			return err
 		}
 	}
 
 	// Update the schema using the common package logic
-	err := common.RegisterOrUpdateSchema(tf.DeviceSchemas, deviceName, measurementName, dataType, encoding, compressor)
+	err := core.RegisterOrUpdateSchema(tf.DeviceSchemas, deviceName, measurementName, dataType, encoding, compressor)
 	if err != nil {
 		return err
 	}

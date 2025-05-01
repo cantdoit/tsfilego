@@ -1,7 +1,7 @@
 package writer
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
 	"Golang/internal/compressor"
 	"Golang/internal/encoder"
 	_ "bytes"
@@ -11,7 +11,7 @@ import (
 // PageWriter handles the low-level processing of individual pages in a chunk
 type PageWriter struct {
 	PageType      string                // Indicates whether this is a "time" or "value" page
-	PageBuffer    *common.ByteStream    // Use ByteStream for storing uncompressed page data
+	PageBuffer    *base.ByteStream      // Use ByteStream for storing uncompressed page data
 	Encoder       encoder.Encoder       // Encoder for generating binary data based on type
 	Compressor    compressor.Compressor // Compressor for compressing page data
 	Statistics    Statistics            // Statistics collector for the page
@@ -40,7 +40,7 @@ func NewPageWriter(pageType string, dataType string, encoding string, compressio
 	statistics := NewStatistic(dataType)
 
 	// Initialize the ByteStream for the PageWriter
-	pageBuffer := common.NewByteStream()
+	pageBuffer := base.NewByteStream()
 
 	pageWriter := &PageWriter{
 		PageType:      pageType,

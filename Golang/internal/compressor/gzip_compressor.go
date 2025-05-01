@@ -1,26 +1,25 @@
 package compressor
 
 import (
+	"Golang/internal/common/base"
 	"bytes"
 	"compress/gzip"
 	"io"
 	"sync"
-
-	"Golang/internal/common" // Import ByteStream from the common package
 )
 
 // GzipCompressor implements the Compressor interface, with ByteStream integration
 type GzipCompressor struct {
-	mu     sync.Mutex         // Mutex for thread-safe operation
-	buffer bytes.Buffer       // Internal buffer for writing compressed data
-	writer *gzip.Writer       // Gzip writer for compressing data
-	reader *gzip.Reader       // Gzip reader for decompressing data
-	stream *common.ByteStream // ByteStream object for buffering data
+	mu     sync.Mutex       // Mutex for thread-safe operation
+	buffer bytes.Buffer     // Internal buffer for writing compressed data
+	writer *gzip.Writer     // Gzip writer for compressing data
+	reader *gzip.Reader     // Gzip reader for decompressing data
+	stream *base.ByteStream // ByteStream object for buffering data
 }
 
 // newGzipCompressor creates a new GzipCompressor instance
 func newGzipCompressor() *GzipCompressor {
-	stream, err := common.NewByteStream(512) // Initialize ByteStream with 512-byte pages (custom value)
+	stream, err := base.NewByteStream(512) // Initialize ByteStream with 512-byte pages (custom value)
 	if err != nil {
 		panic("Failed to create ByteStream: " + err.Error()) // ByteStream initialization should not fail
 	}

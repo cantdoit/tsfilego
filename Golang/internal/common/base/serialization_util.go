@@ -1,6 +1,7 @@
-package common
+package base
 
 import (
+	"fmt"
 	"math"
 	"unsafe"
 )
@@ -9,6 +10,37 @@ import (
 // in a ByteStream (big-endian encoding is used).
 // TODO consider Stack Allocation due to GC garbage collector impact
 type SerializationUtil struct{}
+
+// WriteBool writes a boolean value as uint8 (1 for true, 0 for false) to the ByteStream
+func (su *SerializationUtil) WriteBool(value bool, out *ByteStream) error {
+	uint8Value := uint8(0)
+	if value {
+		uint8Value = 1
+	}
+	return su.WriteUint8(uint8Value, out)
+}
+
+// ReadBool reads a boolean value encoded as a uint8 (1 for true, 0 for false) from the ByteStream.
+func (su *SerializationUtil) ReadBool(in *ByteStream) (bool, error) {
+	// Create a buffer to read 1 byte
+	buf := make([]byte, 1)
+
+	// Use `ReadBuf` to read into the buffer
+	_, err := in.ReadBuf(buf, 1) // Pass buffer and length
+	if err != nil {
+		return false, err
+	}
+
+	// Extract the first byte and interpret as boolean
+	switch buf[0] {
+	case 1:
+		return true, nil
+	case 0:
+		return false, nil
+	default:
+		return false, fmt.Errorf("invalid boolean value: %v", buf[0])
+	}
+}
 
 // WriteUint8 writes a single uint8 value to the ByteStream.
 func (su *SerializationUtil) WriteUint8(ui8 uint8, out *ByteStream) error {

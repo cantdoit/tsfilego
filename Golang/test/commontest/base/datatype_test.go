@@ -1,18 +1,18 @@
-package commontest
+package base
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
 	"testing"
 )
 
 func TestValueConstructor(t *testing.T) {
-	v, err := common.NewValue(common.INT64, int64(123456789))
+	v, err := base.NewValue(base.INT64, int64(123456789))
 	if err != nil {
 		t.Fatalf("Failed to create Value instance: %v", err)
 	}
 
-	if v.Type != common.INT64 {
-		t.Errorf("Expected Type: %s, Got: %s", common.INT64, v.Type)
+	if v.Type != base.INT64 {
+		t.Errorf("Expected Type: %s, Got: %s", base.INT64, v.Type)
 	}
 
 	if v.GetValue().(int64) != 123456789 {
@@ -22,36 +22,36 @@ func TestValueConstructor(t *testing.T) {
 
 func TestValueSetAndGetValue(t *testing.T) {
 	// Test INT64
-	v, err := common.NewValue(common.INT64, int64(123456789))
+	v, err := base.NewValue(base.INT64, int64(123456789))
 	if err != nil {
 		t.Fatalf("Failed to create Value instance: %v", err)
 	}
-	if v.Type != common.INT64 {
-		t.Errorf("Expected Type: %s, Got: %s", common.INT64, v.Type)
+	if v.Type != base.INT64 {
+		t.Errorf("Expected Type: %s, Got: %s", base.INT64, v.Type)
 	}
 	if v.GetValue().(int64) != 123456789 {
 		t.Errorf("Expected Value: %d, Got: %d", 123456789, v.GetValue().(int64))
 	}
 
 	// Test DOUBLE
-	v, err = common.NewValue(common.DOUBLE, float64(123.456))
+	v, err = base.NewValue(base.DOUBLE, float64(123.456))
 	if err != nil {
 		t.Fatalf("Failed to create Value instance: %v", err)
 	}
-	if v.Type != common.DOUBLE {
-		t.Errorf("Expected Type: %s, Got: %s", common.DOUBLE, v.Type)
+	if v.Type != base.DOUBLE {
+		t.Errorf("Expected Type: %s, Got: %s", base.DOUBLE, v.Type)
 	}
 	if v.GetValue().(float64) != 123.456 {
 		t.Errorf("Expected Value: %f, Got: %f", 123.456, v.GetValue().(float64))
 	}
 
 	// Test TEXT
-	v, err = common.NewValue(common.TEXT, "hello")
+	v, err = base.NewValue(base.TEXT, "hello")
 	if err != nil {
 		t.Fatalf("Failed to create Value instance: %v", err)
 	}
-	if v.Type != common.TEXT {
-		t.Errorf("Expected Type: %s, Got: %s", common.TEXT, v.Type)
+	if v.Type != base.TEXT {
+		t.Errorf("Expected Type: %s, Got: %s", base.TEXT, v.Type)
 	}
 	if v.GetValue().(string) != "hello" {
 		t.Errorf("Expected Value: %s, Got: %s", "hello", v.GetValue().(string))
@@ -60,7 +60,7 @@ func TestValueSetAndGetValue(t *testing.T) {
 
 func TestValueFree(t *testing.T) {
 	// Test Free method for TEXT data type
-	v, err := common.NewValue(common.TEXT, "hello")
+	v, err := base.NewValue(base.TEXT, "hello")
 	if err != nil {
 		t.Fatalf("Failed to create Value instance: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestValueFree(t *testing.T) {
 }
 
 func TestInvalidValueCreation(t *testing.T) {
-	_, err := common.NewValue(common.INT64, "invalid_type")
+	_, err := base.NewValue(base.INT64, "invalid_type")
 	if err == nil {
 		t.Errorf("Expected error when creating Value with invalid type, but got none")
 	}

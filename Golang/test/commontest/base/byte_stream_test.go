@@ -1,7 +1,7 @@
-package commontest
+package base
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
 	"Golang/internal/utils"
 	"errors"
 	"testing"
@@ -9,13 +9,13 @@ import (
 
 // ByteStreamTestSuite represents the test suite for ByteStream.
 type ByteStreamTestSuite struct {
-	byteStream *common.ByteStream
+	byteStream *base.ByteStream
 }
 
 // Setup initializes a new ByteStream instance for tests.
 func (suite *ByteStreamTestSuite) Setup(t *testing.T, pageSize uint32) {
 	var err error
-	suite.byteStream, err = common.NewByteStream(pageSize)
+	suite.byteStream, err = base.NewByteStream(pageSize)
 	if err != nil {
 		t.Fatalf("Failed to set up ByteStream: %v", err)
 	}

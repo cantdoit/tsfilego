@@ -1,13 +1,12 @@
 package compressor
 
 import (
+	"Golang/internal/common/base"
 	"bytes"
 	"errors"
 	"github.com/pierrec/lz4"
 	"io"
 	"sync"
-
-	"Golang/internal/common" // Import ByteStream dependency
 )
 
 // Errors specific to the LZ4 compressor
@@ -18,15 +17,15 @@ var (
 
 // LZ4Compressor handles compression and decompression for LZ4 with ByteStream integration.
 type LZ4Compressor struct {
-	mu     sync.Mutex         // Mutex for thread-safe operations
-	buffer bytes.Buffer       // Temporary buffer for compression data
-	writer *lz4.Writer        // LZ4 Writer for compression
-	stream *common.ByteStream // ByteStream for efficient memory management
+	mu     sync.Mutex       // Mutex for thread-safe operations
+	buffer bytes.Buffer     // Temporary buffer for compression data
+	writer *lz4.Writer      // LZ4 Writer for compression
+	stream *base.ByteStream // ByteStream for efficient memory management
 }
 
 // newLz4Compressor initializes a new LZ4Compressor.
 func newLz4Compressor() *LZ4Compressor {
-	stream, err := common.NewByteStream(512) // ByteStream with 512-byte page size
+	stream, err := base.NewByteStream(512) // ByteStream with 512-byte page size
 	if err != nil {
 		panic("Failed to initialize ByteStream: " + err.Error())
 	}

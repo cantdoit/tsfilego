@@ -1,7 +1,7 @@
 package encoder
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
 	"bytes"
 	"errors"
 )
@@ -10,7 +10,7 @@ import (
 
 // Encoder is a generic interface for encoding data into a ByteStream.
 type Encoder interface {
-	Encode(value interface{}, stream *common.ByteStream, su *common.SerializationUtil) error
+	Encode(value interface{}, stream *base.ByteStream, su *base.SerializationUtil) error
 	Destroy()
 }
 
@@ -39,7 +39,7 @@ func NewPlainEncoder() *PlainEncoder {
 }
 
 // Encode encodes a value (of supported types) and writes it into the ByteStream.
-func (pe *PlainEncoder) Encode(value interface{}, stream *common.ByteStream, su *common.SerializationUtil) error {
+func (pe *PlainEncoder) Encode(value interface{}, stream *base.ByteStream, su *base.SerializationUtil) error {
 	switch v := value.(type) {
 	case uint8:
 		return su.WriteUint8(v, stream)

@@ -1,4 +1,4 @@
-package common
+package base
 
 // DefaultEncodings maps data types to their default encoding methods
 var DefaultEncodings = map[TSDataType]TSEncoding{

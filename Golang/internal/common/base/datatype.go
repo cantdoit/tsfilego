@@ -1,4 +1,4 @@
-package common
+package base
 
 import (
 	"errors"
@@ -22,6 +22,7 @@ const (
 	FLOAT      TSDataType = "FLOAT"
 	DOUBLE     TSDataType = "DOUBLE"
 	TEXT       TSDataType = "TEXT"
+	VECTOR     TSDataType = "VECTOR"
 	NULL_TYPE  TSDataType = "NULL_TYPE"
 	INVALID_TS TSDataType = "INVALID_DATATYPE"
 )

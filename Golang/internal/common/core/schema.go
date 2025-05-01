@@ -1,6 +1,9 @@
-package common
+package core
 
-import "errors"
+import (
+	"Golang/internal/common/base"
+	"errors"
+)
 
 // DeviceSchema holds the schema for a specific device
 type DeviceSchema struct {
@@ -10,33 +13,33 @@ type DeviceSchema struct {
 
 // MeasurementSchema defines the schema for a single measurement
 type MeasurementSchema struct {
-	Name         string          // Measurement name (e.g., temperature)
-	DataType     TSDataType      // Data type (e.g., INT32, BOOLEAN, TEXT)
-	Encoding     TSEncoding      // Encoding method (e.g., RLE, PLAIN)
-	Compressor   CompressionType // Compression algorithm (e.g., LZ4, SNAPPY)
-	DefaultValue *Value          // Optional: Default or pre-defined value for this measurement
+	Name         string               // Measurement name (e.g., temperature)
+	DataType     base.TSDataType      // Data type (e.g., INT32, BOOLEAN, TEXT)
+	Encoding     base.TSEncoding      // Encoding method (e.g., RLE, PLAIN)
+	Compressor   base.CompressionType // Compression algorithm (e.g., LZ4, SNAPPY)
+	DefaultValue *base.Value          // Optional: Default or pre-defined value for this measurement
 }
 
 // RegisterOrUpdateSchema registers or updates a schema for a given device and measurement
 func RegisterOrUpdateSchema(deviceSchemas map[string]*DeviceSchema, deviceName, measurementName string,
-	dataType TSDataType, encoding TSEncoding, compressor CompressionType) error {
+	dataType base.TSDataType, encoding base.TSEncoding, compressor base.CompressionType) error {
 
 	// Validate data type
-	if !IsValidDataType(dataType) {
+	if !base.IsValidDataType(dataType) {
 		return errors.New("invalid data type: " + string(dataType))
 	}
 
 	// Validate encoding and apply default if necessary
 	if encoding == "" {
-		encoding = GetDefaultEncoding(dataType)
-	} else if !IsValidEncoding(encoding) {
+		encoding = base.GetDefaultEncoding(dataType)
+	} else if !base.IsValidEncoding(encoding) {
 		return errors.New("invalid encoding: " + string(encoding))
 	}
 
 	// Validate compression and apply default if necessary
 	if compressor == "" {
-		compressor = GetDefaultCompression(dataType)
-	} else if !IsValidCompression(compressor) {
+		compressor = base.GetDefaultCompression(dataType)
+	} else if !base.IsValidCompression(compressor) {
 		return errors.New("invalid compression: " + string(compressor))
 	}
 

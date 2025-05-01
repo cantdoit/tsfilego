@@ -1,21 +1,22 @@
-package commontest
+package core
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
+	"Golang/internal/common/core"
 	"testing"
 )
 
 // RecordTestSuite manages setup and teardown for tests related to TsRecord.
 type RecordTestSuite struct {
-	tsRecord *common.TsRecord
+	tsRecord *core.TsRecord
 }
 
 // Setup initializes a new TsRecord instance.
 func (suite *RecordTestSuite) Setup(deviceID string, timestamp int64, capacity int) {
-	suite.tsRecord = &common.TsRecord{
+	suite.tsRecord = &core.TsRecord{
 		Timestamp: timestamp,
 		DeviceID:  deviceID,
-		Points:    make([]common.DataPoint, 0, capacity),
+		Points:    make([]core.DataPoint, 0, capacity),
 	}
 }
 
@@ -26,11 +27,11 @@ func (suite *RecordTestSuite) TearDown() {
 
 // Test for boolean DataPoint constructor
 func TestDataPoint_BoolConstructor(t *testing.T) {
-	dp := common.NewDataPointBool("touch_sensor", true)
+	dp := core.NewDataPointBool("touch_sensor", true)
 	if dp.MeasurementName != "touch_sensor" {
 		t.Errorf("Expected MeasurementName to be 'touch_sensor', got '%s'", dp.MeasurementName)
 	}
-	if dp.DataType != common.BOOLEAN {
+	if dp.DataType != base.BOOLEAN {
 		t.Errorf("Expected DataType to be BOOLEAN, got '%v'", dp.DataType)
 	}
 	if dp.BoolVal == nil || *dp.BoolVal != true {
@@ -40,11 +41,11 @@ func TestDataPoint_BoolConstructor(t *testing.T) {
 
 // Test for int32 DataPoint constructor
 func TestDataPoint_Int32Constructor(t *testing.T) {
-	dp := common.NewDataPointInt32("temperature", 100)
+	dp := core.NewDataPointInt32("temperature", 100)
 	if dp.MeasurementName != "temperature" {
 		t.Errorf("Expected MeasurementName to be 'temperature', got '%s'", dp.MeasurementName)
 	}
-	if dp.DataType != common.INT32 {
+	if dp.DataType != base.INT32 {
 		t.Errorf("Expected DataType to be INT32, got '%v'", dp.DataType)
 	}
 	if dp.Int32Val == nil || *dp.Int32Val != 100 {
@@ -54,10 +55,10 @@ func TestDataPoint_Int32Constructor(t *testing.T) {
 
 // Test for setting int32 value in DataPoint
 func TestDataPoint_SetInt32(t *testing.T) {
-	dp := common.DataPoint{MeasurementName: "temperature"}
+	dp := core.DataPoint{MeasurementName: "temperature"}
 	dp.SetInt32(42)
 
-	if dp.DataType != common.INT32 {
+	if dp.DataType != base.INT32 {
 		t.Errorf("Expected DataType to be INT32, got '%v'", dp.DataType)
 	}
 	if dp.Int32Val == nil || *dp.Int32Val != 42 {
@@ -67,7 +68,7 @@ func TestDataPoint_SetInt32(t *testing.T) {
 
 // Test for a TsRecord constructed with a device name
 func TestTsRecord_ConstructorWithDeviceName(t *testing.T) {
-	tsr := common.NewTsRecord("device1")
+	tsr := core.NewTsRecord("device1")
 
 	if tsr.DeviceID != "device1" {
 		t.Errorf("Expected DeviceID to be 'device1', got '%s'", tsr.DeviceID)
@@ -83,7 +84,7 @@ func TestTsRecord_AddDataPoint(t *testing.T) {
 	suite.Setup("device1", 0, 1)
 	defer suite.TearDown()
 
-	dp := common.NewDataPointDouble("temperature", 36.6)
+	dp := core.NewDataPointDouble("temperature", 36.6)
 	if err := suite.tsRecord.AddDataPoint(dp); err != nil {
 		t.Errorf("Failed to add DataPoint: %v", err)
 	}
@@ -94,7 +95,7 @@ func TestTsRecord_AddDataPoint(t *testing.T) {
 	if suite.tsRecord.Points[0].MeasurementName != "temperature" {
 		t.Errorf("Expected first DataPoint's MeasurementName to be 'temperature', got '%s'", suite.tsRecord.Points[0].MeasurementName)
 	}
-	if suite.tsRecord.Points[0].DataType != common.DOUBLE {
+	if suite.tsRecord.Points[0].DataType != base.DOUBLE {
 		t.Errorf("Expected first DataPoint's DataType to be DOUBLE, got '%v'", suite.tsRecord.Points[0].DataType)
 	}
 	if suite.tsRecord.Points[0].DoubleVal == nil || *suite.tsRecord.Points[0].DoubleVal != 36.6 {
@@ -109,7 +110,7 @@ func TestTsRecord_LargeQuantities(t *testing.T) {
 	defer suite.TearDown()
 
 	for i := 0; i < 10000; i++ {
-		dp := common.NewDataPointInt64("measurement_"+string(rune(i)), int64(i))
+		dp := core.NewDataPointInt64("measurement_"+string(rune(i)), int64(i))
 		if err := suite.tsRecord.AddDataPoint(dp); err != nil {
 			t.Fatalf("Failed to add DataPoint %d: %v", i, err)
 		}

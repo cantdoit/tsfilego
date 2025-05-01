@@ -1,13 +1,14 @@
-package common
+package core
 
 import (
+	"Golang/internal/common/base"
 	"errors"
 )
 
 // Field represents a single value with its associated type and optional column name.
 type Field struct {
-	Type       TSDataType // Data type of the field (e.g., INT64, BOOLEAN)
-	ColumnName string     // Optional: Column name associated with the field
+	Type       base.TSDataType // Data type of the field (e.g., INT64, BOOLEAN)
+	ColumnName string          // Optional: Column name associated with the field
 	BoolVal    bool
 	Int64Val   int64
 	Int32Val   int32
@@ -17,7 +18,7 @@ type Field struct {
 }
 
 // NewField creates a new Field instance with a specific type.
-func NewField(dataType TSDataType) *Field {
+func NewField(dataType base.TSDataType) *Field {
 	return &Field{
 		Type:       dataType,
 		ColumnName: "",
@@ -27,37 +28,37 @@ func NewField(dataType TSDataType) *Field {
 // SetValue sets the value of the Field based on its data type.
 func (f *Field) SetValue(value interface{}) error {
 	switch f.Type {
-	case BOOLEAN:
+	case base.BOOLEAN:
 		if v, ok := value.(bool); ok {
 			f.BoolVal = v
 		} else {
 			return errors.New("invalid value type for BOOLEAN")
 		}
-	case INT32:
+	case base.INT32:
 		if v, ok := value.(int32); ok {
 			f.Int32Val = v
 		} else {
 			return errors.New("invalid value type for INT32")
 		}
-	case INT64:
+	case base.INT64:
 		if v, ok := value.(int64); ok {
 			f.Int64Val = v
 		} else {
 			return errors.New("invalid value type for INT64")
 		}
-	case FLOAT:
+	case base.FLOAT:
 		if v, ok := value.(float32); ok {
 			f.FloatVal = v
 		} else {
 			return errors.New("invalid value type for FLOAT")
 		}
-	case DOUBLE:
+	case base.DOUBLE:
 		if v, ok := value.(float64); ok {
 			f.DoubleVal = v
 		} else {
 			return errors.New("invalid value type for DOUBLE")
 		}
-	case TEXT:
+	case base.TEXT:
 		if v, ok := value.(string); ok {
 			f.StringVal = v
 		} else {
@@ -71,7 +72,7 @@ func (f *Field) SetValue(value interface{}) error {
 
 // Free clears the StringVal memory for TEXT type.
 func (f *Field) Free() {
-	if f.Type == TEXT {
+	if f.Type == base.TEXT {
 		f.StringVal = ""
 	}
 }
@@ -91,7 +92,7 @@ func NewRowRecord(timestamp int64, columnCount int) *RowRecord {
 
 	// Initialize fields with NULL_TYPE by default
 	for i := 0; i < columnCount; i++ {
-		record.Fields[i] = NewField(NULL_TYPE)
+		record.Fields[i] = NewField(base.NULL_TYPE)
 	}
 	return record
 }
@@ -110,7 +111,7 @@ func (r *RowRecord) GetField(index int) (*Field, error) {
 }
 
 // SetFieldValue modifies the value of a field at a specific index.
-func (r *RowRecord) SetFieldValue(index int, value interface{}, dataType TSDataType) error {
+func (r *RowRecord) SetFieldValue(index int, value interface{}, dataType base.TSDataType) error {
 	if index < 0 || index >= len(r.Fields) {
 		return errors.New("field index out of range")
 	}

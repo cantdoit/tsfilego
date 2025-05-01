@@ -1,23 +1,23 @@
-package commontest
+package base
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
 	"testing"
 )
 
 type SerializationUtilTestSuite struct {
-	byteStream        *common.ByteStream
-	serializationUtil *common.SerializationUtil
+	byteStream        *base.ByteStream
+	serializationUtil *base.SerializationUtil
 }
 
 // Setup initializes the test suite with a ByteStream and SerializationUtil instance
 func (suite *SerializationUtilTestSuite) Setup(t *testing.T, pageSize int) {
 	var err error
-	suite.byteStream, err = common.NewByteStream(uint32(pageSize))
+	suite.byteStream, err = base.NewByteStream(uint32(pageSize))
 	if err != nil {
 		t.Fatalf("Failed to set up ByteStream: %v", err)
 	}
-	suite.serializationUtil = &common.SerializationUtil{}
+	suite.serializationUtil = &base.SerializationUtil{}
 }
 
 // TearDown cleans up the test suite

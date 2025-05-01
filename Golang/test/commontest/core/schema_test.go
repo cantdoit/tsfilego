@@ -1,12 +1,13 @@
-package commontest
+package core
 
 import (
-	"Golang/internal/common"
+	"Golang/internal/common/base"
+	"Golang/internal/common/core"
 	"testing"
 )
 
 func TestDefaultMeasurementSchema(t *testing.T) {
-	schema := common.MeasurementSchema{}
+	schema := core.MeasurementSchema{}
 
 	if schema.Name != "" {
 		t.Errorf("Expected Name: '', Got: %s", schema.Name)
@@ -26,26 +27,26 @@ func TestDefaultMeasurementSchema(t *testing.T) {
 }
 
 func TestParameterizedMeasurementSchema(t *testing.T) {
-	defaultValue, _ := common.NewValue(common.INT64, int64(0))
-	schema := common.MeasurementSchema{
+	defaultValue, _ := base.NewValue(base.INT64, int64(0))
+	schema := core.MeasurementSchema{
 		Name:         "temperature",
-		DataType:     common.INT64,
-		Encoding:     common.RLE,
-		Compressor:   common.SNAPPY,
+		DataType:     base.INT64,
+		Encoding:     base.RLE,
+		Compressor:   base.SNAPPY,
 		DefaultValue: defaultValue,
 	}
 
 	if schema.Name != "temperature" {
 		t.Errorf("Expected Name: 'temperature', Got: %s", schema.Name)
 	}
-	if schema.DataType != common.INT64 {
-		t.Errorf("Expected DataType: %s, Got: %s", common.INT64, schema.DataType)
+	if schema.DataType != base.INT64 {
+		t.Errorf("Expected DataType: %s, Got: %s", base.INT64, schema.DataType)
 	}
-	if schema.Encoding != common.RLE {
-		t.Errorf("Expected Encoding: %s, Got: %s", common.RLE, schema.Encoding)
+	if schema.Encoding != base.RLE {
+		t.Errorf("Expected Encoding: %s, Got: %s", base.RLE, schema.Encoding)
 	}
-	if schema.Compressor != common.SNAPPY {
-		t.Errorf("Expected Compressor: %s, Got: %s", common.SNAPPY, schema.Compressor)
+	if schema.Compressor != base.SNAPPY {
+		t.Errorf("Expected Compressor: %s, Got: %s", base.SNAPPY, schema.Compressor)
 	}
 	if schema.DefaultValue.GetValue().(int64) != int64(0) {
 		t.Errorf("Expected DefaultValue: %d, Got: %d", int64(0), schema.DefaultValue.GetValue().(int64))
@@ -53,8 +54,8 @@ func TestParameterizedMeasurementSchema(t *testing.T) {
 }
 
 func TestDefaultDeviceSchema(t *testing.T) {
-	deviceSchema := common.DeviceSchema{
-		Measurements: make(map[string]*common.MeasurementSchema),
+	deviceSchema := core.DeviceSchema{
+		Measurements: make(map[string]*core.MeasurementSchema),
 		IsAligned:    false,
 	}
 
@@ -68,9 +69,9 @@ func TestDefaultDeviceSchema(t *testing.T) {
 }
 
 func TestRegisterOrUpdateSchema(t *testing.T) {
-	deviceSchemas := make(map[string]*common.DeviceSchema)
+	deviceSchemas := make(map[string]*core.DeviceSchema)
 
-	err := common.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", common.INT32, common.RLE, common.SNAPPY)
+	err := core.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
 	}
@@ -85,27 +86,27 @@ func TestRegisterOrUpdateSchema(t *testing.T) {
 		t.Fatalf("Measurement 'temperature' not found in device schema")
 	}
 
-	if measurementSchema.DataType != common.INT32 {
-		t.Errorf("Expected DataType: %s, Got: %s", common.INT32, measurementSchema.DataType)
+	if measurementSchema.DataType != base.INT32 {
+		t.Errorf("Expected DataType: %s, Got: %s", base.INT32, measurementSchema.DataType)
 	}
-	if measurementSchema.Encoding != common.RLE {
-		t.Errorf("Expected Encoding: %s, Got: %s", common.RLE, measurementSchema.Encoding)
+	if measurementSchema.Encoding != base.RLE {
+		t.Errorf("Expected Encoding: %s, Got: %s", base.RLE, measurementSchema.Encoding)
 	}
-	if measurementSchema.Compressor != common.SNAPPY {
-		t.Errorf("Expected Compressor: %s, Got: %s", common.SNAPPY, measurementSchema.Compressor)
+	if measurementSchema.Compressor != base.SNAPPY {
+		t.Errorf("Expected Compressor: %s, Got: %s", base.SNAPPY, measurementSchema.Compressor)
 	}
 }
 
 func TestRegisterOrUpdateSchemaDuplicate(t *testing.T) {
-	deviceSchemas := make(map[string]*common.DeviceSchema)
+	deviceSchemas := make(map[string]*core.DeviceSchema)
 
-	err := common.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", common.INT32, common.RLE, common.SNAPPY)
+	err := core.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
 	}
 
 	// Try to register the same measurement again
-	err = common.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", common.INT32, common.RLE, common.SNAPPY)
+	err = core.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
 	if err == nil {
 		t.Fatalf("Expected error when registering duplicate measurement, but got none")
 	}

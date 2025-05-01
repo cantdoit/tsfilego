@@ -1,9 +1,9 @@
-package common
+package core
 
 import (
-	"bytes"
+	"Golang/internal/common/base"
+	"Golang/internal/common/statistic"
 	"errors"
-	"fmt"
 	"sort"
 )
 
@@ -30,16 +30,11 @@ var (
 	ErrDeserialization = errors.New("deserialization failed")
 )
 
-// Statistic represents the statistics data structure
-type Statistic struct {
-	// Implementation omitted for brevity
-}
-
 // PageHeader struct represents the page metadata
 type PageHeader struct {
 	UncompressedSize uint32
 	CompressedSize   uint32
-	Statistic        *Statistic
+	Statistic        statistic.Interface
 }
 
 // NewPageHeader initializes a new PageHeader with default values
@@ -51,26 +46,40 @@ func NewPageHeader() *PageHeader {
 	}
 }
 
-// Reset clears the PageHeader fields
-func (p *PageHeader) Reset() {
+// Reset clears the PageHeader fields, releasing the associated statistic.
+func (p *PageHeader) Reset(factory statistic.Factory) {
+	if p.Statistic != nil {
+		factory.FreeStatistic(p.Statistic)
+		p.Statistic = nil
+	}
 	p.UncompressedSize = 0
 	p.CompressedSize = 0
-	p.Statistic = nil
 }
 
 // DeserializeFrom deserializes a PageHeader from ByteStream
-func (p *PageHeader) DeserializeFrom(stream *ByteStream, deserializeStat bool, dataType TSDataType) error {
+func (p *PageHeader) DeserializeFrom(stream *base.ByteStream, deserializeStat bool, dataType base.TSDataType, serial base.SerializationUtil, factory statistic.Factory) error {
 	var err error
-	if p.UncompressedSize, err = stream.ReadVarUint(); err != nil {
-		return ErrDeserialization
+
+	// Read UncompressedSize
+	if p.UncompressedSize, err = serial.ReadVarUint(stream); err != nil {
+		return errors.New("failed to read uncompressed size: " + err.Error())
 	}
-	if p.CompressedSize, err = stream.ReadVarUint(); err != nil {
-		return ErrDeserialization
+
+	// Read CompressedSize
+	if p.CompressedSize, err = serial.ReadVarUint(stream); err != nil {
+		return errors.New("failed to read compressed size: " + err.Error())
 	}
+
 	if deserializeStat {
-		p.Statistic = NewStatistic(dataType)
-		if err = p.Statistic.DeserializeFrom(stream); err != nil {
-			return ErrDeserialization
+		// Allocate a statistic object
+		p.Statistic, _ = factory.AllocStatistic(dataType)
+		if p.Statistic == nil {
+			return errors.New("failed to allocate statistic")
+		}
+
+		// Deserialize the statistic
+		if err = p.Statistic.(stream); err != nil {
+			return errors.New("failed to deserialize statistic: " + err.Error())
 		}
 	}
 	return nil
@@ -80,9 +89,9 @@ func (p *PageHeader) DeserializeFrom(stream *ByteStream, deserializeStat bool, d
 type ChunkHeader struct {
 	MeasurementName string
 	DataSize        uint32
-	DataType        TSDataType
-	CompressionType CompressionType
-	EncodingType    TSEncoding
+	DataType        base.TSDataType
+	CompressionType base.CompressionType
+	EncodingType    base.TSEncoding
 	NumOfPages      int32
 	SerializedSize  int32
 	ChunkType       byte
@@ -93,9 +102,9 @@ func NewChunkHeader() *ChunkHeader {
 	return &ChunkHeader{
 		MeasurementName: "",
 		DataSize:        0,
-		DataType:        INVALID_TS,
-		CompressionType: INVALID_C,
-		EncodingType:    INVALID_E,
+		DataType:        base.INVALID_TS,
+		CompressionType: base.INVALID_C,
+		EncodingType:    base.INVALID_E,
 		NumOfPages:      0,
 		SerializedSize:  0,
 		ChunkType:       0,
@@ -106,16 +115,16 @@ func NewChunkHeader() *ChunkHeader {
 func (c *ChunkHeader) Reset() {
 	c.MeasurementName = ""
 	c.DataSize = 0
-	c.DataType = INVALID_TS
-	c.CompressionType = INVALID_C
-	c.EncodingType = INVALID_E
+	c.DataType = base.INVALID_TS
+	c.CompressionType = base.INVALID_C
+	c.EncodingType = base.INVALID_E
 	c.NumOfPages = 0
 	c.SerializedSize = 0
 	c.ChunkType = 0
 }
 
 // SerializeTo serializes the ChunkHeader to a ByteStream
-func (c *ChunkHeader) SerializeTo(stream *ByteStream) error {
+func (c *ChunkHeader) SerializeTo(stream *base.ByteStream) error {
 	if err := stream.WriteByte(c.ChunkType); err != nil {
 		return ErrSerialization
 	}
@@ -138,7 +147,7 @@ func (c *ChunkHeader) SerializeTo(stream *ByteStream) error {
 }
 
 // DeserializeFrom deserializes a ChunkHeader from a ByteStream
-func (c *ChunkHeader) DeserializeFrom(stream *ByteStream) error {
+func (c *ChunkHeader) DeserializeFrom(stream *base.ByteStream) error {
 	var err error
 	if c.ChunkType, err = stream.ReadByte(); err != nil {
 		return ErrDeserialization
@@ -152,17 +161,17 @@ func (c *ChunkHeader) DeserializeFrom(stream *ByteStream) error {
 	if b, err := stream.ReadByte(); err != nil {
 		return ErrDeserialization
 	} else {
-		c.DataType = TSDataType(b)
+		c.DataType = base.TSDataType(b)
 	}
 	if b, err := stream.ReadByte(); err != nil {
 		return ErrDeserialization
 	} else {
-		c.CompressionType = CompressionType(b)
+		c.CompressionType = base.CompressionType(b)
 	}
 	if b, err := stream.ReadByte(); err != nil {
 		return ErrDeserialization
 	} else {
-		c.EncodingType = TSEncoding(b)
+		c.EncodingType = base.TSEncoding(b)
 	}
 	return nil
 }
@@ -170,14 +179,14 @@ func (c *ChunkHeader) DeserializeFrom(stream *ByteStream) error {
 // ChunkMeta represents metadata for a chunk
 type ChunkMeta struct {
 	MeasurementName string
-	DataType        TSDataType
+	DataType        base.TSDataType
 	OffsetOfHeader  int64
-	Statistic       *Statistic
+	Statistic       *statistic.Statistic
 	Mask            byte
 }
 
 // Initialize creates a new ChunkMeta with the given parameters
-func (c *ChunkMeta) Initialize(name string, dataType TSDataType, offset int64, stat *Statistic, mask byte) {
+func (c *ChunkMeta) Initialize(name string, dataType base.TSDataType, offset int64, stat *statistic.Statistic, mask byte) {
 	c.MeasurementName = name
 	c.DataType = dataType
 	c.OffsetOfHeader = offset
@@ -198,7 +207,7 @@ func (c *ChunkMeta) CloneFrom(other *ChunkMeta) error {
 }
 
 // SerializeTo serializes ChunkMeta to a ByteStream
-func (c *ChunkMeta) SerializeTo(stream *ByteStream, serializeStat bool) error {
+func (c *ChunkMeta) SerializeTo(stream *base.ByteStream, serializeStat bool) error {
 	if err := stream.WriteInt64(c.OffsetOfHeader); err != nil {
 		return ErrSerialization
 	}
