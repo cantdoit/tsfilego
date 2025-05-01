@@ -5,14 +5,14 @@ import (
 	"fmt"
 )
 
-// TSDataType defines the supported data types for timeseries values
-type TSDataType string
-
 // TSEncoding defines the available encoding types
 type TSEncoding string
 
 // CompressionType defines the available compression types
 type CompressionType string
+
+// TSDataType defines the supported data types for timeseries values
+type TSDataType string
 
 // Supported timeseries data types
 const (
@@ -27,6 +27,29 @@ const (
 	INVALID_TS TSDataType = "INVALID_DATATYPE"
 )
 
+func (t TSDataType) TSDataTypeToEnum() uint8 {
+	switch t {
+	case BOOLEAN:
+		return 0
+	case INT32:
+		return 1
+	case INT64:
+		return 2
+	case FLOAT:
+		return 3
+	case DOUBLE:
+		return 4
+	case TEXT:
+		return 5
+	case VECTOR:
+		return 6
+	case NULL_TYPE:
+		return 254
+	default:
+		return 255 // or some error value
+	}
+}
+
 // Supported encoding types
 const (
 	PLAIN      TSEncoding = "PLAIN"
@@ -39,6 +62,20 @@ const (
 	INVALID_E  TSEncoding = "INVALID_ENCODING"
 )
 
+func (e TSEncoding) TSEncodingToEnum() uint8 {
+	switch e {
+	case PLAIN:
+		return 0
+	case DICTIONARY:
+		return 1
+	case RLE:
+		return 2
+	//TODO add the remaining ones
+	default:
+		return 255
+	}
+}
+
 // Supported compression types
 const (
 	UNCOMPRESSED CompressionType = "UNCOMPRESSED"
@@ -48,6 +85,16 @@ const (
 	LZ4          CompressionType = "LZ4"
 	INVALID_C    CompressionType = "INVALID_COMPRESSION"
 )
+
+func (c CompressionType) CompressionTypeToEnum() uint8 {
+	switch c {
+	case UNCOMPRESSED:
+		return 0
+	// TODO add the remaining enum
+	default:
+		return 255
+	}
+}
 
 // Value represents a type-agnostic data holder
 type Value struct {

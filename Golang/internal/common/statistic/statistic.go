@@ -14,6 +14,26 @@ type Statistic struct {
 	DataType  base.TSDataType // The data type of this statistic (e.g., BOOLEAN, INT32)
 }
 
+func (s *Statistic) GetType() base.TSDataType {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Statistic) Clone() Interface {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Statistic) DeserializeTypedStat(stream *base.ByteStream) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (s *Statistic) SerializeTypedStat(stream *base.ByteStream) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 // NewStatistic creates a new base statistic
 func NewStatistic(dataType base.TSDataType) (*Statistic, error) {
 	if !base.IsValidDataType(dataType) {
@@ -902,6 +922,7 @@ type Interface interface {
 	ToString() string
 	Clone() Interface
 	DeserializeTypedStat(stream *base.ByteStream) error
+	SerializeTypedStat(stream *base.ByteStream) error
 }
 
 // CloneStatistic dynamically clones a statistic from one object to another, based on the type.

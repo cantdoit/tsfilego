@@ -168,10 +168,9 @@ int TsFileWriter::register_timeseries(const std::string &device_id,
                                       bool is_aligned) {
     DeviceSchemaIter device_iter = schemas_.find(device_id);
     if (device_iter != schemas_.end()) {
-        MeasurementSchemaMap &msm =
-            device_iter->second->measurement_schema_map_;
-        MeasurementSchemaMapInsertResult ins_res = msm.insert(std::make_pair(
-            measurement_schema->measurement_name_, measurement_schema));
+        MeasurementSchemaMap &msm = device_iter->second->measurement_schema_map_;
+        MeasurementSchemaMapInsertResult ins_res = msm.insert(
+                std::make_pair(measurement_schema->measurement_name_, measurement_schema));
         if (UNLIKELY(!ins_res.second)) {
             return E_ALREADY_EXIST;
         }

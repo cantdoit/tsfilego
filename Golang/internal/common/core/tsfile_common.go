@@ -3,8 +3,8 @@ package core
 import (
 	"Golang/internal/common/base"
 	"Golang/internal/common/statistic"
+	"Golang/internal/utils"
 	"errors"
-	"sort"
 )
 
 // TsFileID type alias for consistency
@@ -29,6 +29,10 @@ var (
 	ErrSerialization   = errors.New("serialization failed")
 	ErrDeserialization = errors.New("deserialization failed")
 )
+
+/////////////////
+// page header //
+/////////////////
 
 // PageHeader struct represents the page metadata
 type PageHeader struct {
@@ -88,6 +92,15 @@ func (p *PageHeader) DeserializeFrom(stream *base.ByteStream, deserializeStat bo
 	return nil
 }
 
+// EstimateMaxPageHeaderSizeWithoutStatistics used for memory estimate
+func EstimateMaxPageHeaderSizeWithoutStatistics() int {
+	return 2 * (4 + 1)
+}
+
+//////////////////
+// chunk header //
+//////////////////
+
 // ChunkHeader struct represents chunk metadata
 type ChunkHeader struct {
 	MeasurementName string
@@ -127,51 +140,52 @@ func (c *ChunkHeader) Reset() {
 }
 
 // SerializeTo serializes the ChunkHeader to a ByteStream
-func (c *ChunkHeader) SerializeTo(stream *base.ByteStream) error {
-	if err := stream.WriteByte(c.ChunkType); err != nil {
+func (c *ChunkHeader) SerializeTo(stream *base.ByteStream, util *base.SerializationUtil) error {
+	err := util.WriteUint8(c.ChunkType, stream) // Write_char direct convert
+	if err != nil {
 		return ErrSerialization
 	}
-	if err := stream.WriteString(c.MeasurementName); err != nil {
+	if err := util.WriteString(c.MeasurementName, stream); err != nil {
 		return ErrSerialization
 	}
-	if err := stream.WriteVarUint(c.DataSize); err != nil {
+	if err := util.WriteVarUint(c.DataSize, stream); err != nil {
 		return ErrSerialization
 	}
-	if err := stream.WriteByte(byte(c.DataType)); err != nil {
+	if err := util.WriteUint8(c.DataType.TSDataTypeToEnum(), stream); err != nil {
 		return ErrSerialization
 	}
-	if err := stream.WriteByte(byte(c.CompressionType)); err != nil {
+	if err := util.WriteUint8(c.CompressionType.CompressionTypeToEnum(), stream); err != nil {
 		return ErrSerialization
 	}
-	if err := stream.WriteByte(byte(c.EncodingType)); err != nil {
+	if err := util.WriteUint8(c.EncodingType.TSEncodingToEnum(), stream); err != nil {
 		return ErrSerialization
 	}
 	return nil
 }
 
 // DeserializeFrom deserializes a ChunkHeader from a ByteStream
-func (c *ChunkHeader) DeserializeFrom(stream *base.ByteStream) error {
+func (c *ChunkHeader) DeserializeFrom(stream *base.ByteStream, util *base.SerializationUtil) error {
 	var err error
-	if c.ChunkType, err = stream.ReadByte(); err != nil {
+	if c.ChunkType, err = util.ReadUint8(stream); err != nil {
 		return ErrDeserialization
 	}
-	if c.MeasurementName, err = stream.ReadString(); err != nil {
+	if c.MeasurementName, err = util.ReadString(stream); err != nil {
 		return ErrDeserialization
 	}
-	if c.DataSize, err = stream.ReadVarUint(); err != nil {
+	if c.DataSize, err = util.ReadVarUint(stream); err != nil {
 		return ErrDeserialization
 	}
-	if b, err := stream.ReadByte(); err != nil {
+	if b, err := util.ReadUint8(stream); err != nil {
 		return ErrDeserialization
 	} else {
 		c.DataType = base.TSDataType(b)
 	}
-	if b, err := stream.ReadByte(); err != nil {
+	if b, err := util.ReadUint8(stream); err != nil {
 		return ErrDeserialization
 	} else {
 		c.CompressionType = base.CompressionType(b)
 	}
-	if b, err := stream.ReadByte(); err != nil {
+	if b, err := util.ReadUint8(stream); err != nil {
 		return ErrDeserialization
 	} else {
 		c.EncodingType = base.TSEncoding(b)
@@ -179,49 +193,100 @@ func (c *ChunkHeader) DeserializeFrom(stream *base.ByteStream) error {
 	return nil
 }
 
+////////////////
+// chunk meta //
+////////////////
+
 // ChunkMeta represents metadata for a chunk
 type ChunkMeta struct {
 	MeasurementName string
 	DataType        base.TSDataType
 	OffsetOfHeader  int64
-	Statistic       *statistic.Statistic
+	Statistic       statistic.Interface
+	TsID            utils.TsID
 	Mask            byte
 }
 
 // Initialize creates a new ChunkMeta with the given parameters
-func (c *ChunkMeta) Initialize(name string, dataType base.TSDataType, offset int64, stat *statistic.Statistic, mask byte) {
+func (c *ChunkMeta) Initialize(name string, dataType base.TSDataType, offset int64, stat statistic.Interface, TsID utils.TsID, mask byte) error {
 	c.MeasurementName = name
 	c.DataType = dataType
 	c.OffsetOfHeader = offset
 	c.Statistic = stat
+	c.TsID = TsID
 	c.Mask = mask
+	return nil
 }
 
-// CloneFrom duplicates data from another ChunkMeta
-func (c *ChunkMeta) CloneFrom(other *ChunkMeta) error {
-	c.MeasurementName = other.MeasurementName
-	c.DataType = other.DataType
-	c.OffsetOfHeader = other.OffsetOfHeader
-	if other.Statistic != nil {
-		c.Statistic = other.Statistic.Clone()
+// CloneStatisticFrom duplicates data from another ChunkMeta
+func (c *ChunkMeta) CloneStatisticFrom(stat statistic.Interface) error {
+	err := statistic.CloneStatistic(stat, c.Statistic, c.DataType)
+	if err != nil {
+		return err
 	}
-	c.Mask = other.Mask
+	return nil
+}
+
+// CloneFrom duplicates the data from another ChunkMeta.
+func (c *ChunkMeta) CloneFrom(that *ChunkMeta, stat statistic.Factory) error {
+	// Clone MeasurementName
+	c.MeasurementName = that.MeasurementName
+
+	// Clone the basic fields
+	c.DataType = that.DataType
+	c.OffsetOfHeader = that.OffsetOfHeader
+	c.TsID = that.TsID
+	c.Mask = that.Mask
+
+	// Clone the statistic if available in the source
+	if that.Statistic != nil {
+		// Ensure the target Statistic exists; initialize if nil
+		if c.Statistic == nil {
+			c.Statistic, _ = stat.AllocStatistic(c.DataType) // Create a new statistic based on DataType
+		}
+		// Call the clone method for the statistic
+		if err := statistic.CloneStatistic(that.Statistic, c.Statistic, c.DataType); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
 // SerializeTo serializes ChunkMeta to a ByteStream
-func (c *ChunkMeta) SerializeTo(stream *base.ByteStream, serializeStat bool) error {
-	if err := stream.WriteInt64(c.OffsetOfHeader); err != nil {
+func (c *ChunkMeta) SerializeTo(stream *base.ByteStream, serializeStat bool, util *base.SerializationUtil) error {
+	if err := util.WriteUint64(uint64(c.OffsetOfHeader), stream); err != nil {
 		return ErrSerialization
 	}
 	if serializeStat && c.Statistic != nil {
-		if err := c.Statistic.SerializeTo(stream); err != nil {
+		if err := c.Statistic.SerializeTypedStat(stream); err != nil {
 			return ErrSerialization
 		}
 	}
 	return nil
 }
 
+// DeserializeFrom deserializes the ChunkMeta from a ByteStream.
+func (c *ChunkMeta) DeserializeFrom(stream *base.ByteStream, deserializeStat bool, util *base.SerializationUtil) error {
+	// Read the OffsetOfHeader from the ByteStream
+	offset, err := util.ReadUint64(stream)
+	if err != nil {
+		return ErrDeserialization
+	}
+	c.OffsetOfHeader = int64(offset)
+
+	// Deserialize the statistic if needed
+	if deserializeStat {
+		// Deserialize into the Statistic
+		if err := c.Statistic.DeserializeTypedStat(stream); err != nil {
+			return ErrDeserialization
+		}
+	}
+
+	return nil
+}
+
+/*
 // ChunkGroupMeta represents metadata for a group of chunks
 type ChunkGroupMeta struct {
 	DeviceName    string
@@ -250,3 +315,4 @@ func (cg *ChunkGroupMeta) SortChunks() {
 		return cg.ChunkMetaList[i].MeasurementName < cg.ChunkMetaList[j].MeasurementName
 	})
 }
+*/
