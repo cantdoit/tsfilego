@@ -3,6 +3,7 @@ package base
 import (
 	"errors"
 	"fmt"
+	"strconv"
 )
 
 // TSEncoding defines the available encoding types
@@ -47,6 +48,29 @@ func (t TSDataType) TSDataTypeToEnum() uint8 {
 		return 254
 	default:
 		return 255 // or some error value
+	}
+}
+
+func (t TSDataType) EnumToTSDataType() TSDataType {
+	switch t {
+	case TSDataType(strconv.Itoa(0)):
+		return BOOLEAN
+	case TSDataType(strconv.Itoa(1)):
+		return INT32
+	case TSDataType(strconv.Itoa(2)):
+		return INT64
+	case TSDataType(strconv.Itoa(3)):
+		return FLOAT
+	case TSDataType(strconv.Itoa(4)):
+		return DOUBLE
+	case TSDataType(strconv.Itoa(5)):
+		return TEXT
+	case TSDataType(strconv.Itoa(6)):
+		return VECTOR
+	case TSDataType(strconv.Itoa(254)):
+		return NULL_TYPE
+	default:
+		return INVALID_TS // or some error value
 	}
 }
 

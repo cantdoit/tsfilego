@@ -24,7 +24,7 @@ func NewTsID(dbNID NodeID, deviceNID NodeID, measurementNID NodeID) TsID {
 }
 
 // Reset resets the TsID to its default state.
-func (ts TsID) Reset() {
+func (ts *TsID) Reset() {
 	ts.DbNID = 0
 	ts.DeviceNID = 0
 	ts.MeasurementNID = 0

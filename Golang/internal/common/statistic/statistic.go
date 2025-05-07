@@ -242,6 +242,54 @@ func (bs *BooleanStatistic) DeserializeTypedStat(in *base.ByteStream) error {
 	return nil
 }
 
+// MergeWith merges another BooleanStatistic into the current one.
+func (bs *BooleanStatistic) MergeWith(other Interface) error {
+	// Ensure the other statistic is of the BooleanStatistic type.
+	otherStat, ok := other.(*BooleanStatistic)
+	if !ok {
+		return errors.New("statistic type does not match for merge")
+	}
+
+	// If the other statistic has no data, there's nothing to merge.
+	if otherStat.Count == 0 {
+		return nil
+	}
+
+	// If the current statistic has no data, clone from the other.
+	if bs.Count == 0 {
+		bs.Count = otherStat.Count
+		bs.StartTime = otherStat.StartTime
+		bs.EndTime = otherStat.EndTime
+		bs.SumValue = otherStat.SumValue
+		bs.FirstValue = otherStat.FirstValue
+		bs.LastValue = otherStat.LastValue
+	} else {
+		// Merge values.
+		bs.Count += otherStat.Count
+		if otherStat.StartTime < bs.StartTime {
+			bs.StartTime = otherStat.StartTime
+			bs.FirstValue = otherStat.FirstValue
+		}
+		if otherStat.EndTime > bs.EndTime {
+			bs.EndTime = otherStat.EndTime
+			bs.LastValue = otherStat.LastValue
+		}
+		bs.SumValue += otherStat.SumValue
+	}
+
+	return nil
+}
+
+// Reset clears the data in the statistic
+func (bs *BooleanStatistic) Reset() {
+	bs.SumValue = 0
+	bs.Count = 0
+	bs.StartTime = 0
+	bs.EndTime = 0
+	bs.FirstValue = false
+	bs.LastValue = false
+}
+
 ///////////////////////
 /// Int32 statistic ///
 ///////////////////////
@@ -377,6 +425,64 @@ func (is *Int32Statistic) DeserializeTypedStat(in *base.ByteStream) error {
 	return nil
 }
 
+// MergeWith merges another Int32Statistic into the current one.
+func (is *Int32Statistic) MergeWith(other Interface) error {
+	// Ensure the other statistic is of the Int32Statistic type.
+	otherStat, ok := other.(*Int32Statistic)
+	if !ok {
+		return errors.New("statistic type does not match for merge")
+	}
+
+	// If the other statistic has no data, there's nothing to merge.
+	if otherStat.Count == 0 {
+		return nil
+	}
+
+	// If the current statistic has no data, clone from the other.
+	if is.Count == 0 {
+		is.Count = otherStat.Count
+		is.StartTime = otherStat.StartTime
+		is.EndTime = otherStat.EndTime
+		is.SumValue = otherStat.SumValue
+		is.FirstValue = otherStat.FirstValue
+		is.LastValue = otherStat.LastValue
+		is.MinValue = otherStat.MinValue
+		is.MaxValue = otherStat.MaxValue
+	} else {
+		// Merge values.
+		is.Count += otherStat.Count
+		if otherStat.StartTime < is.StartTime {
+			is.StartTime = otherStat.StartTime
+			is.FirstValue = otherStat.FirstValue
+		}
+		if otherStat.EndTime > is.EndTime {
+			is.EndTime = otherStat.EndTime
+			is.LastValue = otherStat.LastValue
+		}
+		is.SumValue += otherStat.SumValue
+		if otherStat.MinValue < is.MinValue {
+			is.MinValue = otherStat.MinValue
+		}
+		if otherStat.MaxValue > is.MaxValue {
+			is.MaxValue = otherStat.MaxValue
+		}
+	}
+
+	return nil
+}
+
+// Reset clears the data in the statistic
+func (is *Int32Statistic) Reset() {
+	is.MinValue = 0
+	is.MaxValue = 0
+	is.FirstValue = 0
+	is.LastValue = 0
+	is.SumValue = 0
+	is.Count = 0
+	is.StartTime = 0
+	is.EndTime = 0
+}
+
 ///////////////////////
 /// Int64 statistic ///
 ///////////////////////
@@ -500,6 +606,64 @@ func (is *Int64Statistic) DeserializeTypedStat(in *base.ByteStream) error {
 	is.SumValue = float64(sumValue)
 
 	return nil
+}
+
+// MergeWith merges another Int64Statistic into the current one.
+func (is *Int64Statistic) MergeWith(other Interface) error {
+	// Ensure the other statistic is of the Int64Statistic type.
+	otherStat, ok := other.(*Int64Statistic)
+	if !ok {
+		return errors.New("statistic type does not match for merge")
+	}
+
+	// If the other statistic has no data, there's nothing to merge.
+	if otherStat.Count == 0 {
+		return nil
+	}
+
+	// If the current statistic has no data, clone from the other.
+	if is.Count == 0 {
+		is.Count = otherStat.Count
+		is.StartTime = otherStat.StartTime
+		is.EndTime = otherStat.EndTime
+		is.SumValue = otherStat.SumValue
+		is.FirstValue = otherStat.FirstValue
+		is.LastValue = otherStat.LastValue
+		is.MinValue = otherStat.MinValue
+		is.MaxValue = otherStat.MaxValue
+	} else {
+		// Merge values.
+		is.Count += otherStat.Count
+		if otherStat.StartTime < is.StartTime {
+			is.StartTime = otherStat.StartTime
+			is.FirstValue = otherStat.FirstValue
+		}
+		if otherStat.EndTime > is.EndTime {
+			is.EndTime = otherStat.EndTime
+			is.LastValue = otherStat.LastValue
+		}
+		is.SumValue += otherStat.SumValue
+		if otherStat.MinValue < is.MinValue {
+			is.MinValue = otherStat.MinValue
+		}
+		if otherStat.MaxValue > is.MaxValue {
+			is.MaxValue = otherStat.MaxValue
+		}
+	}
+
+	return nil
+}
+
+// Reset clears the data in the statistic
+func (is *Int64Statistic) Reset() {
+	is.MinValue = 0
+	is.MaxValue = 0
+	is.FirstValue = 0
+	is.LastValue = 0
+	is.SumValue = 0
+	is.Count = 0
+	is.StartTime = 0
+	is.EndTime = 0
 }
 
 ///////////////////////
@@ -637,6 +801,52 @@ func (fs *FloatStatistic) DeserializeTypedStat(in *base.ByteStream) error {
 	return nil
 }
 
+// MergeWith merges another FloatStatistic into the current one.
+func (fs *FloatStatistic) MergeWith(other Interface) error {
+	// Ensure the other statistic is of the FloatStatistic type.
+	otherStat, ok := other.(*FloatStatistic)
+	if !ok {
+		return errors.New("statistic type does not match for merge")
+	}
+
+	// If the other statistic has no data, there's nothing to merge.
+	if otherStat.Count == 0 {
+		return nil
+	}
+
+	// If the current statistic has no data, clone from the other.
+	if fs.Count == 0 {
+		fs.Count = otherStat.Count
+		fs.StartTime = otherStat.StartTime
+		fs.EndTime = otherStat.EndTime
+		fs.SumValue = otherStat.SumValue
+		fs.FirstValue = otherStat.FirstValue
+		fs.LastValue = otherStat.LastValue
+		fs.MinValue = otherStat.MinValue
+		fs.MaxValue = otherStat.MaxValue
+	} else {
+		// Merge values.
+		fs.Count += otherStat.Count
+		if otherStat.StartTime < fs.StartTime {
+			fs.StartTime = otherStat.StartTime
+			fs.FirstValue = otherStat.FirstValue
+		}
+		if otherStat.EndTime > fs.EndTime {
+			fs.EndTime = otherStat.EndTime
+			fs.LastValue = otherStat.LastValue
+		}
+		fs.SumValue += otherStat.SumValue
+		if otherStat.MinValue < fs.MinValue {
+			fs.MinValue = otherStat.MinValue
+		}
+		if otherStat.MaxValue > fs.MaxValue {
+			fs.MaxValue = otherStat.MaxValue
+		}
+	}
+
+	return nil
+}
+
 ////////////////////////
 /// Double statistic ///
 ////////////////////////
@@ -764,6 +974,46 @@ func (ds *DoubleStatistic) DeserializeTypedStat(in *base.ByteStream) error {
 	return nil
 }
 
+// MergeWith merges another DoubleStatistic into the current one.
+func (ds *DoubleStatistic) MergeWith(other Interface) error {
+	// Ensure the other statistic is of the DoubleStatistic type.
+	otherStat, ok := other.(*DoubleStatistic)
+	if !ok {
+		return errors.New("statistic type does not match for merge")
+	}
+
+	// If the other statistic has no data, there's nothing to merge.
+	if otherStat.Count == 0 {
+		return nil
+	}
+
+	// Merge the statistics.
+	if ds.Count == 0 {
+		// If the current statistic has no data, clone from the other.
+		ds.cloneFrom(otherStat)
+	} else {
+		// Combine the fields.
+		ds.Count += otherStat.Count
+		if otherStat.StartTime < ds.StartTime {
+			ds.StartTime = otherStat.StartTime
+			ds.FirstValue = otherStat.FirstValue
+		}
+		if otherStat.EndTime > ds.EndTime {
+			ds.EndTime = otherStat.EndTime
+			ds.LastValue = otherStat.LastValue
+		}
+		ds.SumValue += otherStat.SumValue
+		if otherStat.MinValue < ds.MinValue {
+			ds.MinValue = otherStat.MinValue
+		}
+		if otherStat.MaxValue > ds.MaxValue {
+			ds.MaxValue = otherStat.MaxValue
+		}
+	}
+
+	return nil
+}
+
 // ToString produces a string representation of the FloatStatistic.
 func (fs *FloatStatistic) ToString() string {
 	return fmt.Sprintf("FloatStatistic{Count: %d, StartTime: %d, EndTime: %d, FirstValue: %f, LastValue: %f, SumValue: %f, MinValue: %f, MaxValue: %f}",
@@ -829,6 +1079,38 @@ func (ts *TimeStatistic) DeserializeTypedStat(in *base.ByteStream) error {
 func (ts *TimeStatistic) ToString() string {
 	return fmt.Sprintf("TimeStatistic{Count: %d, StartTime: %d, EndTime: %d}",
 		ts.Count, ts.StartTime, ts.EndTime)
+}
+
+// MergeWith merges another TimeStatistic into the current one.
+func (ts *TimeStatistic) MergeWith(other Interface) error {
+	// Ensure the other statistic is of the TimeStatistic type.
+	otherStat, ok := other.(*TimeStatistic)
+	if !ok {
+		return errors.New("statistic type does not match for merge")
+	}
+
+	// If the other statistic has no data, there's nothing to merge.
+	if otherStat.Count == 0 {
+		return nil
+	}
+
+	// If the current statistic has no data, clone from the other.
+	if ts.Count == 0 {
+		ts.Count = otherStat.Count
+		ts.StartTime = otherStat.StartTime
+		ts.EndTime = otherStat.EndTime
+	} else {
+		// Merge values.
+		ts.Count += otherStat.Count
+		if otherStat.StartTime < ts.StartTime {
+			ts.StartTime = otherStat.StartTime
+		}
+		if otherStat.EndTime > ts.EndTime {
+			ts.EndTime = otherStat.EndTime
+		}
+	}
+
+	return nil
 }
 
 /////////////////////////
@@ -923,6 +1205,8 @@ type Interface interface {
 	Clone() Interface
 	DeserializeTypedStat(stream *base.ByteStream) error
 	SerializeTypedStat(stream *base.ByteStream) error
+	Reset()
+	MergeWith(other Interface) error
 }
 
 // CloneStatistic dynamically clones a statistic from one object to another, based on the type.

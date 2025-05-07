@@ -1,0 +1,145 @@
+package writer
+
+import (
+	"Golang/internal/common/base"
+	"Golang/internal/common/statistic"
+	"Golang/internal/compressor"
+	"Golang/internal/encoder"
+	_ "bytes"
+	"errors"
+)
+
+// PageWriter handles the low-level processing of individual pages in a chunk
+type PageWriter struct {
+	PageType      base.TSDataType       // Vector Datatype
+	PageBuffer    *base.ByteStream      // Use ByteStream for storing uncompressed page data
+	TypeEncoder   string                // Determine if Value or Time encoding
+	Encoder       encoder.Encoder       // Encoder for generating binary data based on type
+	Compressor    compressor.Compressor // Compressor for compressing page data
+	Statistics    statistic.Interface   // Statistics collector for the page
+	CompressedBuf []byte                // Buffer for holding compressed page data
+	SizeLimit     int                   // Limit for the maximum size of a page
+	IsInitialized bool                  // Indicates if the PageWriter has been initialized
+}
+
+// NewPageWriter initializes a PageWriter with encoding and compression settings
+func NewPageWriter(dataType base.TSDataType, encoding string, compression string) (*PageWriter, error) {
+	var err error
+
+	// Initialize the encoder for binary encoding of data
+	encoded, err := encoder.NewEncoder(dataType, encoding)
+	if err != nil {
+		return nil, errors.New("failed to initialize encoder")
+	}
+
+	// Initialize the compressor for handling page compression
+	newcompressor, err := compressor.NewCompressor(compression)
+	if err != nil {
+		return nil, errors.New("failed to initialize compressor")
+	}
+
+	// Initialize the statistics tracker for the page
+	factory := statistic.Factory{}
+	statistics, _ := factory.AllocStatistic(dataType)
+
+	// Initialize the ByteStream for the PageWriter
+	pageBuffer, _ := base.NewByteStream()
+
+	pageWriter := &PageWriter{
+		PageType:      pageType,
+		PageBuffer:    pageBuffer,
+		Encoder:       encoded,
+		Compressor:    newcompressor,
+		Statistics:    statistics,
+		CompressedBuf: make([]byte, 0),
+		SizeLimit:     4096, // Example page size limit: 4KB
+		IsInitialized: true,
+	}
+	return pageWriter, nil
+}
+
+// WriteTimestamp encodes and writes a timestamp into the page
+func (pw *PageWriter) WriteTimestamp(timestamp int64) error {
+	if pw.PageType != "time" {
+		return errors.New("PageWriter is not configured for timestamps")
+	}
+
+	// Use the encoder to serialize the timestamp into the ByteStream
+	err := pw.Encoder.Encode(timestamp, pw.PageBuffer)
+	if err != nil {
+		return err
+	}
+
+	// Update statistics for the timestamp
+	pw.Statistics.Update(timestamp)
+
+	// Check if the page is full
+	if pw.PageBuffer.GetBufferBytes() != nil && len(pw.PageBuffer.GetBufferBytes()) >= pw.SizeLimit {
+		return errors.New("page size limit exceeded")
+	}
+
+	return nil
+}
+
+// WriteValue encodes and writes a value into the page
+func (pw *PageWriter) WriteValue(value interface{}) error {
+	if pw.PageType != "value" {
+		return errors.New("PageWriter is not configured for values")
+	}
+
+	// Use the encoder to serialize the value into the ByteStream
+	err := pw.Encoder.Encode(value, pw.PageBuffer)
+	if err != nil {
+		return err
+	}
+
+	// Update statistics for the value
+	pw.Statistics.Update(value)
+
+	// Check if the page is full
+	if pw.PageBuffer.GetBufferBytes() != nil && len(pw.PageBuffer.GetBufferBytes()) >= pw.SizeLimit {
+		return errors.New("page size limit exceeded")
+	}
+
+	return nil
+}
+
+// Finalize compresses the page data and resets the writer state
+func (pw *PageWriter) Finalize() ([]byte, error) {
+	// Compress the page buffer data
+	compressedData, err := pw.Compressor.Compress(pw.PageBuffer.GetBufferBytes())
+	if err != nil {
+		return nil, err
+	}
+
+	// Save the compressed data for future writing
+	pw.CompressedBuf = compressedData
+
+	// Reset internal state
+	pw.PageBuffer.Reset()
+	pw.Statistics.Reset()
+
+	return compressedData, nil
+}
+
+// Reset clears the PageBuffer and resets statistics for a new page
+func (pw *PageWriter) Reset() {
+	pw.PageBuffer.Reset()
+	pw.Statistics.Reset()
+}
+
+// Destroy frees up resources used by the PageWriter
+func (pw *PageWriter) Destroy() {
+	if pw.IsInitialized {
+		pw.IsInitialized = false
+
+		// Release resources
+		pw.Encoder.Destroy()
+		pw.Compressor.Destroy()
+		pw.Statistics.Destroy()
+
+		// Clear buffers
+		pw.PageBuffer = nil
+		pw.CompressedBuf = nil
+	}
+}

@@ -10,7 +10,6 @@ func (c *UncompressedCompressor) Reset(forCompress bool) error {
 
 func (c *UncompressedCompressor) Destroy() {
 	//TODO implement me
-	panic("implement me")
 }
 
 // newUncompressedCompressor creates and returns a new UncompressedCompressor

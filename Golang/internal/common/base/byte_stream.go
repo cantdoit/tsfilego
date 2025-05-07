@@ -159,7 +159,6 @@ func (bs *ByteStream) WriteBuf(buf []uint8, bufLen uint32) error {
 func (bs *ByteStream) ReadBuf(buf []uint8, wantLen uint32) (uint32, error) {
 	if bs.ReadPos >= bs.TotalSize {
 		return 0, utils.GetError(utils.ErrNoMoreData)
-
 	}
 
 	readLen := uint32(0) // Tracks the number of bytes read into `buf`
@@ -406,4 +405,14 @@ func (bs *ByteStream) GetBytesFromByteStream() ([]byte, error) {
 // deserializeBufNotEnough checks if the buffer state indicates an out-of-range or partial-read error.
 func deserializeBufNotEnough(ret int) bool {
 	return nil != utils.GetError(utils.ErrOutOfRange) || nil != utils.GetError(utils.ErrPartialRead)
+}
+
+func GetVarUintSize(ui32 uint32) uint32 {
+	var bytes uint32 = 0
+	for (ui32 & 0xFFFFFF80) != 0 { // While more than 7 bits are set
+		bytes++
+		ui32 = ui32 >> 7 // Right-shift by 7 bits
+	}
+	return bytes + 1 // Add 1 for the last byte
+
 }

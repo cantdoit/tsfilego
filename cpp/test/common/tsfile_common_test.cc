@@ -157,8 +157,10 @@ TEST_F(TimeseriesIndexTest, SerializeAndDeserialize) {
 
     TimeseriesIndex tsIndexDeserialized;
     ret = tsIndexDeserialized.deserialize_from(out, &arena);
+    tsIndexDeserialized.get_ts_id();
     EXPECT_EQ(ret, common::E_OK);
     EXPECT_EQ(tsIndexDeserialized.get_data_type(), common::TSDataType::INT32);
+    EXPECT_EQ(tsIndexDeserialized.get_ts_id(), tsID);
 }
 
 class TSMIteratorTest : public ::testing::Test {

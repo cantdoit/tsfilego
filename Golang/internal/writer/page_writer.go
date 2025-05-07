@@ -2,141 +2,298 @@ package writer
 
 import (
 	"Golang/internal/common/base"
+	"Golang/internal/common/statistic"
 	"Golang/internal/compressor"
 	"Golang/internal/encoder"
-	_ "bytes"
 	"errors"
+	"fmt"
 )
 
-// PageWriter handles the low-level processing of individual pages in a chunk
-type PageWriter struct {
-	PageType      string                // Indicates whether this is a "time" or "value" page
-	PageBuffer    *base.ByteStream      // Use ByteStream for storing uncompressed page data
-	Encoder       encoder.Encoder       // Encoder for generating binary data based on type
-	Compressor    compressor.Compressor // Compressor for compressing page data
-	Statistics    Statistics            // Statistics collector for the page
-	CompressedBuf []byte                // Buffer for holding compressed page data
-	SizeLimit     int                   // Limit for the maximum size of a page
-	IsInitialized bool                  // Indicates if the PageWriter has been initialized
+const OutStreamPageSize = 1024
+
+// PageData represents metadata and buffers for page management.
+type PageData struct {
+	TimeBufSize      uint32 // Size of the time buffer
+	ValueBufSize     uint32 // Size of the value buffer
+	UncompressedSize uint32 // Total size of the uncompressed data
+	CompressedSize   uint32 // Total size of the compressed data
+	UncompressedBuf  []byte // Combined uncompressed buffer (time + value)
+	CompressedBuf    []byte // Compressed buffer
+	Compressor       compressor.Compressor
 }
 
-// NewPageWriter initializes a PageWriter with encoding and compression settings
-func NewPageWriter(pageType string, dataType string, encoding string, compression string) (*PageWriter, error) {
+// Initialize initializes the PageData by combining the time and value byte streams into a single uncompressed buffer,
+// and optionally compresses the data.
+func (data *PageData) Initialize(timeBS, valueBS *base.ByteStream, compressor compressor.Compressor) error {
+	// Validate buffer sizes
+	if data.TimeBufSize == 0 || data.ValueBufSize == 0 {
+		return errors.New("time and value buffers must not be empty")
+	}
+
+	// Save the sizes of the time and value buffers
+	data.TimeBufSize = timeBS.TotalSize
+	data.ValueBufSize = valueBS.TotalSize
+
+	// Calculate the uncompressed size
+	data.UncompressedSize = data.TimeBufSize + data.ValueBufSize
+
+	// Allocate and populate the uncompressed buffer (time + value)
+	data.UncompressedBuf = make([]byte, data.UncompressedSize)
+	offset := uint32(0)
+
+	// Copy all pages from the time buffer
+	timeData, err := timeBS.GetBytesFromByteStream()
+	if err != nil {
+		return fmt.Errorf("failed to read time buffer: %w", err)
+	}
+	copy(data.UncompressedBuf[offset:], timeData)
+	offset += data.TimeBufSize
+
+	// Copy all pages from the value buffer
+	valueData, err := valueBS.GetBytesFromByteStream()
+	if err != nil {
+		return fmt.Errorf("failed to read value buffer: %w", err)
+	}
+	copy(data.UncompressedBuf[offset:], valueData)
+
+	// Set compressor
+	data.Compressor = compressor
+
+	// Compress the uncompressed buffer if a compressor is provided
+	if compressor != nil {
+		var err error
+		data.CompressedBuf, err = compressor.Compress(data.UncompressedBuf)
+		if err != nil {
+			return fmt.Errorf("compression failed: %v", err)
+		}
+		data.CompressedSize = uint32(len(data.CompressedBuf))
+	} else {
+		data.CompressedSize = 0 // No compression
+	}
+
+	return nil
+}
+
+// Destroy releases the memory associated with the PageData buffers.
+func (data *PageData) Destroy() {
+	// Clear the uncompressed buffer
+	data.UncompressedBuf = nil
+
+	// Handle compressor-specific cleanup for the compressed buffer
+	if data.Compressor != nil && len(data.CompressedBuf) > 0 {
+		data.Compressor.Destroy()
+		data.CompressedBuf = nil
+	}
+}
+
+// PageWriter manages buffers for time and value streams, writes data, and prepares pages.
+type PageWriter struct {
+	DataType       base.TSDataType  // Data type
+	TimeOutStream  *base.ByteStream // Output stream for time data
+	ValueOutStream *base.ByteStream // Output stream for value data
+	TimeEncoder    encoder.Encoder  // time encoder
+	ValueEncoder   encoder.Encoder  // value encoder
+	Compressor     compressor.Compressor
+	Statistic      statistic.Interface // Interface for maintaining statistics
+	PointCount     int                 // Number of data points written
+}
+
+// Initialize sets up the PageWriter with the required type, encoding, and compression.
+func (writer *PageWriter) Initialize(dataType base.TSDataType, encodingType base.TSEncoding, compressionType base.CompressionType) error {
+
+	writer.DataType = dataType
 	var err error
 
-	// Initialize the encoder for binary encoding of data
-	encoded, err := encoder.NewEncoder(dataType, encoding)
+	// Create the ByteStreams
+	writer.TimeOutStream, err = base.NewByteStream(OutStreamPageSize)
 	if err != nil {
-		return nil, errors.New("failed to initialize encoder")
+		return fmt.Errorf("failed to initialize time stream: %w", err)
 	}
 
-	// Initialize the compressor for handling page compression
-	compressor, err := NewCompressor(compression)
+	writer.ValueOutStream, err = base.NewByteStream(OutStreamPageSize)
 	if err != nil {
-		return nil, errors.New("failed to initialize compressor")
+		return fmt.Errorf("failed to initialize value stream: %w", err)
 	}
 
-	// Initialize the statistics tracker for the page
-	statistics := NewStatistic(dataType)
-
-	// Initialize the ByteStream for the PageWriter
-	pageBuffer := base.NewByteStream()
-
-	pageWriter := &PageWriter{
-		PageType:      pageType,
-		PageBuffer:    pageBuffer,
-		Encoder:       encoded,
-		Compressor:    compressor,
-		Statistics:    statistics,
-		CompressedBuf: make([]byte, 0),
-		SizeLimit:     4096, // Example page size limit: 4KB
-		IsInitialized: true,
-	}
-	return pageWriter, nil
-}
-
-// WriteTimestamp encodes and writes a timestamp into the page
-func (pw *PageWriter) WriteTimestamp(timestamp int64) error {
-	if pw.PageType != "time" {
-		return errors.New("PageWriter is not configured for timestamps")
-	}
-
-	// Use the encoder to serialize the timestamp into the ByteStream
-	err := pw.Encoder.Encode(timestamp, pw.PageBuffer)
+	// Initialize the statistic component
+	statFactory := statistic.Factory{}
+	writer.Statistic, err = statFactory.AllocStatistic(dataType)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initialize statistics: %w", err)
 	}
 
-	// Update statistics for the timestamp
-	pw.Statistics.Update(timestamp)
-
-	// Check if the page is full
-	if pw.PageBuffer.GetBufferBytes() != nil && len(pw.PageBuffer.GetBufferBytes()) >= pw.SizeLimit {
-		return errors.New("page size limit exceeded")
+	// Allocate time encoder
+	writer.TimeEncoder, err = encoder.NewEncoder(dataType, encodingType)
+	if err != nil {
+		return fmt.Errorf("failed to allocate time encoder: %w", err)
 	}
+
+	// Allocate value encoder
+	writer.ValueEncoder, err = encoder.NewEncoder(dataType, encodingType)
+	if err != nil {
+		return fmt.Errorf("failed to allocate value encoder: %w", err)
+	}
+
+	// Allocate statistics
+	factory := statistic.Factory{}
+	writer.Statistic, err = factory.AllocStatistic(dataType)
+	if err != nil {
+		return fmt.Errorf("failed to allocate statistic: %w", err)
+	}
+
+	// Allocate compressor
+	writer.Compressor, err = compressor.NewCompressor(compressionType)
+	if err != nil {
+		return fmt.Errorf("failed to allocate compressor: %w", err)
+	}
+
+	writer.PointCount = 0
 
 	return nil
 }
 
-// WriteValue encodes and writes a value into the page
-func (pw *PageWriter) WriteValue(value interface{}) error {
-	if pw.PageType != "value" {
-		return errors.New("PageWriter is not configured for values")
+// Write encodes and writes a data point with a timestamp and value into the PageWriter's output streams.
+func (writer *PageWriter) Write(timestamp int64, value interface{}) error {
+	// Validate data type
+	if !writer.isDataTypeMatch(value) {
+		return errors.New("data type mismatch")
 	}
 
-	// Use the encoder to serialize the value into the ByteStream
-	err := pw.Encoder.Encode(value, pw.PageBuffer)
+	// Encode timestamp
+	err := writer.TimeEncoder.Encode(timestamp, writer.TimeOutStream)
+	if err != nil {
+		return fmt.Errorf("failed to encode timestamp: %w", err)
+	}
+
+	// Encode value
+	err = writer.ValueEncoder.Encode(value, writer.ValueOutStream)
+	if err != nil {
+		return fmt.Errorf("failed to encode value: %w", err)
+	}
+
+	// Update statistics
+	err = writer.Statistic.Update(timestamp, value)
 	if err != nil {
 		return err
 	}
 
-	// Update statistics for the value
-	pw.Statistics.Update(value)
-
-	// Check if the page is full
-	if pw.PageBuffer.GetBufferBytes() != nil && len(pw.PageBuffer.GetBufferBytes()) >= pw.SizeLimit {
-		return errors.New("page size limit exceeded")
-	}
+	// Increment point count
+	writer.PointCount++
 
 	return nil
 }
 
-// Finalize compresses the page data and resets the writer state
-func (pw *PageWriter) Finalize() ([]byte, error) {
-	// Compress the page buffer data
-	compressedData, err := pw.Compressor.Compress(pw.PageBuffer.GetBufferBytes())
+// FinalizePage finalizes the current page and returns the constructed PageData.
+func (writer *PageWriter) FinalizePage() (*PageData, error) {
+	// Create a new PageData instance
+	pageData := &PageData{}
+
+	// Initialize the page with the current time and value buffers
+	err := pageData.Initialize(writer.TimeOutStream, writer.ValueOutStream, writer.Compressor)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to finalize page: %w", err)
 	}
 
-	// Save the compressed data for future writing
-	pw.CompressedBuf = compressedData
+	// Reset the PageWriter after finalizing a page
+	writer.Reset()
 
-	// Reset internal state
-	pw.PageBuffer.Reset()
-	pw.Statistics.Reset()
-
-	return compressedData, nil
+	return pageData, nil
 }
 
-// Reset clears the PageBuffer and resets statistics for a new page
-func (pw *PageWriter) Reset() {
-	pw.PageBuffer.Reset()
-	pw.Statistics.Reset()
+// WriteToChunk write the current page data into a chunk
+func (writer *PageWriter) WriteToChunk(currPageData *base.ByteStream, writeHeader bool, writeStatistic bool, writeDataToChunk bool) error {
+	// prepare to end the current page
+
+	//init the page data
+	pageData := &PageData{}
+	err := pageData.Initialize(writer.TimeOutStream, writer.ValueOutStream, writer.Compressor)
+	if err != nil {
+		return fmt.Errorf("failed to finalize page: %w", err)
+	}
+	serial := base.SerializationUtil{}
+	if writeHeader {
+		err := serial.WriteVarUint(uint32(pageData.UncompressedSize), currPageData)
+		if err != nil {
+			return err
+		}
+
+		err = serial.WriteVarUint(pageData.CompressedSize, currPageData)
+		if err != nil {
+			return err
+		}
+	}
+	if writeStatistic {
+		err = writer.Statistic.SerializeTypedStat(currPageData)
+		if err != nil {
+			return err
+		}
+	}
+	if writeDataToChunk {
+		err := currPageData.WriteBuf(pageData.CompressedBuf, pageData.CompressedSize)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
-// Destroy frees up resources used by the PageWriter
-func (pw *PageWriter) Destroy() {
-	if pw.IsInitialized {
-		pw.IsInitialized = false
+// Reset clears the internal state of the PageWriter, including output streams and statistics.
+func (writer *PageWriter) Reset() {
+	writer.TimeOutStream.Reset()
+	writer.ValueOutStream.Reset()
+	writer.Statistic.Reset()
+	writer.PointCount = 0
+	writer.DataType = base.NULL_TYPE
 
-		// Release resources
-		pw.Encoder.Destroy()
-		pw.Compressor.Destroy()
-		pw.Statistics.Destroy()
+}
 
-		// Clear buffers
-		pw.PageBuffer = nil
-		pw.CompressedBuf = nil
+// GetPointCount retrieves the current number of points written to the writer.
+func (writer *PageWriter) GetPointCount() int {
+	return writer.PointCount
+}
+
+// GetTimeOutStreamSize retrieves the current size of the time output stream.
+func (writer *PageWriter) GetTimeOutStreamSize() int {
+	return int(writer.TimeOutStream.TotalSize)
+}
+
+// Destroy releases resources allocated by the PageWriter.
+func (writer *PageWriter) Destroy() {
+	if writer.TimeEncoder != nil {
+		writer.TimeEncoder = nil
+	}
+	if writer.ValueEncoder != nil {
+		writer.ValueEncoder = nil
+	}
+	if writer.Statistic != nil {
+		writer.Statistic = nil
+	}
+	if writer.TimeOutStream != nil {
+		writer.TimeOutStream = nil
+	}
+	if writer.ValueOutStream != nil {
+		writer.ValueOutStream = nil
+	}
+	if writer.Compressor != nil {
+		writer.Compressor.Destroy()
+		writer.Compressor = nil
+	}
+}
+
+// Helper method to validate data type compatibility.
+func (writer *PageWriter) isDataTypeMatch(value interface{}) bool {
+	switch value.(type) {
+	case bool:
+		return writer.DataType == base.BOOLEAN
+	case int32:
+		return writer.DataType == base.INT32
+	case int64:
+		return writer.DataType == base.INT64
+	case float32:
+		return writer.DataType == base.FLOAT
+	case float64:
+		return writer.DataType == base.DOUBLE
+	default:
+		return false
 	}
 }

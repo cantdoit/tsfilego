@@ -1,6 +1,7 @@
 package base
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"unsafe"
@@ -8,7 +9,7 @@ import (
 
 // SerializationUtil provides utility methods for serializing and deserializing binary data
 // in a ByteStream (big-endian encoding is used).
-// TODO consider Stack Allocation due to GC garbage collector impact
+// TODO consider Stack Allocation due to GO garbage collector impact
 type SerializationUtil struct{}
 
 // WriteBool writes a boolean value as uint8 (1 for true, 0 for false) to the ByteStream
@@ -177,7 +178,7 @@ func (su *SerializationUtil) ReadVarUint(in *ByteStream) (uint32, error) {
 	for {
 		byteVal, err := su.ReadUint8(in)
 		if err != nil {
-			return 0, err
+			return 0, errors.New("readUint8 failed: " + err.Error())
 		}
 		ui32 |= uint32(byteVal&0x7F) << (i * 7)
 		if (byteVal & 0x80) == 0 {
@@ -201,7 +202,7 @@ func (su *SerializationUtil) WriteString(str string, out *ByteStream) error {
 func (su *SerializationUtil) ReadString(in *ByteStream) (string, error) {
 	length, err := su.ReadVarUint(in)
 	if err != nil {
-		return "", err
+		return "", errors.New("readVarUint failed: " + err.Error())
 	}
 	buf := make([]byte, length)
 	_, err = in.ReadBuf(buf, length)

@@ -10,13 +10,13 @@ import (
 
 // Encoder is a generic interface for encoding data into a ByteStream.
 type Encoder interface {
-	Encode(value interface{}, stream *base.ByteStream, su *base.SerializationUtil) error
+	Encode(value interface{}, stream *base.ByteStream) error
 	Destroy()
 }
 
 // NewEncoder is a factory function that returns an appropriate encoder instance based on the provided type and encoding.
-func NewEncoder(dataType string, encoding string) (Encoder, error) {
-	if encoding == "plain" {
+func NewEncoder(dataType base.TSDataType, encoding base.TSEncoding) (Encoder, error) {
+	if encoding == "PLAIN" {
 		// For plain encoding, return a PlainEncoder
 		return NewPlainEncoder(dataType), nil
 	}
@@ -24,7 +24,7 @@ func NewEncoder(dataType string, encoding string) (Encoder, error) {
 	// Add other encoder types here as needed
 	// Example: if encoding == "dictionary" { return NewDictionaryEncoder(dataType), nil }
 
-	return nil, errors.New("unknown encoding type: " + encoding)
+	return nil, errors.New(string("unknown encoding type: " + encoding))
 }
 
 type PlainEncoder struct {
@@ -32,28 +32,26 @@ type PlainEncoder struct {
 }
 
 // NewPlainEncoder initializes the PlainEncoder with serialization utilities.
-func NewPlainEncoder() *PlainEncoder {
+func NewPlainEncoder(datatype base.TSDataType) *PlainEncoder {
 	return &PlainEncoder{
 		Datatype: "plain",
 	}
 }
 
 // Encode encodes a value (of supported types) and writes it into the ByteStream.
-func (pe *PlainEncoder) Encode(value interface{}, stream *base.ByteStream, su *base.SerializationUtil) error {
+func (pe *PlainEncoder) Encode(value interface{}, stream *base.ByteStream) error {
+	su := base.SerializationUtil{}
 	switch v := value.(type) {
-	case uint8:
-		return su.WriteUint8(v, stream)
-	case uint16:
-		return su.WriteUint16(v, stream)
-	case uint32:
-		return su.WriteUint32(v, stream)
-	case uint64:
-		return su.WriteUint64(v, stream)
+	case bool:
+		return su.WriteBool(v, stream)
 	case int32:
-		// Convert signed to unsigned for consistency before writing
-		return su.WriteUint32(uint32(v), stream)
+		return su.WriteVarUint(uint32(v), stream)
 	case int64:
 		return su.WriteUint64(uint64(v), stream)
+	case float32:
+		return su.WriteFloat(v, stream)
+	case float64:
+		return su.WriteDouble(v, stream)
 	default:
 		return errors.New("unsupported type for encoding")
 	}

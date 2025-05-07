@@ -1,6 +1,9 @@
 package compressor
 
-import "errors"
+import (
+	"Golang/internal/common/base"
+	"errors"
+)
 
 // Compressor is the interface for all compressions
 type Compressor interface {
@@ -19,7 +22,7 @@ const (
 )
 
 // NewCompressor - Factory method to create specific compressors
-func NewCompressor(compressionType string) (Compressor, error) {
+func NewCompressor(compressionType base.CompressionType) (Compressor, error) {
 	switch compressionType {
 	case GZIP:
 		return newGzipCompressor(), nil
@@ -27,9 +30,9 @@ func NewCompressor(compressionType string) (Compressor, error) {
 		return newLz4Compressor(), nil
 	case SNAPPY:
 		return newSnappyCompressor(), nil
-	case UNCOMPRESSED:
+	case base.UNCOMPRESSED:
 		return newUncompressedCompressor(), nil
 	default:
-		return nil, errors.New("unsupported compression type: " + compressionType)
+		return nil, errors.New(string("unsupported compression type: " + compressionType))
 	}
 }

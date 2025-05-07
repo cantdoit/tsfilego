@@ -368,6 +368,7 @@ class TimeseriesIndex : public ITimeseriesIndex {
     }
 
     int add_chunk_meta(ChunkMeta *chunk_meta, bool serialize_statistic);
+
     FORCE_INLINE int set_measurement_name(common::String &measurement_name,
                                           common::PageArena &pa) {
         return measurement_name_.dup_from(measurement_name, pa);
