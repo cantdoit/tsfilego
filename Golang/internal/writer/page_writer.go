@@ -96,6 +96,7 @@ type PageWriter struct {
 	Compressor     compressor.Compressor
 	Statistic      statistic.Interface // Interface for maintaining statistics
 	PointCount     int                 // Number of data points written
+	PageData       PageData
 }
 
 // Initialize sets up the PageWriter with the required type, encoding, and compression.
@@ -296,4 +297,9 @@ func (writer *PageWriter) isDataTypeMatch(value interface{}) bool {
 	default:
 		return false
 	}
+}
+
+// GetCurrPageData returns the current page data
+func (writer *PageWriter) GetCurrPageData() PageData {
+	return PageData
 }
