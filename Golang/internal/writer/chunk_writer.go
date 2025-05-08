@@ -2,6 +2,7 @@ package writer
 
 import (
 	"Golang/internal/common/base"
+	"Golang/internal/common/core"
 	"Golang/internal/common/statistic"
 	"errors"
 	"fmt"
@@ -15,22 +16,14 @@ type ChunkWriter struct {
 	ChunkData          *base.ByteStream    // ByteStream where the chunk data is written
 	FirstPageData      *PageData           // Data for the first page (if the chunk has one page only)
 	FirstPageStatistic statistic.Interface // Statistic for the first page
-	ChunkHeader        ChunkHeader         // Metadata for the chunk
+	ChunkHeader        core.ChunkHeader    // Metadata for the chunk
 	NumOfPages         int                 // Total number of pages in the chunk
-}
-
-// ChunkHeader represents metadata about the chunk.
-type ChunkHeader struct {
-	MeasurementName string               // The name of the measurement
-	DataType        base.TSDataType      // The data type of the chunk
-	CompressionType base.CompressionType // Compression type used in the chunk
-	EncodingType    base.TSEncoding      // Encoding type used in the chunk
 }
 
 // Initialize sets up the ChunkWriter given measurement metadata.
 func (writer *ChunkWriter) Initialize(measurementName string, dataType base.TSDataType, encoding base.TSEncoding, compressionType base.CompressionType) error {
 	writer.DataType = dataType
-	writer.ChunkHeader = ChunkHeader{
+	writer.ChunkHeader = core.ChunkHeader{
 		MeasurementName: measurementName,
 		DataType:        dataType,
 		CompressionType: compressionType,
@@ -79,9 +72,12 @@ func (writer *ChunkWriter) Destroy() {
 		writer.FirstPageStatistic.Reset()
 		writer.FirstPageStatistic = nil
 	}
-	if writer.ChunkData != nil {
-		writer.ChunkData = nil
-	}
+	/*
+		if writer.ChunkData != nil {
+			writer.ChunkData = nil
+		}
+
+	*/
 	writer.NumOfPages = 0
 }
 
@@ -114,6 +110,7 @@ func (writer *ChunkWriter) SealCurrentPageIfFull() error {
 
 // SealCurrentPage seals the current page and adds it to the chunk.
 func (writer *ChunkWriter) SealCurrentPage(endChunk bool) error {
+	// pagewriter := writer.PageWriter
 	// Merge the current page's statistics into the chunk's statistics
 	err := writer.ChunkStatistic.MergeWith(writer.PageWriter.Statistic)
 	if err != nil {
@@ -133,7 +130,10 @@ func (writer *ChunkWriter) SealCurrentPage(endChunk bool) error {
 			if err != nil {
 				return err
 			}
-			writer.SaveFirstPageData(writer.PageWriter)
+			err = writer.SaveFirstPageData()
+			if err != nil {
+				return err
+			}
 		}
 	} else {
 		// If this is the first page, flush its data to the chunk
@@ -142,8 +142,6 @@ func (writer *ChunkWriter) SealCurrentPage(endChunk bool) error {
 			if err := writer.WriteFirstPageData(); err != nil {
 				return err
 			}
-			writer.
-				writer.freeFirstPageData()
 		}
 
 		// Write the current page's data
@@ -151,6 +149,7 @@ func (writer *ChunkWriter) SealCurrentPage(endChunk bool) error {
 			return err
 		}
 		writer.PageWriter.Reset()
+		// pagewriter.Destroy()
 	}
 
 	writer.NumOfPages++
@@ -158,8 +157,7 @@ func (writer *ChunkWriter) SealCurrentPage(endChunk bool) error {
 }
 
 // SaveFirstPageData saves the first page's data and statistics in memory
-func (writer *ChunkWriter) SaveFirstPageData(firstPage PageWriter) error {
-	writer.FirstPageData = firstPage.GetCurrPageData()
+func (writer *ChunkWriter) SaveFirstPageData() error {
 	pageData, err := writer.PageWriter.FinalizePage()
 	if err != nil {
 		return fmt.Errorf("failed to finalize first page: %w", err)
@@ -171,12 +169,40 @@ func (writer *ChunkWriter) SaveFirstPageData(firstPage PageWriter) error {
 	return nil
 }
 
-// WriteFirstPageData writes the saved first page data to the chunk
+// WriteFirstPageData writes the saved first page data to the chunk.
 func (writer *ChunkWriter) WriteFirstPageData() error {
 	if writer.FirstPageData == nil {
 		return errors.New("no first page data to write")
 	}
 
-	// Write first page data
-	return writer.PageWriter.WriteToChunk(writer.FirstPageData, writer.ChunkData)
+	if writer.FirstPageStatistic == nil {
+		return errors.New("no first page statistic to serialize")
+	}
+
+	// Serialize the statistics from the first page
+	err := writer.FirstPageStatistic.SerializeTypedStat(writer.ChunkData)
+	if err != nil {
+		return fmt.Errorf("failed to serialize first page statistics: %w", err)
+	}
+
+	// Write the data for the first page to the chunk
+	err = writer.ChunkData.WriteBuf(writer.FirstPageData.CompressedBuf, writer.FirstPageData.CompressedSize)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (writer *ChunkWriter) EndEncodeChunk() error {
+	if writer.PageWriter.PointCount > 0 {
+		err := writer.SealCurrentPage(true)
+		if err != nil {
+			return err
+		}
+		writer.ChunkHeader.DataSize = writer.ChunkData.TotalSize
+		writer.ChunkHeader.NumOfPages = int32(writer.NumOfPages)
+	} else {
+		return errors.New("no data to write")
+	}
+	return nil
 }

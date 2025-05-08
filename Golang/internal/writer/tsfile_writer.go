@@ -3,7 +3,8 @@ package writer
 import (
 	"Golang/internal/common/base"
 	"Golang/internal/common/core"
-	"Golang/internal/file"    // Path to the file package
+	"Golang/internal/file" // Path to the file package
+	"Golang/internal/fileio"
 	_ "Golang/internal/utils" // For error codes or handling
 	_ "errors"
 	"fmt"
@@ -17,7 +18,7 @@ tsfile_writer -> tsfile_io_writer -> tsfile_writer
 
 // TsFileWriter represents the high-level writer managing TSFiles
 type TsFileWriter struct {
-	WriteFile      *file.WriteFile               // Instance of WriteFile used to manage underlying file
+	WriteFile      *fileio.WriteFile             // Instance of WriteFile used to manage underlying file
 	DeviceSchemas  map[string]*core.DeviceSchema // Map of device names to their respective schemas
 	WriteFileReady bool                          // Tracks if the write file is initialized and ready
 	ChunkWriters   map[string]*ChunkWriter       // Map of device to their ChunkWriters
@@ -50,7 +51,7 @@ type MeasurementSchema struct {
 //   - mode: Permissions to be assigned to the file if created
 func (tf *TsFileWriter) Open(filePath string, flags int, mode os.FileMode) error {
 	// Initialize a new WriteFile instance
-	tf.WriteFile = &file.WriteFile{}
+	tf.WriteFile = &fileio.WriteFile{}
 
 	// Check if the file already exists
 	if _, err := os.Stat(filePath); err == nil {
@@ -76,7 +77,7 @@ func (tf *TsFileWriter) Open(filePath string, flags int, mode os.FileMode) error
 // - compressor: Compression used for the measurement data
 // Returns:
 // - Error if the registration fails, or nil if it succeeds
-func (tf *TsFileWriter) RegisterTimeseries(deviceName, measurementName, dataType, encoding, compressor string, defaultValue interface{}) error {
+func (tf *TsFileWriter) RegisterTimeseries(deviceName string, measurementName string, dataType base.TSDataType, encoding base.TSEncoding, compressor base.CompressionType, defaultValue interface{}) error {
 	// Create a TSDataType-compatible value object
 	var value *base.Value
 	if defaultValue != nil {

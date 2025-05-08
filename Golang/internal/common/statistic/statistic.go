@@ -290,6 +290,18 @@ func (bs *BooleanStatistic) Reset() {
 	bs.LastValue = false
 }
 
+func (bs *BooleanStatistic) GetCount() int64 {
+	return int64(bs.Count)
+}
+
+func (bs *BooleanStatistic) GetStartTime() int64 {
+	return bs.StartTime
+}
+
+func (bs *BooleanStatistic) GetEndTime() int64 {
+	return bs.EndTime
+}
+
 ///////////////////////
 /// Int32 statistic ///
 ///////////////////////
@@ -483,6 +495,18 @@ func (is *Int32Statistic) Reset() {
 	is.EndTime = 0
 }
 
+func (is *Int32Statistic) GetCount() int64 {
+	return int64(is.Count)
+}
+
+func (is *Int32Statistic) GetStartTime() int64 {
+	return is.StartTime
+}
+
+func (is *Int32Statistic) GetEndTime() int64 {
+	return is.EndTime
+}
+
 ///////////////////////
 /// Int64 statistic ///
 ///////////////////////
@@ -666,6 +690,18 @@ func (is *Int64Statistic) Reset() {
 	is.EndTime = 0
 }
 
+func (is *Int64Statistic) GetCount() int64 {
+	return int64(is.Count)
+}
+
+func (is *Int64Statistic) GetStartTime() int64 {
+	return is.StartTime
+}
+
+func (is *Int64Statistic) GetEndTime() int64 {
+	return is.EndTime
+}
+
 ///////////////////////
 /// Float statistic ///
 ///////////////////////
@@ -847,6 +883,18 @@ func (fs *FloatStatistic) MergeWith(other Interface) error {
 	return nil
 }
 
+func (fs *FloatStatistic) GetCount() int64 {
+	return int64(fs.Count)
+}
+
+func (fs *FloatStatistic) GetStartTime() int64 {
+	return fs.StartTime
+}
+
+func (fs *FloatStatistic) GetEndTime() int64 {
+	return fs.EndTime
+}
+
 ////////////////////////
 /// Double statistic ///
 ////////////////////////
@@ -1015,9 +1063,21 @@ func (ds *DoubleStatistic) MergeWith(other Interface) error {
 }
 
 // ToString produces a string representation of the FloatStatistic.
-func (fs *FloatStatistic) ToString() string {
+func (ds *DoubleStatistic) ToString() string {
 	return fmt.Sprintf("FloatStatistic{Count: %d, StartTime: %d, EndTime: %d, FirstValue: %f, LastValue: %f, SumValue: %f, MinValue: %f, MaxValue: %f}",
-		fs.Count, fs.StartTime, fs.EndTime, fs.FirstValue, fs.LastValue, fs.SumValue, fs.MinValue, fs.MaxValue)
+		ds.Count, ds.StartTime, ds.EndTime, ds.FirstValue, ds.LastValue, ds.SumValue, ds.MinValue, ds.MaxValue)
+}
+
+func (ds *DoubleStatistic) GetCount() int64 {
+	return int64(ds.Count)
+}
+
+func (ds *DoubleStatistic) GetStartTime() int64 {
+	return ds.StartTime
+}
+
+func (ds *DoubleStatistic) GetEndTime() int64 {
+	return ds.EndTime
 }
 
 /////////////////////////////
@@ -1111,6 +1171,18 @@ func (ts *TimeStatistic) MergeWith(other Interface) error {
 	}
 
 	return nil
+}
+
+func (ts *TimeStatistic) GetCount() int64 {
+	return int64(ts.Count)
+}
+
+func (ts *TimeStatistic) GetStartTime() int64 {
+	return ts.StartTime
+}
+
+func (ts *TimeStatistic) GetEndTime() int64 {
+	return ts.EndTime
 }
 
 /////////////////////////
@@ -1207,6 +1279,9 @@ type Interface interface {
 	SerializeTypedStat(stream *base.ByteStream) error
 	Reset()
 	MergeWith(other Interface) error
+	GetCount() int64
+	GetStartTime() int64
+	GetEndTime() int64
 }
 
 // CloneStatistic dynamically clones a statistic from one object to another, based on the type.

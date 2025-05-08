@@ -17,7 +17,7 @@ type TsFileID int64
 // Constants defined in header file
 const (
 	MAGIC_STRING_TSFILE               = "TsFile"
-	MAGIC_STRING_TSFILE_LEN           = len(MAGIC_STRING_TSFILE)
+	MAGIC_STRING_TSFILE_LEN           = 6
 	VERSION_NUM_BYTE                  = byte(0x03)
 	CHUNK_GROUP_HEADER_MARKER         = byte(0x00)
 	CHUNK_HEADER_MARKER               = byte(0x01)
@@ -145,7 +145,8 @@ func (c *ChunkHeader) Reset() {
 }
 
 // SerializeTo serializes the ChunkHeader to a ByteStream
-func (c *ChunkHeader) SerializeTo(stream *base.ByteStream, util *base.SerializationUtil) error {
+func (c *ChunkHeader) SerializeTo(stream *base.ByteStream) error {
+	util := base.SerializationUtil{}
 	err := util.WriteUint8(c.ChunkType, stream) // Write_char direct convert
 	if err != nil {
 		return ErrSerialization

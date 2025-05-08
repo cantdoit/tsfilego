@@ -26,6 +26,14 @@ type Page struct {
 	data []byte // The data buffer of the page
 }
 
+type ByteStreamConsumer struct {
+	Host                 *ByteStream // The associated ByteStream (host)
+	CurrentPage          *Page       // The current page being read
+	ReadOffsetWithinPage uint32      // Read offset within the current page
+	CurrentPageIdx       int         // Index of the page currently being read
+	TotalConsumedOffset  uint32      // Total bytes consumed
+}
+
 // NewByteStream initializes a new ByteStream with a given page size.
 // The page size must be greater than zero, or it returns an error.
 func NewByteStream(pageSize uint32) (*ByteStream, error) {
@@ -291,6 +299,45 @@ func (bs *ByteStream) GetNextBuffer() ([]byte, uint32, error) {
 
 	// Return the buffer and its length
 	return page.data, uint32(len(page.data)), nil
+}
+
+func (consumer *ByteStreamConsumer) GetNextBuf(host *ByteStream) ([]byte, uint32, error) {
+	if host == nil || len(host.Pages) == 0 {
+		// Host is empty
+		return nil, 0, errors.New("host is empty or not initialized")
+	}
+
+	for {
+		// Check if we've reached the last page
+		if consumer.CurrentPageIdx >= len(host.Pages) {
+			return nil, 0, errors.New("no more buffers available")
+		}
+
+		// Get the current page from the host
+		page := host.Pages[consumer.CurrentPageIdx]
+
+		// Handle partial reads within the page
+		if consumer.ReadOffsetWithinPage < uint32(len(page.data)) {
+			start := consumer.ReadOffsetWithinPage
+			var length uint32
+
+			// Check if we are reading till the end of the current page
+			if consumer.ReadOffsetWithinPage+host.PageSize > uint32(len(page.data)) {
+				length = uint32(len(page.data)) - consumer.ReadOffsetWithinPage
+			} else {
+				length = host.PageSize
+			}
+
+			// Update consumer state
+			consumer.ReadOffsetWithinPage += length
+			consumer.TotalConsumedOffset += length
+			return page.data[start : start+length], length, nil
+		}
+
+		// Move to the next page
+		consumer.CurrentPageIdx++
+		consumer.ReadOffsetWithinPage = 0
+	}
 }
 
 //////////////////////////////////////

@@ -71,7 +71,7 @@ func TestTsFileWriter_Open(t *testing.T) {
 			// Cleanup after the test
 			defer tt.cleanupFunc(tt.filePath)
 
-			tf := &writer.TsFileWriter{WriteFile: &file.WriteFile{}}
+			tf := &writer.TsFileWriter{WriteFile: &fileio.WriteFile{}}
 
 			err := tf.Open(tt.filePath, tt.flags, tt.mode)
 			if (err != nil) != tt.wantErr {

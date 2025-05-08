@@ -25,15 +25,14 @@ type PageData struct {
 // Initialize initializes the PageData by combining the time and value byte streams into a single uncompressed buffer,
 // and optionally compresses the data.
 func (data *PageData) Initialize(timeBS, valueBS *base.ByteStream, compressor compressor.Compressor) error {
-	// Validate buffer sizes
-	if data.TimeBufSize == 0 || data.ValueBufSize == 0 {
-		return errors.New("time and value buffers must not be empty")
-	}
-
 	// Save the sizes of the time and value buffers
 	data.TimeBufSize = timeBS.TotalSize
 	data.ValueBufSize = valueBS.TotalSize
 
+	// Validate buffer sizes
+	if data.TimeBufSize == 0 || data.ValueBufSize == 0 {
+		return errors.New("time and value buffers must not be empty")
+	}
 	// Calculate the uncompressed size
 	data.UncompressedSize = data.TimeBufSize + data.ValueBufSize
 
@@ -243,8 +242,7 @@ func (writer *PageWriter) Reset() {
 	writer.TimeOutStream.Reset()
 	writer.ValueOutStream.Reset()
 	writer.Statistic.Reset()
-	writer.PointCount = 0
-	writer.DataType = base.NULL_TYPE
+	// writer.PointCount = 0
 
 }
 
@@ -301,5 +299,5 @@ func (writer *PageWriter) isDataTypeMatch(value interface{}) bool {
 
 // GetCurrPageData returns the current page data
 func (writer *PageWriter) GetCurrPageData() PageData {
-	return PageData
+	return writer.PageData
 }
