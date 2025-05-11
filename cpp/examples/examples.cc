@@ -17,7 +17,7 @@
  * under the License.
  */
 
-#include "c_examples/c_examples.h"
+// #include "c_examples/c_examples.h"
 #include "cpp_examples/cpp_examples.h"
 
 int main() {
@@ -25,7 +25,7 @@ int main() {
     demo_write();
     demo_read();
     // C examples
-    write_tsfile();
-    read_tsfile();
+    //write_tsfile();
+    //read_tsfile();
     return 0;
 }

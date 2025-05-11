@@ -1,7 +1,7 @@
-package filetest
+package fileiotest
 
 import (
-	"Golang/internal/file" // Import your module for the WriteFile implementation
+	"Golang/internal/fileio" // Import your module for the WriteFile implementation
 	"os"
 	"testing"
 )
@@ -32,7 +32,7 @@ func TestWriteFileCreateFile(t *testing.T) {
 	}
 
 	// Close the file
-	if err := writeFile.Close(); err != nil {
+	if err := writeFile.CloseFile(); err != nil {
 		t.Fatalf("Failed to close file: %v", err)
 	}
 
@@ -62,13 +62,13 @@ func TestWriteFileWriteToFile(t *testing.T) {
 
 	// Write some content to the file
 	content := []byte("Hello, World!")
-	err = writeFile.Write(content)
+	err = writeFile.Write(content, uint32(len(content)))
 	if err != nil {
 		t.Fatalf("Failed to write content to file: %v", err)
 	}
 
 	// Close the file
-	if err := writeFile.Close(); err != nil {
+	if err := writeFile.CloseFile(); err != nil {
 		t.Fatalf("Failed to close file: %v", err)
 	}
 
@@ -108,18 +108,18 @@ func TestWriteFileSyncFile(t *testing.T) {
 
 	// Write some content to the file
 	content := []byte("Hello, Sync!")
-	err = writeFile.Write(content)
+	err = writeFile.Write(content, uint32(len(content)))
 	if err != nil {
 		t.Fatalf("Failed to write content to file: %v", err)
 	}
 
 	// Sync the file to disk
-	if err := writeFile.Sync(); err != nil {
+	if err := writeFile.SyncFile(); err != nil {
 		t.Fatalf("Failed to sync file: %v", err)
 	}
 
 	// Close the file
-	if err := writeFile.Close(); err != nil {
+	if err := writeFile.CloseFile(); err != nil {
 		t.Fatalf("Failed to close file: %v", err)
 	}
 
@@ -149,13 +149,13 @@ func TestWriteFileCloseFile(t *testing.T) {
 
 	// Write some content to the file
 	content := []byte("Closing file.")
-	err = writeFile.Write(content)
+	err = writeFile.Write(content, uint32(len(content)))
 	if err != nil {
 		t.Fatalf("Failed to write content to file: %v", err)
 	}
 
 	// Close the file
-	if err := writeFile.Close(); err != nil {
+	if err := writeFile.CloseFile(); err != nil {
 		t.Fatalf("Failed to close file: %v", err)
 	}
 

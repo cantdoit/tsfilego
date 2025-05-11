@@ -352,8 +352,7 @@ int TsFileIOWriter::write_file_index() {
 
         // pick an entry as index entry every max_degree_of_index_node entries.
         if (IS_SUCC(ret) && entry_count_in_cur_device %
-                                    g_config_value_.max_degree_of_index_node_ ==
-                                0) {
+                                    g_config_value_.max_degree_of_index_node_ == 0) {
             if (cur_index_node->is_full()) {
                 if (RET_FAIL(add_cur_index_node_to_queue(
                         cur_index_node, cur_index_node_queue))) {

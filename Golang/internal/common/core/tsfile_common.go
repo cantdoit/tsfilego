@@ -941,6 +941,19 @@ func compareStrings(a, b string) int {
 	return 0
 }
 
+func (node *MetaIndexNode) IsFull() bool {
+	return len(node.Children) >= utils.ConfigValue.MaxDegreeOfIndexNode
+}
+
+func (node *MetaIndexNode) PushEntry(entry *MetaIndexEntry) error {
+	node.Children = append(node.Children, entry)
+	return nil
+}
+
+func (node *MetaIndexNode) IsEmpty() bool {
+	return len(node.Children) == 0
+}
+
 // MetaIndexNodeType represents the type of the meta index node.
 type MetaIndexNodeType int
 

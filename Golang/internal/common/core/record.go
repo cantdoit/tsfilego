@@ -13,6 +13,7 @@ type DataPoint struct {
 	FloatVal        *float32        // Float value (optional)
 	DoubleVal       *float64        // Double value (optional)
 	TextVal         *TextType       // Text value (optional)
+	Value           **base.Value
 }
 
 // NewDataPointBool initializes a boolean DataPoint.

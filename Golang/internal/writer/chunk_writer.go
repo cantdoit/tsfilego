@@ -85,7 +85,7 @@ func (writer *ChunkWriter) Destroy() {
 func (writer *ChunkWriter) Write(timestamp int64, value interface{}) error {
 	// Ensure the data type matches
 	if writer.PageWriter.DataType != writer.DataType {
-		return errors.New("data type mismatch")
+		return fmt.Errorf("data type mismatch: %d, %d", base.TSDataType.TSDataTypeToEnum(writer.PageWriter.DataType), base.TSDataType.TSDataTypeToEnum(writer.DataType))
 	}
 
 	// Write the data to the current page

@@ -20,13 +20,6 @@ type WriteFile struct {
 }
 
 // Create opens a new file or ensures the file doesn’t already exist
-// - Parameters:
-//   - filePath: Absolute or relative path of the file to create
-//   - flags: Options passed for file opening (O_RDWR, O_CREATE, etc.)
-//     (Use constants from the `os` or `syscall` package)
-//   - mode: File permissions (e.g., 0644)
-//
-// - Returns: Error if any, or nil if creation succeeds
 func (wf *WriteFile) Create(filePath string, flags int, mode os.FileMode) error {
 	// First, check if the file descriptor is already in use
 	if wf.fd != nil {
@@ -78,8 +71,8 @@ func (wf *WriteFile) Write(buf []byte, len uint32) error {
 	return nil
 }
 
-// Sync flushes any written data to disk
-func (wf *WriteFile) Sync() error {
+// SyncFile flushes any written data to disk
+func (wf *WriteFile) SyncFile() error {
 	if wf.fd == nil {
 		return fmt.Errorf("file is not open: path=%s", wf.path)
 	}
@@ -93,8 +86,8 @@ func (wf *WriteFile) Sync() error {
 	return nil
 }
 
-// Close closes the file descriptor and releases resources
-func (wf *WriteFile) Close() error {
+// CloseFile closes the file descriptor and releases resources
+func (wf *WriteFile) CloseFile() error {
 	if wf.fd == nil {
 		return fmt.Errorf("file is not open: path=%s", wf.path)
 	}

@@ -156,7 +156,7 @@ func (writer *PageWriter) Initialize(dataType base.TSDataType, encodingType base
 func (writer *PageWriter) Write(timestamp int64, value interface{}) error {
 	// Validate data type
 	if !writer.isDataTypeMatch(value) {
-		return errors.New("data type mismatch")
+		return fmt.Errorf("data type mismatch %v", value)
 	}
 
 	// Encode timestamp
