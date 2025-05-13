@@ -20,7 +20,7 @@ import (
 type TsFileIOWriter struct {
 	writeStream         *base.ByteStream                // Stream for writing data
 	writeStreamConsumer *base.ByteStreamConsumer        // Consumer for the write stream
-	curChunkMeta        *core.ChunkMeta                 // Current chunk metadata
+	CurChunkMeta        *core.ChunkMeta                 // Current chunk metadata
 	curChunkGroupMeta   *core.ChunkGroupMeta            // Current chunk group metadata
 	chunkMetaCount      int                             // Count of chunks in the current group
 	chunkGroupMetaList  []*core.ChunkGroupMeta          // All chunk group metadata
@@ -68,7 +68,7 @@ func (io *TsFileIOWriter) Init(writeFile *WriteFile) error {
 	// Set up the WriteFile
 	io.file = writeFile
 	io.writeFileCreated = true
-
+	NewTsFileIOWriter()
 	// Initialize other metadata as needed here...
 	return nil
 }
@@ -85,7 +85,7 @@ func (io *TsFileIOWriter) Destroy() {
 
 	io.writeFileCreated = false
 	// Reset all fields
-	io.curChunkMeta = nil
+	io.CurChunkMeta = nil
 	io.curChunkGroupMeta = nil
 	io.chunkGroupMetaList = nil
 	io.tsTimeIndexVector = nil
@@ -167,7 +167,7 @@ func (io *TsFileIOWriter) StartFlushChunk(
 	const mask = 0 // For common chunk
 
 	// Step 1: Record chunk meta
-	if io.curChunkMeta != nil {
+	if io.CurChunkMeta != nil {
 		return fmt.Errorf("current chunk metadata is not nil")
 	}
 
@@ -191,7 +191,7 @@ func (io *TsFileIOWriter) StartFlushChunk(
 	if err != nil {
 		return fmt.Errorf("failed to initialize chunk metadata: %w", err)
 	}
-	io.curChunkMeta = curChunkMeta
+	io.CurChunkMeta = curChunkMeta
 
 	var chunkTy byte = 0
 	if numOfPages <= 1 {
@@ -241,11 +241,15 @@ func (io *TsFileIOWriter) WriteChunkData(chunkData *base.ByteStream) error {
 }
 
 // EndFlushChunk finalizes and closes the current chunk.
-func (io *TsFileIOWriter) EndFlushChunk() error {
+func (io *TsFileIOWriter) EndFlushChunk(p statistic.Interface) error {
 	io.chunkMetaCount++
-	// stat := statistic.Factory{}
+	stat := statistic.Factory{}
 	// Append the current chunk meta to the chunk group list
-	io.curChunkGroupMeta.Push(io.curChunkMeta)
+	err := stat.CloneStatistic(p, io.CurChunkMeta.Statistic, p.GetType())
+	if err != nil {
+		return err
+	}
+	io.curChunkGroupMeta.Push(io.CurChunkMeta)
 	return nil
 }
 
@@ -331,19 +335,20 @@ func (io *TsFileIOWriter) WriteByte(written byte) error {
 func (io *TsFileIOWriter) FlushStreamToFile() error {
 	for {
 		// Retrieve the next buffer from the writeStreamConsumer
-		buffer, length, err := io.writeStreamConsumer.GetNextBuf(io.writeStream)
-		if err != nil {
-			// If there's an error retrieving the buffer, stop the process
-			return fmt.Errorf("failed to get next buffer: %w", err)
-		}
+		//buffer, length, err := io.writeStreamConsumer.GetNextBuf(io.writeStream)
+		//if err != nil {
+		// If there's an error retrieving the buffer, stop the process
+		//return fmt.Errorf("failed to get next buffer: %w", err)
+		//}
+		buf, err := io.writeStream.GetBytesFromByteStream()
 
 		// If no buffer is available (end of stream), break the loop
-		if buffer == nil {
+		if buf == nil {
 			break
 		}
 
 		// Write the buffer content to the file
-		if err = io.file.Write(buffer, length); err != nil {
+		if err = io.file.Write(buf, uint32(len(buf))); err != nil {
 			return fmt.Errorf("failed to write buffer to file: %w", err)
 		}
 	}

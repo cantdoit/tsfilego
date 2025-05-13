@@ -18,6 +18,7 @@ type MeasurementSchema struct {
 	Encoding     base.TSEncoding      // Encoding method (e.g., RLE, PLAIN)
 	Compressor   base.CompressionType // Compression algorithm (e.g., LZ4, SNAPPY)
 	DefaultValue *base.Value          // Optional: Default or pre-defined value for this measurement
+
 }
 
 // RegisterOrUpdateSchema registers or updates a schema for a given device and measurement

@@ -12,6 +12,7 @@ import (
 type Encoder interface {
 	Encode(value interface{}, stream *base.ByteStream) error
 	Destroy()
+	Flush(stream *base.ByteStream) error
 }
 
 // NewEncoder is a factory function that returns an appropriate encoder instance based on the provided type and encoding.
@@ -80,4 +81,8 @@ func (pe *PlainEncoder) Decode(dataType string, buffer *bytes.Buffer) (interface
 		}
 	*/
 	return nil, errors.New("unsupported data type for decoding")
+}
+
+func (pe *PlainEncoder) Flush(stream *base.ByteStream) error {
+	return nil
 }

@@ -7,13 +7,7 @@ type DataPoint struct {
 	IsNull          bool            // Indicates if the value is null
 	MeasurementName string          // Measurement name
 	DataType        base.TSDataType // Data type of the value
-	BoolVal         *bool           // Boolean value (optional)
-	Int32Val        *int32          // Int32 value (optional)
-	Int64Val        *int64          // Int64 value (optional)
-	FloatVal        *float32        // Float value (optional)
-	DoubleVal       *float64        // Double value (optional)
-	TextVal         *TextType       // Text value (optional)
-	Value           **base.Value
+	Value           interface{}
 }
 
 // NewDataPointBool initializes a boolean DataPoint.
@@ -22,7 +16,7 @@ func NewDataPointBool(measurementName string, value bool) DataPoint {
 		IsNull:          false,
 		MeasurementName: measurementName,
 		DataType:        base.BOOLEAN,
-		BoolVal:         &value,
+		Value:           &value,
 	}
 }
 
@@ -32,7 +26,7 @@ func NewDataPointInt32(measurementName string, value int32) DataPoint {
 		IsNull:          false,
 		MeasurementName: measurementName,
 		DataType:        base.INT32,
-		Int32Val:        &value,
+		Value:           &value,
 	}
 }
 
@@ -42,7 +36,7 @@ func NewDataPointInt64(measurementName string, value int64) DataPoint {
 		IsNull:          false,
 		MeasurementName: measurementName,
 		DataType:        base.INT64,
-		Int64Val:        &value,
+		Value:           &value,
 	}
 }
 
@@ -52,7 +46,7 @@ func NewDataPointFloat(measurementName string, value float32) DataPoint {
 		IsNull:          false,
 		MeasurementName: measurementName,
 		DataType:        base.FLOAT,
-		FloatVal:        &value,
+		Value:           &value,
 	}
 }
 
@@ -62,35 +56,35 @@ func NewDataPointDouble(measurementName string, value float64) DataPoint {
 		IsNull:          false,
 		MeasurementName: measurementName,
 		DataType:        base.DOUBLE,
-		DoubleVal:       &value,
+		Value:           &value,
 	}
 }
 
 // SetInt32 updates the DataPoint with a new int32 value.
 func (dp *DataPoint) SetInt32(value int32) {
 	dp.DataType = base.INT32
-	dp.Int32Val = &value
+	dp.Value = &value
 	dp.IsNull = false
 }
 
 // SetInt64 updates the DataPoint with a new int64 value.
 func (dp *DataPoint) SetInt64(value int64) {
 	dp.DataType = base.INT64
-	dp.Int64Val = &value
+	dp.Value = &value
 	dp.IsNull = false
 }
 
 // SetFloat updates the DataPoint with a new float value.
 func (dp *DataPoint) SetFloat(value float32) {
 	dp.DataType = base.FLOAT
-	dp.FloatVal = &value
+	dp.Value = &value
 	dp.IsNull = false
 }
 
 // SetDouble updates the DataPoint with a new double value.
 func (dp *DataPoint) SetDouble(value float64) {
 	dp.DataType = base.DOUBLE
-	dp.DoubleVal = &value
+	dp.Value = &value
 	dp.IsNull = false
 }
 
