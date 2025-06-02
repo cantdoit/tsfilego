@@ -93,6 +93,7 @@ func (writer *ChunkWriter) Write(timestamp int64, value interface{}) error {
 	if err != nil {
 		return err
 	}
+	// fmt.Printf("chunkwriter write:(%v)\n", writer.PageWriter.Statistic)
 
 	// Seal the current page if it is full
 	return writer.SealCurrentPageIfFull()
@@ -101,11 +102,12 @@ func (writer *ChunkWriter) Write(timestamp int64, value interface{}) error {
 // SealCurrentPageIfFull seals the current page if it is full.
 func (writer *ChunkWriter) SealCurrentPageIfFull() error {
 	// Use the PageWriter's statistics to check if the current page is full
+	// fmt.Printf("chunkwriter pagewriter:(%v)\n", writer.PageWriter.Statistic)
 	if writer.PageWriter.PointCount >= int(OutStreamPageSize) {
+		return writer.SealCurrentPage(true)
+	} else {
 		return writer.SealCurrentPage(false)
 	}
-	return nil
-
 }
 
 // SealCurrentPage seals the current page and adds it to the chunk.
@@ -116,6 +118,7 @@ func (writer *ChunkWriter) SealCurrentPage(endChunk bool) error {
 	if err != nil {
 		return fmt.Errorf("failed to merge page statistics with chunk statistics: %w", err)
 	}
+	// fmt.Printf("chunkwriter merge:(%v)\n", writer.ChunkStatistic)
 
 	if writer.NumOfPages == 0 {
 		if endChunk {

@@ -140,6 +140,7 @@ func (bs *ByteStream) WriteBuf(buf []uint8, bufLen uint32) error {
 
 	// Write loop: ensures all data from `buf` is written, splitting across Pages if needed
 	for writeLen < bufLen {
+		// fmt.Println(bs.PageSize)
 		// Prepare the current page or allocate a new one if the current is full
 		if bs.CurrentPage == nil || uint32(len(bs.CurrentPage.data)) == bs.PageSize {
 			bs.AllocatePage()
@@ -209,7 +210,7 @@ func (bs *ByteStream) ReadBuf(buf []uint8, wantLen uint32) (uint32, error) {
 // PurgePrevPages removes a specified number of pages from the beginning of the ByteStream.
 // If purgePageCount is greater than the current number of pages, all pages except the last one will be purged.
 func (bs *ByteStream) PurgePrevPages(purgePageCount int) {
-	if len(bs.Pages) == 0 || purgePageCount <= 0 {
+	if len(bs.Pages) <= 1 || purgePageCount <= 0 {
 		return // Nothing to purge or invalid input
 	}
 
@@ -290,6 +291,7 @@ func (bs *ByteStream) GetNextBuffer() ([]byte, uint32, error) {
 	if int(bs.CurrentPageIdx) >= len(bs.Pages) {
 		return nil, 0, errors.New("no more buffers available")
 	}
+	// fmt.Println(bs.CurrentPageIdx, len(bs.Pages))
 
 	// Get the current page
 	page := bs.Pages[bs.CurrentPageIdx]
@@ -370,6 +372,7 @@ func (bs *ByteStream) MergeByteStream(sea *ByteStream, river *ByteStream, purgeR
 	// Iterate through all buffers in the river
 	for {
 		buf, length, err := river.GetNextBuffer()
+		// fmt.Println(buf, length, err)
 		if err != nil {
 			// No more buffers to process
 			break
@@ -377,6 +380,7 @@ func (bs *ByteStream) MergeByteStream(sea *ByteStream, river *ByteStream, purgeR
 
 		// Write the buffer from the river into the sea
 		if err := sea.WriteBuf(buf, length); err != nil {
+
 			return err // Abort if write to the sea fails
 		}
 

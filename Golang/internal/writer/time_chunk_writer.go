@@ -179,7 +179,7 @@ func (writer *TimeChunkWriter) sealCurrentPage(endChunk bool) error {
 
 // saveFirstPageData saves the first page's data for deferred writing.
 func (writer *TimeChunkWriter) saveFirstPageData(pageWriter *TimePageWriter) {
-	writer.FirstPageData = pageWriter.GetTimeData()
+	writer.FirstPageData = &pageWriter.CurPageData
 	writer.FirstPageStatistic = pageWriter.GetStatistic().Clone()
 }
 

@@ -3,10 +3,8 @@ package writer
 import (
 	"Golang/internal/common/base"
 	"Golang/internal/common/core"
-	_ "Golang/internal/common/statistic"
-	_ "Golang/internal/compressor"
-	_ "Golang/internal/encoder"
 	"Golang/internal/fileio"
+	"Golang/internal/utils"
 	"fmt"
 	"os"
 )
@@ -14,19 +12,19 @@ import (
 // TsFileWriter represents the high-level writer managing TSFiles
 type TsFileWriter struct {
 	WriteFile                 *fileio.WriteFile                  // Managing the underlying TSFile
-	DeviceSchemas             map[string]*core.DeviceSchema      // Device to schema map
+	DeviceSchemas             map[string]*DeviceSchema           // Device to schema map
 	ChunkWriters              map[string]*ChunkWriter            // Device to ChunkWriter map
 	Schemas                   map[string]*MeasurementSchemaGroup // Device schemas group for timeseries
 	StartFileDone             bool                               // Indication if file writing has been initialized
 	RecordCountSinceLastFlush int64                              // Count of records since the last flush
 	RecordCountForNextCheck   int64                              // Count for the next memory boundary check
 	WriteFileCreated          bool                               // Indicates if the WriteFile has been created
-	ioWriter                  *fileio.TsFileIOWriter
+	IoWriter                  *fileio.TsFileIOWriter
 }
 
 // MeasurementSchemaGroup represents a group of measurements for a device
 type MeasurementSchemaGroup struct {
-	MeasurementSchemas map[string]*core.MeasurementSchema
+	MeasurementSchemas map[string]*MeasurementSchema
 	IsAligned          bool
 	TimeChunkWriter    *TimeChunkWriter
 }
@@ -34,26 +32,38 @@ type MeasurementSchemaGroup struct {
 // Function to create a new instance of TsFileWriter
 func NewTsFileWriter() *TsFileWriter {
 	return &TsFileWriter{
-		DeviceSchemas: make(map[string]*core.DeviceSchema),
+		DeviceSchemas: make(map[string]*DeviceSchema),
 		ChunkWriters:  make(map[string]*ChunkWriter),
 		Schemas:       make(map[string]*MeasurementSchemaGroup),
+		IoWriter:      fileio.NewTsFileIOWriter(),
 	}
 }
 
-func (tf *TsFileWriter) Init() error {
-	if tf.WriteFile == nil {
-		return fmt.Errorf("file is not ready")
+func (tf *TsFileWriter) Init(writeFile *fileio.WriteFile) error {
+	if writeFile == nil {
+		// Provide a clear error if `WriteFile` isn't initialized
+		return fmt.Errorf("file is not ready; WriteFile instance is nil")
 	}
-	if tf.WriteFile.IsFileOpened() {
-		return fmt.Errorf("file is already opened")
+
+	// Check if file is already open
+	if writeFile.IsFileOpened() {
+		return fmt.Errorf("file is already opened: path=%s", writeFile.GetFilePath())
 	}
-	tf.WriteFile = &fileio.WriteFile{}
-	tf.ioWriter = &fileio.TsFileIOWriter{}
-	err := tf.ioWriter.Init(tf.WriteFile)
-	if err != nil {
-		return err
+
+	// Assign the WriteFile to the TsFileWriter
+	tf.WriteFile = writeFile
+
+	// Check if IoWriter exists, and create it if not
+	if tf.IoWriter == nil {
+		tf.IoWriter = &fileio.TsFileIOWriter{}
 	}
+	// fmt.Println("IoWriter", tf.WriteFile)
+
+	tf.StartFileDone = true // Indicate initialization is done
+	// fmt.Println("TsFileWriter successfully initialized")
+
 	return nil
+
 }
 
 // Open handles opening or creating a TSFile
@@ -152,11 +162,11 @@ func (tf *TsFileWriter) Close() error {
 }
 
 // RegisterTimeseries registers a timeseries (a measurement) for a specific device
-func (tf *TsFileWriter) RegisterTimeseries(deviceID string, measurementSchema *core.MeasurementSchema) error {
+func (tf *TsFileWriter) RegisterTimeseries(deviceID string, measurementSchema *MeasurementSchema) error {
 	group, exists := tf.Schemas[deviceID]
 	if !exists {
 		group = &MeasurementSchemaGroup{
-			MeasurementSchemas: make(map[string]*core.MeasurementSchema),
+			MeasurementSchemas: make(map[string]*MeasurementSchema),
 			IsAligned:          false,
 		}
 		tf.Schemas[deviceID] = group
@@ -168,11 +178,11 @@ func (tf *TsFileWriter) RegisterTimeseries(deviceID string, measurementSchema *c
 }
 
 // RegisterAlignedTimeseries registers aligned timeseries for a particular device
-func (tf *TsFileWriter) RegisterAlignedTimeseries(deviceID string, measurementSchemas []*core.MeasurementSchema) error {
+func (tf *TsFileWriter) RegisterAlignedTimeseries(deviceID string, measurementSchemas []*MeasurementSchema) error {
 	group, exists := tf.Schemas[deviceID]
 	if !exists {
 		group = &MeasurementSchemaGroup{
-			MeasurementSchemas: make(map[string]*core.MeasurementSchema),
+			MeasurementSchemas: make(map[string]*MeasurementSchema),
 			IsAligned:          true,
 		}
 		tf.Schemas[deviceID] = group
@@ -213,6 +223,7 @@ func (tf *TsFileWriter) WriteRecord(record *core.TsRecord) error {
 			// If no valid chunk writer exists for the measurement, skip
 			continue
 		}
+		// fmt.Println(chunkWriter)
 
 		if err := chunkWriter.Write(timestamp, point.Value); err != nil {
 			// Log or handle individual failure, but allow other points to continue
@@ -250,8 +261,10 @@ func (tf *TsFileWriter) checkAndPrepareSchema(deviceName string, record *core.Ts
 			chunkWriters[idx] = nil
 			continue
 		}
-		chunkWriter := ChunkWriter{}
-		err := chunkWriter.Initialize(schema.Name, schema.DataType, schema.Encoding, schema.Compressor)
+		if schema.ChunkWriter == nil {
+			schema.ChunkWriter = &ChunkWriter{}
+		}
+		err := schema.ChunkWriter.Initialize(schema.Name, schema.DataType, schema.Encoding, schema.Compressor)
 		// If the chunk writer does not exist, initialize it
 		if tf.ChunkWriters == nil {
 
@@ -267,7 +280,7 @@ func (tf *TsFileWriter) checkAndPrepareSchema(deviceName string, record *core.Ts
 		}
 
 		// Add the chunk writer to the list
-		chunkWriters[idx] = &chunkWriter
+		chunkWriters[idx] = schema.ChunkWriter
 	}
 
 	return chunkWriters, nil
@@ -278,17 +291,35 @@ func (tf *TsFileWriter) checkMemoryAndFlushChunks() error {
 	// Logic to determine if memory usage requires flushing
 	// This is just a placeholder for more advanced memory management
 	if tf.RecordCountSinceLastFlush >= tf.RecordCountForNextCheck {
-		// Perform flushing operation (implementation depends on other layers)
-		for _, schemaGroup := range tf.Schemas {
-			err := tf.flushChunkGroup(schemaGroup, false)
-			if err != nil {
-				return fmt.Errorf("failed to flush chunks for device schema: %v", err)
-			}
-		}
+		memSize := tf.calculateMemSizeForAllGroup()
+		tf.RecordCountForNextCheck = int64(int(tf.RecordCountSinceLastFlush) * (utils.ConfigValue.ChunkGroupSizeThreshold / memSize))
 		// Reset the record count after flushing
 		tf.RecordCountSinceLastFlush = 0
 	}
 	return nil
+}
+
+func (tf *TsFileWriter) calculateMemSizeForAllGroup() int {
+	var memTotalSize int64 = 0
+
+	// Iterate over the Schemas map
+	for _, chunkGroup := range tf.Schemas {
+		// Access the MeasurementSchemas map within the chunk group
+		for _, measurementSchema := range chunkGroup.MeasurementSchemas {
+			// Check if the ChunkWriter is not nil
+			if measurementSchema.ChunkWriter != nil {
+				// Add the estimated memory size from the ChunkWriter
+				memTotalSize += measurementSchema.ChunkWriter.es
+			}
+		}
+
+		// Check if the group has a TimeChunkWriter and add its memory size
+		if chunkGroup.TimeChunkWriter != nil {
+			memTotalSize += chunkGroup.TimeChunkWriter.EstimateMaxSeriesMemSize()
+		}
+	}
+
+	return int(memTotalSize)
 }
 
 // WriteTablet writes a tablet of records (batch) to the TSFile
@@ -412,7 +443,7 @@ func (tf *TsFileWriter) flushChunkGroup(group *MeasurementSchemaGroup, isAligned
 		}
 
 		// Retrieve the chunk header from the timeChunkWriter
-		TCWriter := *tf.TimeToChunk(group)
+		TCWriter := tf.TimeToChunk(group)
 		// Flush the aligned time chunk
 		if err := tf.flushChunk(TCWriter, timeChunkWriter.ChunkHeader.MeasurementName, timeChunkWriter.ChunkHeader.DataType, timeChunkWriter.ChunkHeader.EncodingType, timeChunkWriter.ChunkHeader.CompressionType, int(group.TimeChunkWriter.NumOfPages)); err != nil {
 			return fmt.Errorf("failed to flush aligned time chunk: %v", err)
@@ -423,13 +454,8 @@ func (tf *TsFileWriter) flushChunkGroup(group *MeasurementSchemaGroup, isAligned
 	for _, mSchema := range group.MeasurementSchemas {
 		if !group.IsAligned {
 			// Handle non-aligned chunk writers
-			chunkWriter := ChunkWriter{}
-			err := chunkWriter.Initialize(mSchema.Name, mSchema.DataType, mSchema.Encoding, mSchema.Compressor)
-			if err != nil {
-				return err
-			}
-			if err := tf.flushChunk(chunkWriter, mSchema.Name, mSchema.DataType, mSchema.Encoding, mSchema.Compressor, chunkWriter.NumOfPages); err != nil {
-				return fmt.Errorf("failed to flush non-aligned chunk for measurement '%s': %v", mSchema.Name, err)
+			if err := tf.flushChunk(mSchema.ChunkWriter, mSchema.Name, mSchema.DataType, mSchema.Encoding, mSchema.Compressor, mSchema.ChunkWriter.NumOfPages); err != nil {
+				return fmt.Errorf("failed to flush non-aligned chunk for measurement '%v': %v", mSchema.Name, err)
 			}
 		} else {
 			// Handle aligned value chunk writers
@@ -438,7 +464,7 @@ func (tf *TsFileWriter) flushChunkGroup(group *MeasurementSchemaGroup, isAligned
 			if err != nil {
 				return err
 			}
-			VCWriter := *tf.ValueToChunk(&valueChunkWriter)
+			VCWriter := tf.ValueToChunk(&valueChunkWriter)
 
 			if err := tf.flushChunk(VCWriter, mSchema.Name, mSchema.DataType, mSchema.Encoding, mSchema.Compressor, valueChunkWriter.NumOfPages); err != nil {
 				return fmt.Errorf("failed to flush aligned value chunk for measurement '%s': %v", mSchema.Name, err)
@@ -450,7 +476,7 @@ func (tf *TsFileWriter) flushChunkGroup(group *MeasurementSchemaGroup, isAligned
 }
 
 // flushChunk handles the logic for finalizing the chunk writer, flushing its data to the file, and performing cleanup.
-func (tf *TsFileWriter) flushChunk(writer ChunkWriter, name string, dataType base.TSDataType, encoding base.TSEncoding, compression base.CompressionType, numPages int) error {
+func (tf *TsFileWriter) flushChunk(writer *ChunkWriter, name string, dataType base.TSDataType, encoding base.TSEncoding, compression base.CompressionType, numPages int) error {
 
 	// Step 1: Finalize the chunk encoding
 	err := writer.EndEncodeChunk()
@@ -458,23 +484,25 @@ func (tf *TsFileWriter) flushChunk(writer ChunkWriter, name string, dataType bas
 		return fmt.Errorf("failed to finalize chunk encoding for measurement '%s': %v", name, err)
 	}
 
-	meta := tf.ioWriter.CurChunkMeta
 	// Step 2: Start flushing the chunk data
-	err = tf.ioWriter.StartFlushChunk(writer.ChunkData, name, dataType, encoding, compression, int32(numPages), meta.TsID)
+	err = tf.IoWriter.StartFlushChunk(writer.ChunkData, name, dataType, encoding, compression, int32(numPages))
 	if err != nil {
 		return err
 	}
 
-	err = tf.ioWriter.FlushChunk(writer.ChunkData)
+	// fmt.Print("____", tf.WriteFile, tf.IoWriter)
+	err = tf.IoWriter.FlushChunk(writer.ChunkData)
 	if err != nil {
 		return fmt.Errorf("failed to start flushing chunk for measurement '%s': %v", name, err)
 	}
 
-	err = tf.ioWriter.EndFlushChunk(writer.ChunkStatistic)
+	// fmt.Println("end flushing chunk")
+	err = tf.IoWriter.EndFlushChunk(writer.ChunkStatistic)
 	if err != nil {
 		return err
 	}
 
+	// fmt.Println("end flushing chunk statistic")
 	// Step 5: Perform cleanup - destroy the writer instance after flushing
 	writer.Destroy()
 	return nil

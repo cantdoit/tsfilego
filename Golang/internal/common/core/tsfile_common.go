@@ -312,6 +312,7 @@ func NewChunkGroupMeta(deviceName string) *ChunkGroupMeta {
 
 // Push adds a ChunkMeta to the group
 func (cg *ChunkGroupMeta) Push(meta *ChunkMeta) {
+	// fmt.Println("Push ChunkMeta", cg.ChunkMetaList)
 	cg.ChunkMetaList = append(cg.ChunkMetaList, meta)
 }
 

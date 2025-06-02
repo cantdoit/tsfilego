@@ -26,8 +26,8 @@ type PageData struct {
 // and optionally compresses the data.
 func (data *PageData) Initialize(timeBS, valueBS *base.ByteStream, compressor compressor.Compressor) error {
 	// Save the sizes of the time and value buffers
-	data.TimeBufSize = timeBS.TotalSize
-	data.ValueBufSize = valueBS.TotalSize
+	data.TimeBufSize = timeBS.PageSize
+	data.ValueBufSize = valueBS.PageSize
 
 	// Validate buffer sizes
 	if data.TimeBufSize == 0 || data.ValueBufSize == 0 {
@@ -106,6 +106,7 @@ func (writer *PageWriter) Initialize(dataType base.TSDataType, encodingType base
 
 	// Create the ByteStreams
 	writer.TimeOutStream, err = base.NewByteStream(OutStreamPageSize)
+	// fmt.Printf("time out stream size %v", writer.TimeOutStream.TotalSize)
 	if err != nil {
 		return fmt.Errorf("failed to initialize time stream: %w", err)
 	}
@@ -176,6 +177,7 @@ func (writer *PageWriter) Write(timestamp int64, value interface{}) error {
 	if err != nil {
 		return err
 	}
+	// fmt.Printf("Statistic (%v)", writer.Statistic)
 
 	// Increment point count
 	writer.PointCount++

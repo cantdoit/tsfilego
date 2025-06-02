@@ -154,7 +154,7 @@ func (writer *ValueChunkWriter) SealCurrentPage(endChunk bool) error {
 
 // saveFirstPageData saves the data of the first page for deferred writing.
 func (writer *ValueChunkWriter) saveFirstPageData(pageWriter *ValuePageWriter) {
-	writer.FirstPageData = pageWriter.GetPageData()
+	writer.FirstPageData = &pageWriter.PageData
 	writer.FirstPageStatistic = pageWriter.Statistic.Clone()
 }
 

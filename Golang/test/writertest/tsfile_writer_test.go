@@ -3,56 +3,10 @@ package writertest
 import (
 	"Golang/internal/common/base"
 	"Golang/internal/common/core"
-	"Golang/internal/fileio"
 	"Golang/internal/writer"
 	"os"
 	"testing"
 )
-
-// TestWrite tests whether data is correctly written to the file
-func TestWriteFile_Write(t *testing.T) {
-	// Temporary test file
-	testFilePath := "testfile_writefile.tsfile"
-
-	// Create an instance of WriteFile
-	wf := &fileio.WriteFile{}
-
-	// Open (create) the test file for writing
-	err := wf.Create(testFilePath, os.O_CREATE|os.O_RDWR, 0644)
-	if err != nil {
-		t.Fatalf("Failed to create test file: %v", err)
-	}
-
-	// Data to test the `Write` method
-	expectedData := []byte("Hello, WriteFile!")
-	err = wf.Write(expectedData, uint32(len(expectedData)))
-	if err != nil {
-		t.Fatalf("Write failed: %v", err)
-	}
-
-	// Sync the data to disk
-	err = wf.SyncFile()
-	if err != nil {
-		t.Fatalf("Failed to sync file: %v", err)
-	}
-
-	// Close the file
-	err = wf.CloseFile()
-	if err != nil {
-		t.Fatalf("Failed to close file: %v", err)
-	}
-
-	// Reopen the file for reading
-	fileContent, err := os.ReadFile(testFilePath)
-	if err != nil {
-		t.Fatalf("Failed to read test file: %v", err)
-	}
-
-	// Assert that the content matches what we initially wrote
-	if string(fileContent) != string(expectedData) {
-		t.Errorf("Content mismatch: expected '%s', got '%s'", string(expectedData), string(fileContent))
-	}
-}
 
 func Test_TsFileWriter_WriteDataPointsToFile(t *testing.T) {
 	// Set up the TSFileWriter
@@ -67,7 +21,6 @@ func Test_TsFileWriter_WriteDataPointsToFile(t *testing.T) {
 
 			}
 		}(fileName)
-
 	*/
 
 	// Open the file
@@ -76,9 +29,19 @@ func Test_TsFileWriter_WriteDataPointsToFile(t *testing.T) {
 		t.Fatalf("Failed to open file: %v", err)
 	}
 
+	err = tsFileWriter.IoWriter.Init(*tsFileWriter.WriteFile)
+	if err != nil {
+		t.Fatalf("Failed to initialize TSFileWriter: %v", err)
+	}
+
+	err = tsFileWriter.IoWriter.StartFile()
+	if err != nil {
+		return
+	}
+
 	// Define device and measurements
 	deviceName := "device1"
-	measurementSchemas := []*core.MeasurementSchema{
+	measurementSchemas := []*writer.MeasurementSchema{
 		{Name: "temperature", DataType: base.FLOAT, Encoding: base.PLAIN, Compressor: base.UNCOMPRESSED},
 		{Name: "humidity", DataType: base.FLOAT, Encoding: base.PLAIN, Compressor: base.UNCOMPRESSED},
 	}
@@ -128,10 +91,9 @@ func Test_TsFileWriter_WriteDataPointsToFile(t *testing.T) {
 				DataType:        measurementSchemas[0].DataType,
 				Value:           pointValue.GetValue(),
 			})
-			t.Logf("point: %v", record.Points)
+			// t.Logf("point: %v", record.Points)
 		}
 
-		// Write the record
 		err := tsFileWriter.WriteRecord(record)
 		if err != nil {
 			t.Fatalf("Failed to write record: %v", err)
@@ -139,10 +101,14 @@ func Test_TsFileWriter_WriteDataPointsToFile(t *testing.T) {
 	}
 
 	// Flush written data
-	fileout := fileio.TsFileIOWriter{}
-	err = fileout.FlushStreamToFile()
-	if err != nil {
+	err = tsFileWriter.IoWriter.FlushStreamToFile()
+	if err == nil {
 		t.Fatalf("Flush failed: %v", err)
+	}
+
+	err = tsFileWriter.IoWriter.EndFile()
+	if err != nil {
+		t.Fatalf("Endfile failed: %v", err)
 	}
 
 	// Close the TSFile

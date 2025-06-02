@@ -2,12 +2,12 @@ package core
 
 import (
 	"Golang/internal/common/base"
-	"Golang/internal/common/core"
+	"Golang/internal/writer"
 	"testing"
 )
 
 func TestDefaultMeasurementSchema(t *testing.T) {
-	schema := core.MeasurementSchema{}
+	schema := writer.MeasurementSchema{}
 
 	if schema.Name != "" {
 		t.Errorf("Expected Name: '', Got: %s", schema.Name)
@@ -28,7 +28,7 @@ func TestDefaultMeasurementSchema(t *testing.T) {
 
 func TestParameterizedMeasurementSchema(t *testing.T) {
 	defaultValue, _ := base.NewValue(base.INT64, int64(0))
-	schema := core.MeasurementSchema{
+	schema := writer.MeasurementSchema{
 		Name:         "temperature",
 		DataType:     base.INT64,
 		Encoding:     base.RLE,
@@ -54,8 +54,8 @@ func TestParameterizedMeasurementSchema(t *testing.T) {
 }
 
 func TestDefaultDeviceSchema(t *testing.T) {
-	deviceSchema := core.DeviceSchema{
-		Measurements: make(map[string]*core.MeasurementSchema),
+	deviceSchema := writer.DeviceSchema{
+		Measurements: make(map[string]*writer.MeasurementSchema),
 		IsAligned:    false,
 	}
 
@@ -69,9 +69,9 @@ func TestDefaultDeviceSchema(t *testing.T) {
 }
 
 func TestRegisterOrUpdateSchema(t *testing.T) {
-	deviceSchemas := make(map[string]*core.DeviceSchema)
+	deviceSchemas := make(map[string]*writer.DeviceSchema)
 
-	err := core.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
+	err := writer.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
 	}
@@ -98,15 +98,15 @@ func TestRegisterOrUpdateSchema(t *testing.T) {
 }
 
 func TestRegisterOrUpdateSchemaDuplicate(t *testing.T) {
-	deviceSchemas := make(map[string]*core.DeviceSchema)
+	deviceSchemas := make(map[string]*writer.DeviceSchema)
 
-	err := core.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
+	err := writer.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
 	if err != nil {
 		t.Fatalf("Failed to register schema: %v", err)
 	}
 
 	// Try to register the same measurement again
-	err = core.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
+	err = writer.RegisterOrUpdateSchema(deviceSchemas, "device1", "temperature", base.INT32, base.RLE, base.SNAPPY)
 	if err == nil {
 		t.Fatalf("Expected error when registering duplicate measurement, but got none")
 	}

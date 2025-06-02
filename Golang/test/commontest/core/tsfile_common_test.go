@@ -541,7 +541,7 @@ func TestMetaIndexEntry_SerializeDeserialize(t *testing.T) {
 	entry := &core.MetaIndexEntry{}
 	entry.Init(name, offset)
 
-	t.Log(entry)
+	// t.Log(entry)
 
 	// Serialize the entry
 	stream, _ := base.NewByteStream(1024)

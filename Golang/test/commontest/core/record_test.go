@@ -34,8 +34,8 @@ func TestDataPoint_BoolConstructor(t *testing.T) {
 	if dp.DataType != base.BOOLEAN {
 		t.Errorf("Expected DataType to be BOOLEAN, got '%v'", dp.DataType)
 	}
-	if dp.BoolVal == nil || *dp.BoolVal != true {
-		t.Errorf("Expected BoolVal to be true, got '%v'", dp.BoolVal)
+	if dp.Value == nil || *dp.Value.(*bool) != true {
+		t.Errorf("Expected BoolVal to be true, got '%v'", dp.Value)
 	}
 }
 
@@ -48,8 +48,8 @@ func TestDataPoint_Int32Constructor(t *testing.T) {
 	if dp.DataType != base.INT32 {
 		t.Errorf("Expected DataType to be INT32, got '%v'", dp.DataType)
 	}
-	if dp.Int32Val == nil || *dp.Int32Val != 100 {
-		t.Errorf("Expected Int32Val to be 100, got '%v'", dp.Int32Val)
+	if dp.Value == nil || *dp.Value.(*int32) != 100 {
+		t.Errorf("Expected Int32Val to be 100, got '%v'", dp.Value)
 	}
 }
 
@@ -61,8 +61,8 @@ func TestDataPoint_SetInt32(t *testing.T) {
 	if dp.DataType != base.INT32 {
 		t.Errorf("Expected DataType to be INT32, got '%v'", dp.DataType)
 	}
-	if dp.Int32Val == nil || *dp.Int32Val != 42 {
-		t.Errorf("Expected Int32Val to be 42, got '%v'", dp.Int32Val)
+	if dp.Value == nil || *dp.Value.(*int32) != 42 {
+		t.Errorf("Expected Int32Val to be 42, got '%v'", dp.Value)
 	}
 }
 
@@ -98,8 +98,8 @@ func TestTsRecord_AddDataPoint(t *testing.T) {
 	if suite.tsRecord.Points[0].DataType != base.DOUBLE {
 		t.Errorf("Expected first DataPoint's DataType to be DOUBLE, got '%v'", suite.tsRecord.Points[0].DataType)
 	}
-	if suite.tsRecord.Points[0].DoubleVal == nil || *suite.tsRecord.Points[0].DoubleVal != 36.6 {
-		t.Errorf("Expected first DataPoint's DoubleVal to be 36.6, got '%v'", suite.tsRecord.Points[0].DoubleVal)
+	if suite.tsRecord.Points[0].Value == nil || *suite.tsRecord.Points[0].Value.(*float64) != 36.6 {
+		t.Errorf("Expected first DataPoint's DoubleVal to be 36.6, got '%v'", suite.tsRecord.Points[0].Value)
 	}
 }
 
@@ -123,8 +123,8 @@ func TestTsRecord_LargeQuantities(t *testing.T) {
 		if suite.tsRecord.Points[i].MeasurementName != "measurement_"+string(rune(i)) {
 			t.Errorf("Expected MeasurementName to be 'measurement_%d', got '%s'", i, suite.tsRecord.Points[i].MeasurementName)
 		}
-		if suite.tsRecord.Points[i].Int64Val == nil || *suite.tsRecord.Points[i].Int64Val != int64(i) {
-			t.Errorf("Expected Int64Val to be %d, got '%v'", i, suite.tsRecord.Points[i].Int64Val)
+		if suite.tsRecord.Points[i].Value == nil || *suite.tsRecord.Points[i].Value.(*int64) != int64(i) {
+			t.Errorf("Expected Int64Val to be %d, got '%v'", i, suite.tsRecord.Points[i].Value)
 		}
 	}
 }

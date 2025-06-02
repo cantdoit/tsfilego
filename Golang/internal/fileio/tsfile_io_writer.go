@@ -1,7 +1,7 @@
 package fileio
 
 /*
-Handle file writing index, chunk, flush
+Handle File writing index, chunk, flush
 writing into chunks for buffer memory into stream
 Chunk gets passed to writefile to be flushed into disk
 */
@@ -18,7 +18,7 @@ import (
 
 // TsFileIOWriter handles the operations required for writing to .ts files.
 type TsFileIOWriter struct {
-	writeStream         *base.ByteStream                // Stream for writing data
+	WriteStream         *base.ByteStream                // Stream for writing data
 	writeStreamConsumer *base.ByteStreamConsumer        // Consumer for the write stream
 	CurChunkMeta        *core.ChunkMeta                 // Current chunk metadata
 	curChunkGroupMeta   *core.ChunkGroupMeta            // Current chunk group metadata
@@ -26,9 +26,9 @@ type TsFileIOWriter struct {
 	chunkGroupMetaList  []*core.ChunkGroupMeta          // All chunk group metadata
 	usePrevAllocCgm     bool                            // Flag for reusing allocation
 	curDeviceName       string                          // Current device name
-	file                *WriteFile                      // The write file (.ts file)
+	File                WriteFile                       // The write File (.ts File)
 	tsTimeIndexVector   []core.TimeseriesTimeIndexEntry // Time index vector for timeseries
-	writeFileCreated    bool                            // Whether the write file has been created
+	writeFileCreated    bool                            // Whether the write File has been created
 }
 
 // Constants
@@ -49,7 +49,7 @@ func NewTsFileIOWriter() *TsFileIOWriter {
 	}
 
 	return &TsFileIOWriter{
-		writeStream:         writeStream,
+		WriteStream:         writeStream,
 		writeStreamConsumer: writeStreamConsumer, // Consumer uses the same ByteStream by default
 		chunkMetaCount:      0,
 		chunkGroupMetaList:  []*core.ChunkGroupMeta{},
@@ -59,29 +59,31 @@ func NewTsFileIOWriter() *TsFileIOWriter {
 }
 
 // Init initializes the TsFileIOWriter with a WriteFile instance.
-func (io *TsFileIOWriter) Init(writeFile *WriteFile) error {
+func (io *TsFileIOWriter) Init(writeFile WriteFile) error {
+	// Log here
+	// fmt.Println("Initializing TsFileIOWriter...")
 
 	if io.writeFileCreated {
-		return fmt.Errorf("write file already initialized")
+		return fmt.Errorf("write File already initialized")
 	}
 
 	// Set up the WriteFile
-	io.file = writeFile
-	io.writeFileCreated = true
-	NewTsFileIOWriter()
-	// Initialize other metadata as needed here...
+	io.File = writeFile
+	// fmt.Printf("Init writeFile %v", io.File)
+	io.writeFileCreated = true // Ensure this guard prevents double initialization
 	return nil
+
 }
 
 // Destroy cleans up resources used by TsFileIOWriter.
 func (io *TsFileIOWriter) Destroy() {
 
 	// Clean up allocated resources and metadata objects
-	err := io.file.CloseFile()
+	err := io.File.CloseFile()
 	if err != nil {
 		return
-	} // Ensure the file is properly closed
-	io.file = nil
+	} // Ensure the File is properly closed
+	io.File = WriteFile{}
 
 	io.writeFileCreated = false
 	// Reset all fields
@@ -96,8 +98,9 @@ func (io *TsFileIOWriter) Destroy() {
 
 // StartFile initializes the writing process for the TsFile.
 func (io *TsFileIOWriter) StartFile() error {
-	// Write the magic string to the file
-	if err := io.writeStream.WriteBuf([]uint8(core.MAGIC_STRING_TSFILE), uint32(core.MAGIC_STRING_TSFILE_LEN)); err != nil {
+	// fmt.Print("IOFILE", io.File)
+	// Write the magic string to the File
+	if err := io.WriteStream.WriteBuf([]uint8(core.MAGIC_STRING_TSFILE), uint32(core.MAGIC_STRING_TSFILE_LEN)); err != nil {
 		return fmt.Errorf("%w: writing magic string", err)
 	}
 
@@ -106,14 +109,14 @@ func (io *TsFileIOWriter) StartFile() error {
 		return fmt.Errorf("%w: writing version number", err)
 	}
 
-	// Flush the stream data to file
+	// Flush the stream data to File
 	if err := io.FlushStreamToFile(); err != nil {
-		return fmt.Errorf("%w: flushing to file", err)
+		return fmt.Errorf("%w: flushing to File", err)
 	}
 	return nil
 }
 
-// StartFlushChunkGroup begins flushing a new chunk group into the file.
+// StartFlushChunkGroup begins flushing a new chunk group into the File.
 func (io *TsFileIOWriter) StartFlushChunkGroup(deviceName string, isAligned bool) error {
 	// Write the marker for a chunk group header
 	if err := io.WriteByte(core.CHUNK_GROUP_HEADER_MARKER); err != nil {
@@ -162,10 +165,10 @@ func (io *TsFileIOWriter) StartFlushChunk(
 	encoding base.TSEncoding,
 	compression base.CompressionType,
 	numOfPages int32,
-	TsID utils.TsID,
 ) error {
 	const mask = 0 // For common chunk
 
+	// fmt.Println("StartFlushChunk", chunkData, measurementName, dataType, encoding, compression, numOfPages, mask)
 	// Step 1: Record chunk meta
 	if io.CurChunkMeta != nil {
 		return fmt.Errorf("current chunk metadata is not nil")
@@ -178,20 +181,27 @@ func (io *TsFileIOWriter) StartFlushChunk(
 	if err != nil {
 		return fmt.Errorf("failed to create statistics: %w", err)
 	}
+	// fmt.Println("chunkStatistic", chunkStatistic)
 
 	// Initialize chunk metadata
 	err = curChunkMeta.Initialize(
 		measurementName,
 		dataType,
-		int64(io.curFilePosition()), // offsetOfHeader
+		int64(io.WriteStream.TotalSize), // offsetOfHeader
 		chunkStatistic,
-		TsID,
+		utils.TsID{
+			DbNID:          0,
+			DeviceNID:      0,
+			MeasurementNID: 0,
+		},
 		mask,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to initialize chunk metadata: %w", err)
 	}
 	io.CurChunkMeta = curChunkMeta
+
+	// fmt.Println("curChunkMeta", io.CurChunkMeta.Statistic)
 
 	var chunkTy byte = 0
 	if numOfPages <= 1 {
@@ -200,7 +210,7 @@ func (io *TsFileIOWriter) StartFlushChunk(
 		chunkTy = core.CHUNK_HEADER_MARKER
 	}
 
-	// Step 2: Serialize chunk header to writeStream
+	// Step 2: Serialize chunk header to WriteStream
 	chunkHeader := core.ChunkHeader{
 		MeasurementName: measurementName,
 		DataSize:        chunkData.TotalSize, // Retrieved from ByteStream
@@ -210,7 +220,7 @@ func (io *TsFileIOWriter) StartFlushChunk(
 		NumOfPages:      numOfPages,
 		ChunkType:       chunkTy,
 	}
-	err = chunkHeader.SerializeTo(io.writeStream)
+	err = chunkHeader.SerializeTo(io.WriteStream)
 	if err != nil {
 		return err
 	}
@@ -219,12 +229,15 @@ func (io *TsFileIOWriter) StartFlushChunk(
 
 }
 
-// FlushChunk flushes the contents of the current chunk to the file.
+// FlushChunk flushes the contents of the current chunk to the File.
 func (io *TsFileIOWriter) FlushChunk(chunkData *base.ByteStream) error {
+
+	// fmt.Print("IOFILE", io.File)
 	err := io.WriteChunkData(chunkData)
 	if err != nil {
 		return err
 	}
+
 	err = io.FlushStreamToFile()
 	if err != nil {
 		return err
@@ -233,7 +246,7 @@ func (io *TsFileIOWriter) FlushChunk(chunkData *base.ByteStream) error {
 }
 
 func (io *TsFileIOWriter) WriteChunkData(chunkData *base.ByteStream) error {
-	err := chunkData.MergeByteStream(io.writeStream, chunkData, true)
+	err := chunkData.MergeByteStream(io.WriteStream, chunkData, true)
 	if err != nil {
 		return err
 	}
@@ -269,25 +282,25 @@ func (io *TsFileIOWriter) EndFile() error {
 		return err
 	}
 
-	// Write file index
+	// Write File index
 	if err := io.WriteFileIndex(); err != nil {
-		fmt.Printf("writer file index error: %v\n", err)
+		fmt.Printf("writer File index error: %v\n", err)
 		return err
 	}
 
-	// Write file footer
+	// Write File footer
 	if err := io.WriteFileFooter(); err != nil {
-		fmt.Printf("writer file footer error: %v\n", err)
+		fmt.Printf("writer File footer error: %v\n", err)
 		return err
 	}
 
-	// Sync file
+	// Sync File
 	if err := wf.SyncFile(); err != nil {
-		fmt.Printf("sync file error: %v\n", err)
+		fmt.Printf("sync File error: %v\n", err)
 		return err
 	}
 
-	// Close file
+	// Close File
 	if err := wf.CloseFile(); err != nil {
 		return err
 	}
@@ -304,28 +317,28 @@ func (io *TsFileIOWriter) WriteLogIndexRange() error {
 		return err
 	}
 	serial := base.SerializationUtil{}
-	err = serial.WriteUint64(uint64(minPlanIndex), io.writeStream)
+	err = serial.WriteUint64(uint64(minPlanIndex), io.WriteStream)
 	if err != nil {
 		return err
 	}
-	err = serial.WriteUint64(uint64(maxPlanIndex), io.writeStream)
+	err = serial.WriteUint64(uint64(maxPlanIndex), io.WriteStream)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-// GetFilePath returns the path of the associated file.
+// GetFilePath returns the path of the associated File.
 func (io *TsFileIOWriter) GetFilePath() string {
-	if io.file == nil {
+	if io.File == (WriteFile{}) {
 		return ""
 	}
-	return io.file.GetFilePath()
+	return io.File.GetFilePath()
 }
 
 func (io *TsFileIOWriter) WriteByte(written byte) error {
 	serial := base.SerializationUtil{}
-	err := serial.WriteUint8(written, io.writeStream)
+	err := serial.WriteUint8(written, io.WriteStream)
 	if err != nil {
 		return err
 	}
@@ -334,38 +347,32 @@ func (io *TsFileIOWriter) WriteByte(written byte) error {
 
 func (io *TsFileIOWriter) FlushStreamToFile() error {
 	for {
-		// Retrieve the next buffer from the writeStreamConsumer
-		//buffer, length, err := io.writeStreamConsumer.GetNextBuf(io.writeStream)
-		//if err != nil {
-		// If there's an error retrieving the buffer, stop the process
-		//return fmt.Errorf("failed to get next buffer: %w", err)
-		//}
-		buf, err := io.writeStream.GetBytesFromByteStream()
+		buf, _, err := io.WriteStream.GetNextBuffer()
 
 		// If no buffer is available (end of stream), break the loop
 		if buf == nil {
 			break
 		}
 
-		// Write the buffer content to the file
-		if err = io.file.Write(buf, uint32(len(buf))); err != nil {
-			return fmt.Errorf("failed to write buffer to file: %w", err)
+		// Write the buffer content to the File
+		if err = io.File.Write(buf, uint32(len(buf))); err != nil {
+			return fmt.Errorf("failed to write buffer to File: %w", err)
 		}
 	}
 
-	// Purge previous pages in the writeStream to free memory
-	io.writeStream.PurgePrevPages(math.MaxInt32)
+	// Purge previous pages in the WriteStream to free memory
+	io.WriteStream.PurgePrevPages(math.MaxInt32)
 
 	return nil
 }
 
 func (io *TsFileIOWriter) WriteString(str string) error {
 	serial := base.SerializationUtil{}
-	err := serial.WriteVarUint(uint32(len(str)), io.writeStream)
+	err := serial.WriteVarUint(uint32(len(str)), io.WriteStream)
 	if err != nil {
 		return err
 	}
-	err = io.writeStream.WriteBuf([]byte(str), uint32(len(str)))
+	err = io.WriteStream.WriteBuf([]byte(str), uint32(len(str)))
 	if err != nil {
 		return err
 	}
@@ -373,7 +380,8 @@ func (io *TsFileIOWriter) WriteString(str string) error {
 }
 
 func (io *TsFileIOWriter) curFilePosition() uint32 {
-	return io.writeStream.TotalSize
+	// fmt.Println("curFilePosition", io.WriteStream.CurrentPageIdx)
+	return io.WriteStream.CurrentPageIdx
 }
 
 func (io *TsFileIOWriter) WriteFileIndex() error {
@@ -480,7 +488,7 @@ func (io *TsFileIOWriter) WriteFileIndex() error {
 			filter.AddPathEntry(deviceName, measurementName)
 
 		}
-		if err := tsIndex.SerializeTo(io.writeStream); err != nil {
+		if err := tsIndex.SerializeTo(io.WriteStream); err != nil {
 			return fmt.Errorf("failed to serialize timeseries index: %w", err)
 		}
 
@@ -503,18 +511,18 @@ func (io *TsFileIOWriter) WriteFileIndex() error {
 		return fmt.Errorf("failed to build device level: %w", err)
 	}
 
-	// Write the file metadata to the stream.
+	// Write the File metadata to the stream.
 	tsFileMeta := core.TsFileMeta{}
 	tsFileMeta.IndexNode = deviceIndexRootNode
 	tsFileMeta.MetaOffset = int64(io.CurrentFilePosition())
 
 	tsFileMetaOffset := io.CurrentFilePosition()
-	if err := tsFileMeta.Serialize(io.writeStream); err != nil {
-		return fmt.Errorf("failed to serialize file metadata: %w", err)
+	if err := tsFileMeta.Serialize(io.WriteStream); err != nil {
+		return fmt.Errorf("failed to serialize File metadata: %w", err)
 	}
 
 	// Write the Bloom filter.
-	if err := filter.SerializeTo(io.writeStream); err != nil {
+	if err := filter.SerializeTo(io.WriteStream); err != nil {
 		return fmt.Errorf("failed to serialize Bloom filter: %w", err)
 	}
 
@@ -522,7 +530,7 @@ func (io *TsFileIOWriter) WriteFileIndex() error {
 	tsFileMetaEndOffset := io.CurrentFilePosition()
 	metaSize := uint32(tsFileMetaEndOffset - tsFileMetaOffset)
 	serial := base.SerializationUtil{}
-	if err := serial.WriteUint32(metaSize, io.writeStream); err != nil {
+	if err := serial.WriteUint32(metaSize, io.WriteStream); err != nil {
 		return fmt.Errorf("failed to write metadata size: %w", err)
 	}
 
@@ -563,7 +571,7 @@ func (io *TsFileIOWriter) BuildDeviceLevel(deviceMap map[string]*core.MetaIndexN
 		}
 
 		// Serialize the device map into the write stream
-		if err = deviceNode.Serialize(io.writeStream); err != nil {
+		if err = deviceNode.Serialize(io.WriteStream); err != nil {
 			return fmt.Errorf("failed to serialize device node: %w", err)
 		}
 
@@ -604,14 +612,14 @@ func (io *TsFileIOWriter) WriteSeperatorMarker(tsfIleMeta *core.TsFileMeta) erro
 }
 
 func (io *TsFileIOWriter) CurrentFilePosition() uint32 {
-	return io.writeStream.TotalSize
+	return io.WriteStream.TotalSize
 }
 
 func (io *TsFileIOWriter) AllocAndInitMetaIndexEntry(wmm *FileIndexWritingMemManager, name string) (*core.MetaIndexEntry, error) {
 	// Allocate MetaIndexEntry
 	entry := &core.MetaIndexEntry{
 		Name:   name,                            // Copy the name
-		Offset: int64(io.CurrentFilePosition()), // Get file position
+		Offset: int64(io.CurrentFilePosition()), // Get File position
 	}
 	return entry, nil
 }
@@ -634,7 +642,7 @@ func (io *TsFileIOWriter) AddCurIndexNodeToQueue(node *core.MetaIndexNode, queue
 		return fmt.Errorf("invalid node or queue")
 	}
 
-	// Set the node's end offset to the current file position
+	// Set the node's end offset to the current File position
 	node.EndOffset = int64(io.CurrentFilePosition())
 
 	// Add the node to the queue
@@ -767,7 +775,7 @@ func (io *TsFileIOWriter) WriteFileFooter() error {
 }
 
 func (io *TsFileIOWriter) WriteBuf(tsfile string, tsfileLen int) error {
-	err := io.writeStream.WriteBuf([]byte(tsfile), uint32(tsfileLen))
+	err := io.WriteStream.WriteBuf([]byte(tsfile), uint32(tsfileLen))
 	if err != nil {
 		return err
 	}

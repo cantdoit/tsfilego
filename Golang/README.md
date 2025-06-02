@@ -6,15 +6,15 @@ all things needed to be understood is marked with (whut)
 
 tsfile writing
 
-the order of processing is as follows when writing a file
+the order of processing is as follows when writing a File
 
-1. Open a new file in tsfile_writer (making checks for name conficts etc)
+1. Open a new File in tsfile_writer (making checks for name conficts etc)
 
    1. calls the create function from write_file
 2. Calls tsfile_io_writer to write magic string(whut) and version
 3. Starts a chunk group flush process. Each device or logical group of data is written as a "chunk group" (e.g., a collection of measurements for one device)
 
-   1. in tsfile_writer:727 where a chunk group header is written to file (the device)
+   1. in tsfile_writer:727 where a chunk group header is written to File (the device)
 4. After the ehader is writted it write the data (measurements) into the chunk
 
    1. defined my Bytesream and ColumnDesc
